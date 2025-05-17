@@ -35,7 +35,7 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 // Simulate a logged-in user. In a real app, this would come from an auth context.
 const mockCurrentUser = {
   id: 'investor1',
-  isAdmin: true,
+  isAdmin: true, // Set to true to see admin controls
 };
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
@@ -73,13 +73,13 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   React.useEffect(() => {
     let tempTransactions = [...transactions];
 
-    if (investorFilter) {
+    if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
     }
-    if (projectFilter) {
+    if (projectFilter && projectFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.project === projectFilter);
     }
-    if (cardFilter) {
+    if (cardFilter && cardFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
     }
     if (dateRangeFilter?.from) {
@@ -92,7 +92,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         tempTransactions = tempTransactions.filter(tx => {
             const txDate = parseISO(tx.date);
             const toDate = new Date(dateRangeFilter.to as Date);
-            toDate.setDate(toDate.getDate() + 1);
+            toDate.setDate(toDate.getDate() + 1); // Include the 'to' date
             return txDate < toDate;
         });
     }
@@ -185,6 +185,34 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
     router.push(`/transactions/edit/${id}`);
+  };
+
+  const handleToggleReconciled = (id: string) => {
+    if (!mockCurrentUser.isAdmin) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to change reconciliation status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const indexInGlobalMock = globalMockTransactions.findIndex(tx => tx.id === id);
+    if (indexInGlobalMock !== -1) {
+      globalMockTransactions[indexInGlobalMock].reconciled = !globalMockTransactions[indexInGlobalMock].reconciled;
+      const updatedTransaction = globalMockTransactions[indexInGlobalMock];
+      
+      // Update local state to re-render
+      setTransactions(prevTransactions => 
+        prevTransactions.map(tx => 
+          tx.id === id ? { ...tx, reconciled: updatedTransaction.reconciled } : tx
+        )
+      );
+      toast({
+        title: "Reconciliation Status Updated",
+        description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
+      });
+    }
   };
 
   const handleCopySnippet = async (id: string) => {
@@ -353,7 +381,15 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                   {columnVisibility.cardUsed && <TableCell>{getCardName(tx.cardId)}</TableCell>}
                   {columnVisibility.reconciled && (
                     <TableCell>
-                      <Badge variant={tx.reconciled ? "default" : "secondary"} className={tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : ""}>
+                      <Badge 
+                        variant={tx.reconciled ? "default" : "secondary"} 
+                        className={cn(
+                          "cursor-pointer",
+                          tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent"
+                        )}
+                        onClick={() => handleToggleReconciled(tx.id)}
+                        title={mockCurrentUser.isAdmin ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
+                      >
                         {tx.reconciled ? "Yes" : "No"}
                       </Badge>
                     </TableCell>
@@ -398,3 +434,4 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
+

@@ -17,8 +17,9 @@ export const transactionSchema = z.object({
   project: z.string().min(1, { message: "Project is required." }),
   cardId: z.string().min(1, { message: "Card is required." }),
   receiptLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal("")),
-  reconciled: z.boolean().default(false),
+  // reconciled: z.boolean().default(false), // Reconciled is no longer managed by this form
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
+

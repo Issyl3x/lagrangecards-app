@@ -10,7 +10,7 @@ import { mockTransactions } from "@/lib/mock-data"; // Using mock data
 import type { Transaction } from "@/lib/types";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button"; // Added Button import
+import { Button } from "@/components/ui/button"; 
 
 export default function EditTransactionPage() {
   const { toast } = useToast();
@@ -55,10 +55,11 @@ export default function EditTransactionPage() {
     }
     
     const updatedTransactionData: Transaction = {
-      ...transaction, // Spread existing transaction to keep original fields not in form (like id, sourceType if not edited)
-      ...data,          // Spread form data, this will overwrite fields like vendor, amount, reconciled
+      ...transaction, // Spread existing transaction to keep original fields not in form (like id, sourceType, reconciled status)
+      ...data,          // Spread form data, this will overwrite fields like vendor, amount etc.
       id: transactionId, // Ensure ID is maintained from the original transaction
       date: format(data.date, "yyyy-MM-dd"), // Format date
+      // reconciled status is NOT updated by this form anymore. It's handled directly in the table.
     };
 
     const transactionIndex = mockTransactions.findIndex(tx => tx.id === transactionId);
@@ -110,15 +111,21 @@ export default function EditTransactionPage() {
     );
   }
 
+  // We pass the original 'reconciled' status to the form's initialData
+  // so it's correctly displayed if we decide to show it (read-only) in the form later.
+  // However, the form itself won't submit or change this value anymore.
+  const formInitialData = { ...transaction }; 
+  // delete formInitialData.reconciled; // No longer part of form values.
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Edit Transaction</CardTitle>
-        <CardDescription>Update the details for this transaction.</CardDescription>
+        <CardDescription>Update the details for this transaction. Reconciliation is managed in the table view.</CardDescription>
       </CardHeader>
       <CardContent>
         <TransactionForm 
-          initialData={transaction} 
+          initialData={formInitialData} 
           onSubmit={handleSubmit} 
           isLoading={isLoading} 
         />

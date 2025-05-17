@@ -25,7 +25,8 @@ export default function AddTransactionPage() {
       id: uuidv4(), // Generate a new unique ID
       ...data,
       date: format(data.date, "yyyy-MM-dd"), // Format date to string for storage
-      // 'reconciled' status is already in 'data' from the form
+      reconciled: false, // New transactions default to not reconciled
+      // sourceType is already in 'data' from the form
     };
 
     // Add to the beginning of the mockTransactions array
