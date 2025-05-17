@@ -1,15 +1,16 @@
 
-import type { Investor, Card, Transaction, TransactionCategory } from './types';
+import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewPropertyData, NewCardData } from './types';
 import { formatISO, subDays, subMonths } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 
-export const mockInvestors: Investor[] = [
+let updatableInvestors: Investor[] = [
   { id: 'investor1', name: 'Gualter', email: 'gualter@example.com' },
   { id: 'investor4', name: 'Greg', email: 'greg@example.com' },
 ];
 
-export const mockProperties: string[] = ["Blue Haven", "Brick Haven", "Fountain Commons"]; // Renamed from mockProjects
+let updatableProperties: string[] = ["Blue Haven", "Brick Haven", "Fountain Commons"];
 
-export const mockCards: Card[] = [
+let updatableCards: Card[] = [
   { id: 'card1', cardName: 'Gualter - Blue Haven - Card 1', investorId: 'investor1', property: 'Blue Haven', isPersonal: false, spendLimitMonthly: 5000, last4Digits: '1111' },
   { id: 'card2', cardName: 'Gualter - Brick Haven - Card 1', investorId: 'investor1', property: 'Brick Haven', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
   {
@@ -40,7 +41,7 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Repairs',
     cardId: 'card1', // Gualter
     investorId: 'investor1',
-    property: 'Blue Haven', // Updated
+    property: 'Blue Haven', 
     receiptLink: 'https://docs.google.com/receipt1',
     reconciled: true,
     sourceType: 'manual'
@@ -54,12 +55,11 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Utilities',
     cardId: 'card2', // Gualter
     investorId: 'investor1',
-    property: 'Brick Haven', // Updated
+    property: 'Brick Haven', 
     receiptLink: '',
     reconciled: false,
     sourceType: 'OCR'
   },
-  // Transactions for Alice (txn3, txn5) and Bob are removed.
   {
     id: 'txn4',
     date: formatISO(subDays(today, 2), { representation: 'date' }),
@@ -69,7 +69,7 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Repairs',
     cardId: 'card1', // Gualter
     investorId: 'investor1',
-    property: 'Blue Haven', // Updated
+    property: 'Blue Haven', 
     receiptLink: '',
     reconciled: false,
     sourceType: 'OCR'
@@ -83,7 +83,7 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Utilities',
     cardId: 'card2', // Gualter
     investorId: 'investor1',
-    property: 'Brick Haven', // Updated
+    property: 'Brick Haven', 
     receiptLink: '',
     reconciled: true,
     sourceType: 'import'
@@ -97,12 +97,11 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Property Management',
     cardId: 'card1', // Gualter
     investorId: 'investor1',
-    property: 'Blue Haven', // Updated
+    property: 'Blue Haven', 
     receiptLink: '',
     reconciled: true,
     sourceType: 'manual'
   },
-  // Example transaction for Greg
   {
     id: 'txn8',
     date: formatISO(subDays(today, 7), { representation: 'date' }),
@@ -112,7 +111,7 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Supplies',
     cardId: 'card6', // Greg
     investorId: 'investor4',
-    property: 'Fountain Commons', // Updated
+    property: 'Fountain Commons', 
     receiptLink: '',
     reconciled: false,
     sourceType: 'manual'
@@ -121,28 +120,67 @@ let updatableMockTransactions: Transaction[] = [
 
 let updatableDeletedTransactions: Transaction[] = [];
 
-export const getMockTransactions = (): Transaction[] => {
-  // console.log("getMockTransactions called, returning:", updatableMockTransactions.length, "items");
-  return [...updatableMockTransactions];
+// Getters
+export const getMockInvestors = (): Investor[] => [...updatableInvestors];
+export const getMockProperties = (): string[] => [...updatableProperties];
+export const getMockCards = (): Card[] => [...updatableCards];
+export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
+export const getDeletedTransactions = (): Transaction[] => {
+  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions.length, "items", updatableDeletedTransactions.map(t => t.id));
+  return [...updatableDeletedTransactions];
+};
+
+// Adders
+export const addInvestor = (investorData: NewInvestorData): Investor => {
+  const newInvestor: Investor = {
+    id: uuidv4(),
+    ...investorData,
+  };
+  updatableInvestors = [...updatableInvestors, newInvestor];
+  console.log("Added investor:", newInvestor, "Total investors:", updatableInvestors.length);
+  return newInvestor;
+};
+
+export const addProperty = (propertyName: string): string => {
+  if (!updatableProperties.includes(propertyName)) {
+    updatableProperties = [...updatableProperties, propertyName];
+    console.log("Added property:", propertyName, "Total properties:", updatableProperties.length);
+  } else {
+    console.log("Property already exists:", propertyName);
+  }
+  return propertyName;
+};
+
+export const addCard = (cardData: NewCardData): Card => {
+  const newCard: Card = {
+    id: uuidv4(),
+    isPersonal: false, // Default as per user instruction
+    ...cardData,
+  };
+  updatableCards = [...updatableCards, newCard];
+  console.log("Added card:", newCard, "Total cards:", updatableCards.length);
+  return newCard;
 };
 
 export const addTransactionToMockData = (newTx: Transaction): void => {
-  // console.log("addTransactionToMockData called with:", newTx);
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
+  console.log("addTransactionToMockData called with:", newTx, "Total transactions:", updatableMockTransactions.length);
 };
 
+// Updaters
 export const updateTransactionInMockData = (updatedTx: Transaction): void => {
-  // console.log("updateTransactionInMockData called for ID:", updatedTx.id, "with data:", updatedTx);
   const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
   if (index !== -1) {
     const newTransactions = [...updatableMockTransactions];
-    newTransactions[index] = { ...updatedTx }; // Ensure this is a new object for the updated item
+    newTransactions[index] = { ...updatedTx };
     updatableMockTransactions = newTransactions;
+    console.log("updateTransactionInMockData called for ID:", updatedTx.id);
   } else {
-    // console.warn("updateTransactionInMockData: Transaction not found for ID:", updatedTx.id);
+     console.warn("updateTransactionInMockData: Transaction not found for ID:", updatedTx.id);
   }
 };
 
+// Deleters / Restorers
 export const deleteTransactionFromMockData = (txId: string): void => {
   const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
   if (transactionToDelete) {
@@ -153,11 +191,6 @@ export const deleteTransactionFromMockData = (txId: string): void => {
   } else {
     console.warn(`deleteTransactionFromMockData: Transaction not found for ID: ${txId} in active list.`);
   }
-};
-
-export const getDeletedTransactions = (): Transaction[] => {
-  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions.length, "items", updatableDeletedTransactions.map(t => t.id));
-  return [...updatableDeletedTransactions];
 };
 
 export const restoreTransactionFromMockData = (txId: string): void => {

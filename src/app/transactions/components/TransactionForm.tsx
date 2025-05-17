@@ -36,7 +36,13 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
-import { mockInvestors, mockProperties, mockCards, mockCategories, getMockTransactions } from "@/lib/mock-data";
+import { 
+  getMockInvestors, 
+  getMockProperties, 
+  getMockCards, 
+  mockCategories, 
+  getMockTransactions 
+} from "@/lib/mock-data";
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
@@ -53,10 +59,10 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: undefined, 
+      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : undefined,
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
-      amount: initialData?.amount || 0,
+      amount: initialData?.amount || undefined, // Set to undefined to show placeholder correctly
       category: initialData?.category || "",
       cardId: initialData?.cardId || "",
       investorId: initialData?.investorId || "",
@@ -67,15 +73,19 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     },
   });
 
-  const [investors] = React.useState<Investor[]>(mockInvestors);
-  const [properties] = React.useState<string[]>(mockProperties);
-  const [cards, setCards] = React.useState<UserCard[]>(mockCards);
+  const [investors, setInvestors] = React.useState<Investor[]>([]);
+  const [properties, setProperties] = React.useState<string[]>([]);
+  const [cards, setCards] = React.useState<UserCard[]>([]);
   const [categories] = React.useState<(string)[]>(mockCategories);
 
   const [isVendorPopoverOpen, setIsVendorPopoverOpen] = React.useState(false);
   const [uniqueVendors, setUniqueVendors] = React.useState<string[]>([]);
 
   React.useEffect(() => {
+    setInvestors(getMockInvestors());
+    setProperties(getMockProperties());
+    setCards(getMockCards()); // Initially load all cards
+
     const transactions = getMockTransactions();
     const vendors = Array.from(new Set(transactions.map(tx => tx.vendor).filter(Boolean).map(v => v.trim())))
                        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
@@ -84,8 +94,9 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
   React.useEffect(() => {
     if (initialData) {
+      const currentInvestors = getMockInvestors(); // Fetch current investors
       const investorName = initialData.investorId
-        ? (investors.find(inv => inv.id === initialData.investorId)?.name || "")
+        ? (currentInvestors.find(inv => inv.id === initialData.investorId)?.name || "")
         : "";
       
       const resetValues: TransactionFormValues = {
@@ -104,12 +115,12 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       form.reset(resetValues);
 
       if (initialData.investorId) {
-        setCards(mockCards.filter(card => card.investorId === initialData.investorId));
+        setCards(getMockCards().filter(card => card.investorId === initialData.investorId));
       } else {
-        setCards(mockCards);
+        setCards(getMockCards());
       }
     }
-  }, [initialData, form, investors]);
+  }, [initialData, form]); // Removed 'investors' from deps as it's fetched once
 
   React.useEffect(() => {
     if (!initialData?.date && form.getValues('date') === undefined) {
@@ -120,11 +131,13 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const selectedInvestorId = form.watch("investorId");
 
   React.useEffect(() => {
+    const currentInvestors = getMockInvestors();
+    const allCards = getMockCards();
     if (selectedInvestorId) {
-      const investor = investors.find(inv => inv.id === selectedInvestorId);
+      const investor = currentInvestors.find(inv => inv.id === selectedInvestorId);
       if (investor) form.setValue("investorName", investor.name);
       
-      const filteredCards = mockCards.filter(card => card.investorId === selectedInvestorId);
+      const filteredCards = allCards.filter(card => card.investorId === selectedInvestorId);
       setCards(filteredCards);
       
       const currentCardId = form.getValues("cardId");
@@ -134,9 +147,9 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
     } else {
       form.setValue("investorName", "");
-      setCards(mockCards);
+      setCards(allCards);
     }
-  }, [selectedInvestorId, form, investors]);
+  }, [selectedInvestorId, form]); // Removed 'investors' and 'mockCards'
 
 
   function handleSubmit(data: TransactionFormValues) {
@@ -226,7 +239,14 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                           if (!isVendorPopoverOpen && currentValue) setIsVendorPopoverOpen(true);
                         }}
                         ref={field.ref} 
-                        onBlur={field.onBlur} 
+                        onBlur={(e) => {
+                          field.onBlur();
+                          // If user types and blurs without selecting, keep the typed value
+                          if (e.target.value && !uniqueVendors.some(v => v.toLowerCase() === e.target.value.toLowerCase())) {
+                            // Allow adding new vendor by typing
+                          }
+                          // setTimeout(() => setIsVendorPopoverOpen(false), 100); // delay closing
+                        }}
                       />
                       <CommandList>
                         <CommandEmpty>
@@ -295,6 +315,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                     step="0.01" 
                     placeholder="0.00" 
                     {...field}
+                    value={field.value === undefined ? '' : field.value} // Handle undefined for placeholder
                     onChange={event => {
                       const value = event.target.value;
                       if (value === '' || value === null || value === undefined) {

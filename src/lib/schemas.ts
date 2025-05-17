@@ -1,15 +1,9 @@
 
 import { z } from "zod";
-// Import the updated mockCategories to ensure the enum is derived correctly
 import { mockCategories as allCategories } from "./mock-data"; 
 
-// Filter out any non-string types just in case, though mockCategories should be strings
 const stringCategories = allCategories.filter(c => typeof c === 'string') as string[];
-
-// Ensure there's at least one category for the enum, or provide a fallback
 const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other", "Appliances"];
-
-
 const categoryEnum = z.enum(categoriesForEnum);
 
 export const transactionSchema = z.object({
@@ -19,13 +13,37 @@ export const transactionSchema = z.object({
   vendor: z.string().min(1, { message: "Vendor is required." }).max(100, { message: "Vendor name is too long." }),
   description: z.string().max(500, { message: "Description is too long." }).optional().or(z.literal("")),
   amount: z.number({ invalid_type_error: "Amount must be a number." }).positive({ message: "Amount must be positive." }),
-  category: categoryEnum.or(z.string().min(1, {message: "Category is required."})), // Allows custom categories if not in enum
+  category: categoryEnum.or(z.string().min(1, {message: "Category is required."})),
   investorId: z.string().min(1, { message: "Investor is required." }),
-  investorName: z.string().optional(), // For display or internal use, not directly submitted
-  property: z.string().min(1, { message: "Property is required." }), // Renamed from project
+  investorName: z.string().optional(),
+  property: z.string().min(1, { message: "Property is required." }),
   cardId: z.string().min(1, { message: "Card is required." }),
   receiptLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal("")),
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),
 });
-
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
+
+
+// Settings Schemas
+export const investorSchema = z.object({
+  name: z.string().min(1, { message: "Investor name is required." }).max(100),
+  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal("")),
+});
+export type InvestorFormValues = z.infer<typeof investorSchema>;
+
+export const propertySchema = z.object({
+  name: z.string().min(1, { message: "Property name is required." }).max(100),
+});
+export type PropertyFormValues = z.infer<typeof propertySchema>;
+
+export const cardSchema = z.object({
+  cardName: z.string().min(1, { message: "Card name is required." }).max(100),
+  investorId: z.string().min(1, { message: "Investor is required." }),
+  property: z.string().min(1, { message: "Property is required." }),
+  last4Digits: z.string().length(4, { message: "Must be 4 digits." }).regex(/^\d{4}$/, "Must be 4 digits.").optional().or(z.literal("")),
+  spendLimitMonthly: z.preprocess(
+    (val) => (val === "" || val === undefined || val === null) ? undefined : Number(val),
+    z.number().positive({ message: "Spend limit must be positive." }).optional()
+  ),
+});
+export type CardFormValues = z.infer<typeof cardSchema>;

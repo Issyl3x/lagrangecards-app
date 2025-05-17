@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from "@/components/theme-provider"; // To be created
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import {
   SidebarProvider,
@@ -93,18 +93,21 @@ export default function RootLayout({
                    <SidebarMenu>
                      <SidebarMenuItem>
                         <SidebarMenuButton 
+                          asChild
                           variant="ghost" 
                           className="w-full justify-start"
                           tooltip={{ children: "Settings", className: "ml-2"}}
                         >
-                          <Settings className="h-5 w-5" />
-                          <span>Settings</span>
+                          <Link href="/settings">
+                            <Settings className="h-5 w-5" />
+                            <span>Settings</span>
+                          </Link>
                         </SidebarMenuButton>
                      </SidebarMenuItem>
                    </SidebarMenu>
                 </SidebarFooter>
               </Sidebar>
-              <div className="flex flex-1 flex-col sm:gap-4 sm:py-4"> {/* Removed sm:pl-14 for full width content */}
+              <div className="flex flex-1 flex-col sm:gap-4 sm:py-4">
                 <AppHeader />
                 <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                   {children}

@@ -53,3 +53,21 @@ export interface ParsedReceiptData {
   amount: number;
   date: string; // YYYY-MM-DD
 }
+
+// For Settings forms
+export interface NewInvestorData {
+  name: string;
+  email?: string;
+}
+
+export interface NewPropertyData {
+  name: string;
+}
+
+export interface NewCardData {
+  cardName: string;
+  investorId: string;
+  property: string;
+  last4Digits?: string;
+  spendLimitMonthly?: number;
+}
