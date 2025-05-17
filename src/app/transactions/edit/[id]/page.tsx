@@ -78,7 +78,8 @@ export default function EditTransactionPage() {
       description: `Transaction for ${data.vendor} of $${data.amount} has been updated.`,
     });
     setIsLoading(false);
-    // Optionally redirect or refresh data
+    // Refresh data on the target page and then navigate
+    router.refresh();
     router.push("/transactions"); 
   };
 
@@ -125,3 +126,4 @@ export default function EditTransactionPage() {
     </Card>
   );
 }
+

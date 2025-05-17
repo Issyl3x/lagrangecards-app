@@ -41,7 +41,8 @@ export default function AddTransactionPage() {
       description: `Transaction for ${data.vendor} of $${data.amount} has been saved.`,
     });
     setIsLoading(false);
-    // Optionally redirect or clear form
+    // Refresh data on the target page and then navigate
+    router.refresh(); 
     router.push("/transactions"); 
   };
 
@@ -57,3 +58,4 @@ export default function AddTransactionPage() {
     </Card>
   );
 }
+
