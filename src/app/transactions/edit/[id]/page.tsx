@@ -24,7 +24,7 @@ export default function EditTransactionPage() {
 
   React.useEffect(() => {
     if (transactionId) {
-      const allTransactions = getMockTransactions();
+      const allTransactions = getMockTransactions(); // Ensures we get the latest at the time of page load
       const foundTransaction = allTransactions.find(tx => tx.id === transactionId);
       if (foundTransaction) {
         setTransactionForForm({ ...foundTransaction });
@@ -57,7 +57,7 @@ export default function EditTransactionPage() {
     }
     
     const updatedTransactionData: Transaction = {
-        ...currentTransaction, // Preserve existing fields like 'reconciled' and 'sourceType'
+        ...currentTransaction, 
         date: format(data.date, "yyyy-MM-dd"),
         vendor: data.vendor,
         description: data.description || "",
@@ -67,12 +67,13 @@ export default function EditTransactionPage() {
         project: data.project,
         cardId: data.cardId,
         receiptLink: data.receiptLink || "",
+        // sourceType will be preserved from currentTransaction
     };
     
     updateTransactionInMockData(updatedTransactionData);
     console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", updatedTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
     toast({
       title: "Transaction Updated",
@@ -80,7 +81,7 @@ export default function EditTransactionPage() {
     });
     setIsLoading(false);
     
-    router.refresh();
+    // router.refresh(); // Removed this line
     router.push("/transactions"); 
   };
 
