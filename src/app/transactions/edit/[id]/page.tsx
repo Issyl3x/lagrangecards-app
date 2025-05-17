@@ -10,6 +10,7 @@ import { mockTransactions } from "@/lib/mock-data"; // Using mock data
 import type { Transaction } from "@/lib/types";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Added Button import
 
 export default function EditTransactionPage() {
   const { toast } = useToast();
@@ -42,10 +43,32 @@ export default function EditTransactionPage() {
   // In a real app, this would send data to a backend API to update the transaction
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("Updated Transaction Data (ID: " + transactionId + "):", {
-        ...data,
-        date: format(data.date, "yyyy-MM-dd"), // Format date to string for storage
-    });
+
+    if (!transaction) {
+        toast({
+            title: "Error",
+            description: "Cannot update transaction, original data not found.",
+            variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+    }
+    
+    const updatedTransactionData: Transaction = {
+      ...transaction, // Spread existing transaction to keep original fields not in form (like id, sourceType if not edited)
+      ...data,          // Spread form data, this will overwrite fields like vendor, amount, reconciled
+      id: transactionId, // Ensure ID is maintained from the original transaction
+      date: format(data.date, "yyyy-MM-dd"), // Format date
+    };
+
+    const transactionIndex = mockTransactions.findIndex(tx => tx.id === transactionId);
+    if (transactionIndex !== -1) {
+      mockTransactions[transactionIndex] = updatedTransactionData;
+      console.log("Updated Transaction in mockData (ID: " + transactionId + "):", updatedTransactionData);
+    } else {
+       console.error("Transaction not found in mockTransactions for update");
+    }
+
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));

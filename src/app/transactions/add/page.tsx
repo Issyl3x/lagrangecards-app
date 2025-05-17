@@ -1,11 +1,16 @@
 
 "use client";
 
+import * as React from "react";
 import { TransactionForm, type TransactionFormValues } from "../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation"; // For redirecting after submit
 import { format } from "date-fns";
+import { mockTransactions } from "@/lib/mock-data"; // Import the array
+import type { Transaction } from "@/lib/types";   // Import the type
+import { v4 as uuidv4 } from 'uuid'; // For generating new IDs
+
 
 export default function AddTransactionPage() {
   const { toast } = useToast();
@@ -15,10 +20,18 @@ export default function AddTransactionPage() {
   // In a real app, this would send data to a backend API
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("New Transaction Data:", {
-        ...data,
-        date: format(data.date, "yyyy-MM-dd"), // Format date to string for storage
-    });
+
+    const newTransactionData: Transaction = {
+      id: uuidv4(), // Generate a new unique ID
+      ...data,
+      date: format(data.date, "yyyy-MM-dd"), // Format date to string for storage
+      // 'reconciled' status is already in 'data' from the form
+    };
+
+    // Add to the beginning of the mockTransactions array
+    mockTransactions.unshift(newTransactionData);
+    console.log("New Transaction Added to mockData:", newTransactionData);
+
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -29,7 +42,7 @@ export default function AddTransactionPage() {
     });
     setIsLoading(false);
     // Optionally redirect or clear form
-    // router.push("/transactions"); 
+    router.push("/transactions"); 
   };
 
   return (
@@ -44,6 +57,3 @@ export default function AddTransactionPage() {
     </Card>
   );
 }
-
-// Need React for useState
-import * as React from "react";
