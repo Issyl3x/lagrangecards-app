@@ -21,7 +21,7 @@ import {
   mockInvestors, 
   mockProjects, 
   mockCards, 
-  deleteTransactionFromMockData, // This now moves to deleted
+  deleteTransactionFromMockData,
   updateTransactionInMockData,
   getMockTransactions
 } from "@/lib/mock-data"; 
@@ -168,14 +168,15 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
 
-    deleteTransactionFromMockData(id); // This now moves the transaction to the deleted list
-    setTransactionsData(getMockTransactions()); // Refresh local state from source
+    deleteTransactionFromMockData(id); // This moves the transaction to the deleted list in mock-data
+    // Update local state directly for immediate UI feedback
+    setTransactionsData(prevTransactions => prevTransactions.filter(tx => tx.id !== id));
     
     toast({
       title: "Transaction Moved to Deleted",
       description: `Transaction with ID ${id} has been moved to deleted items.`,
     });
-    router.refresh(); // Refresh data on other related pages (like the new deleted items page)
+    router.refresh(); // Refresh data for other related pages (like the deleted items page and parent page)
   };
 
   const handleEdit = (id: string) => {
@@ -203,8 +204,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     const transactionToUpdate = transactionsData.find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
-      updateTransactionInMockData(updatedTransaction);
-      setTransactionsData(getMockTransactions()); 
+      updateTransactionInMockData(updatedTransaction); // Update in global mock data
+      
+      // Update local state for immediate UI feedback
+      setTransactionsData(prevTransactions => 
+        prevTransactions.map(tx => tx.id === id ? updatedTransaction : tx)
+      );
       
       toast({
         title: "Reconciliation Status Updated",
@@ -254,7 +259,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         <div className="flex gap-2 flex-wrap">
           <Select
             value={investorFilter}
-            onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Investor" />
@@ -266,7 +271,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
           </Select>
           <Select
             value={projectFilter}
-            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Project" />
@@ -278,7 +283,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
           </Select>
           <Select
             value={cardFilter}
-            onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
           >
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Filter by Card" />
@@ -436,3 +441,4 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
+
