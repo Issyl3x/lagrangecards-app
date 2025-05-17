@@ -139,40 +139,52 @@ let updatableMockTransactions: Transaction[] = [
 let updatableDeletedTransactions: Transaction[] = [];
 
 export const getMockTransactions = (): Transaction[] => {
+  // console.log("getMockTransactions called, returning:", updatableMockTransactions.length, "items");
   return [...updatableMockTransactions];
 };
 
 export const addTransactionToMockData = (newTx: Transaction): void => {
+  // console.log("addTransactionToMockData called with:", newTx);
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
 };
 
 export const updateTransactionInMockData = (updatedTx: Transaction): void => {
+  // console.log("updateTransactionInMockData called for ID:", updatedTx.id, "with data:", updatedTx);
   const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
   if (index !== -1) {
     const newTransactions = [...updatableMockTransactions];
     newTransactions[index] = { ...updatedTx };
     updatableMockTransactions = newTransactions;
+  } else {
+    // console.warn("updateTransactionInMockData: Transaction not found for ID:", updatedTx.id);
   }
 };
 
 export const deleteTransactionFromMockData = (txId: string): void => {
   const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
   if (transactionToDelete) {
+    console.log(`Moving transaction ${txId} to deleted items.`);
     updatableDeletedTransactions = [transactionToDelete, ...updatableDeletedTransactions];
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
+    console.log(`Active transactions: ${updatableMockTransactions.length}, Deleted transactions: ${updatableDeletedTransactions.length}`);
+  } else {
+    console.warn(`deleteTransactionFromMockData: Transaction not found for ID: ${txId} in active list.`);
   }
 };
 
 export const getDeletedTransactions = (): Transaction[] => {
+  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions.length, "items", updatableDeletedTransactions.map(t => t.id));
   return [...updatableDeletedTransactions];
 };
 
 export const restoreTransactionFromMockData = (txId: string): void => {
   const transactionToRestore = updatableDeletedTransactions.find(tx => tx.id === txId);
   if (transactionToRestore) {
-    // Add to active transactions (you might want to decide where to insert it, e.g., at the beginning or sort later)
+    console.log(`Restoring transaction ${txId} from deleted items.`);
     updatableMockTransactions = [transactionToRestore, ...updatableMockTransactions];
-    // Remove from deleted transactions
     updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
+    console.log(`Active transactions: ${updatableMockTransactions.length}, Deleted transactions: ${updatableDeletedTransactions.length}`);
+  } else {
+    console.warn(`restoreTransactionFromMockData: Transaction not found for ID: ${txId} in deleted list.`);
   }
 };
