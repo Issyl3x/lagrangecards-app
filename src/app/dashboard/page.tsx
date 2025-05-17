@@ -1,15 +1,32 @@
 
+"use client";
+
+import * as React from "react";
 import { TotalSpendCard } from "./components/TotalSpendCard";
 import { SpendByCategoryChart } from "./components/SpendByCategoryChart";
 import { MonthlySpendChart } from "./components/MonthlySpendChart";
 import { AlertsList } from "./components/AlertsList";
-import { getMockTransactions, mockCards } from "@/lib/mock-data"; // Using mock data for now
+import { getMockTransactions, mockCards as getMockCards } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
+import { usePathname, useSearchParams } from 'next/navigation';
+import type { Transaction, Card as UserCard } from "@/lib/types";
 
 export default function DashboardPage() {
-  // In a real app, this data would be fetched
-  const transactions = getMockTransactions();
-  const cards = mockCards;
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [cards, setCards] = React.useState<UserCard[]>([]);
+  
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const fetchDashboardData = React.useCallback(() => {
+    // console.log("DashboardPage: Fetching dashboard data");
+    setTransactions(getMockTransactions());
+    setCards(getMockCards); // Assuming mockCards is stable or also fetched if dynamic
+  }, []);
+
+  React.useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData, pathname, searchParams]); // Re-fetch on navigation
 
   return (
     <div className="flex flex-col gap-6">
