@@ -4,7 +4,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertTriangle, Info } from "lucide-react";
 import type { Card as UserCard, Transaction } from "@/lib/types";
-import { mockCards } from "@/lib/mock-data"; // Using mock cards for limits
 import { getMonth, getYear, parseISO } from "date-fns";
 import { useState, useEffect } from "react";
 
@@ -41,7 +40,7 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
           newAlerts.push({
             id: `alert-${card.id}`,
             type: 'warning',
-            title: `Over Budget: ${card.cardName}`,
+            title: `Over Budget: ${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`,
             message: `Spent $${cardSpendThisMonth.toFixed(2)} of $${card.spendLimitMonthly.toFixed(2)} limit.`,
           });
         }
@@ -95,3 +94,4 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
     </Card>
   );
 }
+

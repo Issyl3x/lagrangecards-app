@@ -11,11 +11,11 @@ export const mockInvestors: Investor[] = [
 export const mockProjects: string[] = ["Skyline Towers", "Oceanview Villas", "Mountain Retreat", "Downtown Lofts", "Suburban Homes"];
 
 export const mockCards: Card[] = [
-  { id: 'card1', cardName: 'Gualter - Skyline - Card 1', investorId: 'investor1', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 5000 },
-  { id: 'card2', cardName: 'Gualter - Oceanview - Card 1', investorId: 'investor1', project: 'Oceanview Villas', isPersonal: false, spendLimitMonthly: 3000 },
-  { id: 'card3', cardName: 'Alice - Skyline - Card 1', investorId: 'investor2', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 4000 },
-  { id: 'card4', cardName: 'Bob - Mountain - Card 1', investorId: 'investor3', project: 'Mountain Retreat', isPersonal: true, spendLimitMonthly: 1000 },
-  { id: 'card5', cardName: 'Alice - Personal - Card 1', investorId: 'investor2', project: 'N/A', isPersonal: true },
+  { id: 'card1', cardName: 'Gualter - Skyline - Card 1', investorId: 'investor1', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 5000, last4Digits: '1111' },
+  { id: 'card2', cardName: 'Gualter - Oceanview - Card 1', investorId: 'investor1', project: 'Oceanview Villas', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
+  { id: 'card3', cardName: 'Alice - Skyline - Card 1', investorId: 'investor2', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 4000, last4Digits: '3333' },
+  { id: 'card4', cardName: 'Bob - Mountain - Card 1', investorId: 'investor3', project: 'Mountain Retreat', isPersonal: true, spendLimitMonthly: 1000, last4Digits: '4444' },
+  { id: 'card5', cardName: 'Alice - Personal - Card 1', investorId: 'investor2', project: 'N/A', isPersonal: true, last4Digits: '5555' },
 ];
 
 export const mockCategories: (TransactionCategory | string)[] = [
@@ -121,3 +121,4 @@ export const mockTransactions: Transaction[] = [
     sourceType: 'manual' 
   },
 ];
+

@@ -1,10 +1,15 @@
 
-import type { Transaction } from './types';
+import type { Transaction, Card as UserCard } from './types'; // Added UserCard
 import { mockInvestors, mockCards } from './mock-data'; // To resolve names
 import { format, parseISO } from 'date-fns';
 
 const getInvestorName = (id: string) => mockInvestors.find(i => i.id === id)?.name || id;
-const getCardName = (id: string) => mockCards.find(c => c.id === id)?.cardName || id;
+
+const getCardName = (id: string) => {
+  const card = mockCards.find(c => c.id === id);
+  if (!card) return id; // Or 'N/A'
+  return `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`;
+};
 
 export function convertToCSV(transactions: Transaction[]): string {
   if (transactions.length === 0) {
@@ -59,3 +64,4 @@ export function downloadCSV(csvContent: string, filename: string): void {
     document.body.removeChild(link);
   }
 }
+

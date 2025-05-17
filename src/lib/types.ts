@@ -12,6 +12,7 @@ export interface Card {
   project: string;
   isPersonal: boolean;
   spendLimitMonthly?: number;
+  last4Digits?: string; // Added field for last 4 digits
 }
 
 export type TransactionCategory = 
@@ -51,3 +52,4 @@ export interface ParsedReceiptData {
   amount: number;
   date: string; // YYYY-MM-DD
 }
+

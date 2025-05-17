@@ -318,7 +318,9 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                   </FormControl>
                   <SelectContent>
                     {cards.map(card => (
-                      <SelectItem key={card.id} value={card.id}>{card.cardName}</SelectItem>
+                      <SelectItem key={card.id} value={card.id}>
+                        {card.cardName}{card.last4Digits ? ` (****${card.last4Digits})` : ''}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -350,3 +352,4 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     </Form>
   );
 }
+

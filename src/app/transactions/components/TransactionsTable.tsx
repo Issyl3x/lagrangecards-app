@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown } from "lucide-react";
-import type { Transaction } from "@/lib/types";
+import type { Transaction, Card as UserCard } from "@/lib/types"; // Added UserCard
 import { mockInvestors, mockProjects, mockCards } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -54,7 +54,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
 
   const investors = mockInvestors;
   const projects = mockProjects;
-  const cards = mockCards;
+  const cards: UserCard[] = mockCards; // Explicitly type cards
 
   React.useEffect(() => {
     let tempTransactions = [...initialTransactions];
@@ -65,7 +65,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     if (projectFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.project === projectFilter);
     }
-    if (cardFilter) { // Assuming card filter logic will be added similarly
+    if (cardFilter) { 
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
     }
     if (dateRangeFilter?.from) {
@@ -126,7 +126,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   };
   
   const getInvestorName = (id: string) => investors.find(i => i.id === id)?.name || 'N/A';
-  const getCardName = (id: string) => cards.find(c => c.id === id)?.cardName || 'N/A';
+  
+  const getCardName = (id: string) => {
+    const card = cards.find(c => c.id === id);
+    if (!card) return 'N/A';
+    return `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`;
+  };
 
   const renderSortIcon = (key: SortKey) => {
     if (sortKey === key) {
@@ -172,6 +177,22 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
             <SelectContent>
               <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Projects</SelectItem>
               {projects.map(proj => <SelectItem key={proj} value={proj}>{proj}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select // Adding Card Filter
+            value={cardFilter === "" ? ALL_ITEMS_FILTER_VALUE : cardFilter}
+            onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+          >
+            <SelectTrigger className="w-[220px]"> {/* Adjusted width for card names */}
+              <SelectValue placeholder="Filter by Card" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Cards</SelectItem>
+              {cards.map(card => (
+                <SelectItem key={card.id} value={card.id}>
+                  {card.cardName}{card.last4Digits ? ` (****${card.last4Digits})` : ''}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
            <Popover>
