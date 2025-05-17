@@ -21,7 +21,7 @@ import {
   mockInvestors, 
   mockProjects, 
   mockCards, 
-  deleteTransactionFromMockData,
+  deleteTransactionFromMockData, // This now moves to deleted
   updateTransactionInMockData,
   getMockTransactions
 } from "@/lib/mock-data"; 
@@ -75,6 +75,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
 
   React.useEffect(() => {
     setTransactionsData(initialTransactions);
+    setFilteredTransactions(initialTransactions); // Ensure filteredTransactions also updates
   }, [initialTransactions]);
 
   React.useEffect(() => {
@@ -167,13 +168,14 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
 
-    deleteTransactionFromMockData(id);
+    deleteTransactionFromMockData(id); // This now moves the transaction to the deleted list
     setTransactionsData(getMockTransactions()); // Refresh local state from source
     
     toast({
-      title: "Transaction Deleted",
-      description: `Transaction with ID ${id} has been removed.`,
+      title: "Transaction Moved to Deleted",
+      description: `Transaction with ID ${id} has been moved to deleted items.`,
     });
+    router.refresh(); // Refresh data on other related pages (like the new deleted items page)
   };
 
   const handleEdit = (id: string) => {
@@ -202,7 +204,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
       updateTransactionInMockData(updatedTransaction);
-      setTransactionsData(getMockTransactions()); // Refresh local state from source
+      setTransactionsData(getMockTransactions()); 
       
       toast({
         title: "Reconciliation Status Updated",
@@ -252,7 +254,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         <div className="flex gap-2 flex-wrap">
           <Select
             value={investorFilter}
-            onValueChange={(value) => setInvestorFilter(value)}
+            onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Investor" />
@@ -264,7 +266,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
           </Select>
           <Select
             value={projectFilter}
-            onValueChange={(value) => setProjectFilter(value)}
+            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Project" />
@@ -276,7 +278,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
           </Select>
           <Select
             value={cardFilter}
-            onValueChange={(value) => setCardFilter(value)}
+            onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Filter by Card" />
@@ -382,7 +384,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                           "cursor-pointer",
                           tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent"
                         )}
-                        onClick={() => handleToggleReconciled(tx.id)}
+                        onClick={() => mockCurrentUser.isAdmin && handleToggleReconciled(tx.id)}
                         title={mockCurrentUser.isAdmin ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
                       >
                         {tx.reconciled ? "Yes" : "No"}

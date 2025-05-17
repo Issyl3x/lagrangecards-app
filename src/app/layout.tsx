@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Settings, Building2 } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Settings, Building2, Trash2 } from 'lucide-react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { EstateFlowLogo } from '@/components/icons/EstateFlowLogo';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,7 @@ const navItems = [
   { href: '/transactions', label: 'View Transactions', icon: List },
   { href: '/transactions/ocr', label: 'Upload Receipt', icon: ScanLine },
   { href: '/export', label: 'Export Data', icon: FileOutput },
+  { href: '/transactions/deleted', label: 'Deleted Items', icon: Trash2 },
 ];
 
 export default function RootLayout({

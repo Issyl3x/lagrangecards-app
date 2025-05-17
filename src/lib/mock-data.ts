@@ -136,8 +136,10 @@ let updatableMockTransactions: Transaction[] = [
   },
 ];
 
+let updatableDeletedTransactions: Transaction[] = [];
+
 export const getMockTransactions = (): Transaction[] => {
-  return [...updatableMockTransactions]; // Return a copy to encourage immutability at the consumer level
+  return [...updatableMockTransactions];
 };
 
 export const addTransactionToMockData = (newTx: Transaction): void => {
@@ -145,11 +147,32 @@ export const addTransactionToMockData = (newTx: Transaction): void => {
 };
 
 export const updateTransactionInMockData = (updatedTx: Transaction): void => {
-  updatableMockTransactions = updatableMockTransactions.map(tx =>
-    tx.id === updatedTx.id ? { ...updatedTx } : tx
-  );
+  const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
+  if (index !== -1) {
+    const newTransactions = [...updatableMockTransactions];
+    newTransactions[index] = { ...updatedTx };
+    updatableMockTransactions = newTransactions;
+  }
 };
 
 export const deleteTransactionFromMockData = (txId: string): void => {
-  updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
+  const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
+  if (transactionToDelete) {
+    updatableDeletedTransactions = [transactionToDelete, ...updatableDeletedTransactions];
+    updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
+  }
+};
+
+export const getDeletedTransactions = (): Transaction[] => {
+  return [...updatableDeletedTransactions];
+};
+
+export const restoreTransactionFromMockData = (txId: string): void => {
+  const transactionToRestore = updatableDeletedTransactions.find(tx => tx.id === txId);
+  if (transactionToRestore) {
+    // Add to active transactions (you might want to decide where to insert it, e.g., at the beginning or sort later)
+    updatableMockTransactions = [transactionToRestore, ...updatableMockTransactions];
+    // Remove from deleted transactions
+    updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
+  }
 };
