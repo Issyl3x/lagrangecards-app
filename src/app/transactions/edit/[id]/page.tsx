@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { mockTransactions } from "@/lib/mock-data"; // Using mock data
 import type { Transaction } from "@/lib/types";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button"; 
 
@@ -18,68 +18,70 @@ export default function EditTransactionPage() {
   const params = useParams();
   const transactionId = params.id as string;
 
-  const [transaction, setTransaction] = React.useState<Transaction | null>(null);
+  // Store a copy of the transaction to be edited.
+  // This copy is used to pre-fill the form.
+  const [transactionForForm, setTransactionForForm] = React.useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(true);
 
   React.useEffect(() => {
     if (transactionId) {
-      // Simulate fetching transaction data
       const foundTransaction = mockTransactions.find(tx => tx.id === transactionId);
       if (foundTransaction) {
-        setTransaction(foundTransaction);
+        // Set a *copy* for the form's initial data to avoid direct mutation of mockData via form state
+        setTransactionForForm({ ...foundTransaction });
       } else {
         toast({
           title: "Error",
           description: "Transaction not found.",
           variant: "destructive",
         });
-        router.push("/transactions"); // Redirect if not found
+        router.push("/transactions");
       }
       setIsFetching(false);
     }
   }, [transactionId, router, toast]);
 
-  // In a real app, this would send data to a backend API to update the transaction
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
+    console.log("Receipt link submitted from form:", data.receiptLink); // For debugging
 
-    if (!transaction) {
+    const transactionToUpdate = mockTransactions.find(tx => tx.id === transactionId);
+
+    if (!transactionToUpdate) {
         toast({
             title: "Error",
-            description: "Cannot update transaction, original data not found.",
+            description: "Cannot update transaction, original data not found in mock data.",
             variant: "destructive",
         });
         setIsLoading(false);
         return;
     }
     
-    const updatedTransactionData: Transaction = {
-      ...transaction, // Spread existing transaction to keep original fields not in form (like id, sourceType, reconciled status)
-      ...data,          // Spread form data, this will overwrite fields like vendor, amount etc.
-      id: transactionId, // Ensure ID is maintained from the original transaction
-      date: format(data.date, "yyyy-MM-dd"), // Format date
-      // reconciled status is NOT updated by this form anymore. It's handled directly in the table.
-    };
-
-    const transactionIndex = mockTransactions.findIndex(tx => tx.id === transactionId);
-    if (transactionIndex !== -1) {
-      mockTransactions[transactionIndex] = updatedTransactionData;
-      console.log("Updated Transaction in mockData (ID: " + transactionId + "):", updatedTransactionData);
-    } else {
-       console.error("Transaction not found in mockTransactions for update");
-    }
-
+    // Directly update the properties of the transaction object *within* the mockTransactions array
+    transactionToUpdate.date = format(data.date, "yyyy-MM-dd");
+    transactionToUpdate.vendor = data.vendor;
+    transactionToUpdate.description = data.description || ""; // Ensure empty string if optional and not provided
+    transactionToUpdate.amount = data.amount;
+    transactionToUpdate.category = data.category;
+    transactionToUpdate.investorId = data.investorId;
+    transactionToUpdate.project = data.project;
+    transactionToUpdate.cardId = data.cardId;
+    transactionToUpdate.receiptLink = data.receiptLink || ""; // Ensure empty string if optional and not provided
+    // sourceType is not changed by this form
+    // reconciled status is NOT updated by this form anymore. It's handled directly in the table.
+    
+    console.log("Updated transaction directly in mockData (ID: " + transactionId + "):", transactionToUpdate);
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     toast({
       title: "Transaction Updated",
-      description: `Transaction for ${data.vendor} of $${data.amount} has been updated.`,
+      description: `Transaction for ${transactionToUpdate.vendor} of $${transactionToUpdate.amount} has been updated.`,
     });
     setIsLoading(false);
-    // Refresh data on the target page and then navigate
+    
     router.refresh();
     router.push("/transactions"); 
   };
@@ -93,9 +95,7 @@ export default function EditTransactionPage() {
     );
   }
 
-  if (!transaction) {
-    // This case should ideally be handled by the redirect in useEffect,
-    // but it's good practice to have a fallback.
+  if (!transactionForForm) {
     return (
       <Card>
         <CardHeader>
@@ -111,12 +111,6 @@ export default function EditTransactionPage() {
     );
   }
 
-  // We pass the original 'reconciled' status to the form's initialData
-  // so it's correctly displayed if we decide to show it (read-only) in the form later.
-  // However, the form itself won't submit or change this value anymore.
-  const formInitialData = { ...transaction }; 
-  // delete formInitialData.reconciled; // No longer part of form values.
-
   return (
     <Card>
       <CardHeader>
@@ -125,7 +119,7 @@ export default function EditTransactionPage() {
       </CardHeader>
       <CardContent>
         <TransactionForm 
-          initialData={formInitialData} 
+          initialData={transactionForForm} 
           onSubmit={handleSubmit} 
           isLoading={isLoading} 
         />
@@ -133,4 +127,3 @@ export default function EditTransactionPage() {
     </Card>
   );
 }
-
