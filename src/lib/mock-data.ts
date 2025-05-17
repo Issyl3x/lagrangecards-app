@@ -30,7 +30,7 @@ export const mockCards: Card[] = [
 export const mockCategories: (TransactionCategory | string)[] = [
   "Repairs", "Utilities", "Supplies", "Mortgage", "Insurance", "HOA Fees",
   "Property Management", "Travel", "Marketing", "Legal & Professional Fees",
-  "Furnishings", "Landscaping", "Other"
+  "Furnishings", "Landscaping", "Appliances", "Other"
 ];
 
 
@@ -153,7 +153,7 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
   const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
   if (index !== -1) {
     const newTransactions = [...updatableMockTransactions];
-    newTransactions[index] = { ...updatedTx };
+    newTransactions[index] = { ...updatedTx }; // Ensure this is a new object for the updated item
     updatableMockTransactions = newTransactions;
   } else {
     // console.warn("updateTransactionInMockData: Transaction not found for ID:", updatedTx.id);

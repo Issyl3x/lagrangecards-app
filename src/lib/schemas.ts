@@ -1,8 +1,16 @@
 
 import { z } from "zod";
-import { mockCategories } from "./mock-data"; // To ensure category is one of the valid ones
+// Import the updated mockCategories to ensure the enum is derived correctly
+import { mockCategories as allCategories } from "./mock-data"; 
 
-const categoryEnum = z.enum(mockCategories as [string, ...string[]]);
+// Filter out any non-string types just in case, though mockCategories should be strings
+const stringCategories = allCategories.filter(c => typeof c === 'string') as string[];
+
+// Ensure there's at least one category for the enum, or provide a fallback
+const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other"];
+
+
+const categoryEnum = z.enum(categoriesForEnum);
 
 export const transactionSchema = z.object({
   date: z.date({
@@ -17,9 +25,7 @@ export const transactionSchema = z.object({
   project: z.string().min(1, { message: "Project is required." }),
   cardId: z.string().min(1, { message: "Card is required." }),
   receiptLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal("")),
-  // reconciled: z.boolean().default(false), // Reconciled is no longer managed by this form
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
-
