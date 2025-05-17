@@ -23,7 +23,7 @@ import {
   mockCards, 
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  getMockTransactions
+  // getMockTransactions // No longer needed here for direct fetching after prop change
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 interface TransactionsTableProps {
   transactions: Transaction[]; 
+  onTransactionUpdate: () => void; // Callback to notify parent of data change
 }
 
 type SortKey = keyof Transaction | "";
@@ -45,7 +46,7 @@ const mockCurrentUser = {
   isAdmin: true, 
 };
 
-export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
+export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
   const [transactionsData, setTransactionsData] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
   const router = useRouter();
@@ -74,12 +75,14 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
+    // console.log("TransactionsTable: initialTransactions prop changed, updating local state.");
     setTransactionsData(initialTransactions);
-    setFilteredTransactions(initialTransactions); // Ensure filteredTransactions also updates
+    // No need to setFilteredTransactions here, the next effect will handle it.
   }, [initialTransactions]);
 
   React.useEffect(() => {
-    let tempTransactions = [...transactionsData];
+    // console.log("TransactionsTable: Filtering/sorting effect triggered. transactionsData length:", transactionsData.length);
+    let tempTransactions = [...transactionsData]; // Use the local transactionsData state
 
     if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
@@ -131,6 +134,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         return sortOrder === "asc" ? comparison : -comparison;
       });
     }
+    // console.log("TransactionsTable: Setting filteredTransactions. Count:", tempTransactions.length);
     setFilteredTransactions(tempTransactions);
   }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]);
 
@@ -168,15 +172,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
 
-    deleteTransactionFromMockData(id); // This moves the transaction to the deleted list in mock-data
-    // Update local state directly for immediate UI feedback
-    setTransactionsData(prevTransactions => prevTransactions.filter(tx => tx.id !== id));
-    
+    deleteTransactionFromMockData(id); 
     toast({
       title: "Transaction Moved to Deleted",
       description: `Transaction with ID ${id} has been moved to deleted items.`,
     });
-    router.refresh(); // Refresh data for other related pages (like the deleted items page and parent page)
+    onTransactionUpdate(); // Notify parent to refresh its state
   };
 
   const handleEdit = (id: string) => {
@@ -204,17 +205,13 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     const transactionToUpdate = transactionsData.find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
-      updateTransactionInMockData(updatedTransaction); // Update in global mock data
-      
-      // Update local state for immediate UI feedback
-      setTransactionsData(prevTransactions => 
-        prevTransactions.map(tx => tx.id === id ? updatedTransaction : tx)
-      );
+      updateTransactionInMockData(updatedTransaction); 
       
       toast({
         title: "Reconciliation Status Updated",
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
       });
+      onTransactionUpdate(); // Notify parent to refresh its state
     }
   };
 
@@ -441,4 +438,3 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
-
