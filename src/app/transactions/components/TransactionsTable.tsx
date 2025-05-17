@@ -32,6 +32,12 @@ interface TransactionsTableProps {
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
+// Simulate a logged-in user. In a real app, this would come from an auth context.
+const mockCurrentUser = {
+  id: 'investor1', // Example: 'investor1' (Gualter) is the admin
+  isAdmin: true,  // Set to true for admin, false for regular user
+};
+
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
@@ -87,7 +93,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         tempTransactions = tempTransactions.filter(tx => {
             const txDate = parseISO(tx.date);
             const toDate = new Date(dateRangeFilter.to as Date);
-            toDate.setDate(toDate.getDate() + 1);
+            toDate.setDate(toDate.getDate() + 1); // Include the 'to' date
             return txDate < toDate;
         });
     }
@@ -146,6 +152,14 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   };
 
   const handleDelete = (id: string) => {
+    if (!mockCurrentUser.isAdmin) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to delete transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
     const updatedTransactions = transactions.filter(tx => tx.id !== id);
     setTransactions(updatedTransactions); // Update the local state
     // In a real app, you would also call an API to delete the transaction from the backend
@@ -157,6 +171,14 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   };
 
   const handleEdit = (id: string) => {
+    if (!mockCurrentUser.isAdmin) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to edit transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
     router.push(`/transactions/edit/${id}`);
   };
 
@@ -348,8 +370,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                   <TableCell>
                     <div className="flex space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleCopySnippet(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} title="Delete Transaction" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
+                        {mockCurrentUser.isAdmin && (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} title="Delete Transaction" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
+                          </>
+                        )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -367,6 +393,3 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
-
-
-    
