@@ -6,6 +6,7 @@ export const mockInvestors: Investor[] = [
   { id: 'investor1', name: 'Gualter', email: 'gualter@example.com' },
   { id: 'investor2', name: 'Alice Smith', email: 'alice@example.com' },
   { id: 'investor3', name: 'Bob Johnson', email: 'bob@example.com' },
+  { id: 'investor4', name: 'Greg', email: 'greg@example.com' },
 ];
 
 export const mockProjects: string[] = ["Skyline Towers", "Oceanview Villas", "Mountain Retreat", "Downtown Lofts", "Suburban Homes"];
