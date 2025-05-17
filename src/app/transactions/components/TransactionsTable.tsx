@@ -19,10 +19,11 @@ import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, Clipb
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { 
   mockInvestors, 
-  mockProperties, // Renamed from mockProjects
+  mockProperties, 
   mockCards, 
   deleteTransactionFromMockData,
   updateTransactionInMockData,
+  getMockTransactions, // Import this
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -52,7 +53,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const { toast } = useToast();
 
   const [investorFilter, setInvestorFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
-  const [propertyFilter, setPropertyFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE); // Renamed from projectFilter
+  const [propertyFilter, setPropertyFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
   const [cardFilter, setCardFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
   const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -62,7 +63,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
   const [columnVisibility, setColumnVisibility] = React.useState({
     investor: true,
-    property: true, // Renamed from project
+    property: true,
     cardUsed: true,
     reconciled: true,
     receiptLink: true,
@@ -70,7 +71,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   });
 
   const investors = mockInvestors;
-  const properties = mockProperties; // Renamed from projects
+  const properties = mockProperties;
   const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
@@ -83,8 +84,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
     }
-    if (propertyFilter && propertyFilter !== ALL_ITEMS_FILTER_VALUE) { // Renamed from projectFilter
-      tempTransactions = tempTransactions.filter(tx => tx.property === propertyFilter); // Renamed from project
+    if (propertyFilter && propertyFilter !== ALL_ITEMS_FILTER_VALUE) {
+      tempTransactions = tempTransactions.filter(tx => tx.property === propertyFilter);
     }
     if (cardFilter && cardFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
@@ -131,7 +132,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
     }
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, propertyFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]); // Renamed projectFilter
+  }, [investorFilter, propertyFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -197,7 +198,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       return;
     }
 
-    const transactionToUpdate = transactionsData.find(tx => tx.id === id);
+    const transactionToUpdate = getMockTransactions().find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
       updateTransactionInMockData(updatedTransaction); 
@@ -221,7 +222,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       return;
     }
 
-    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`; // Renamed Project to Property
+    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`;
 
     try {
       await navigator.clipboard.writeText(snippet);
@@ -262,8 +263,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
             </SelectContent>
           </Select>
           <Select
-            value={propertyFilter} // Renamed from projectFilter
-            onValueChange={(value) => setPropertyFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)} // Renamed from projectFilter
+            value={propertyFilter}
+            onValueChange={(value) => setPropertyFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Property" /> 
@@ -346,24 +347,24 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow>{/* Start Table Header Row */}
               <TableHead onClick={() => handleSort("date")}>Date {renderSortIcon("date")}</TableHead>
               <TableHead onClick={() => handleSort("vendor")}>Vendor {renderSortIcon("vendor")}</TableHead>
               <TableHead onClick={() => handleSort("amount")} className="text-right">Amount {renderSortIcon("amount")}</TableHead>
               <TableHead onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</TableHead>
               {columnVisibility.investor && <TableHead onClick={() => handleSort("investorId")}>Investor {renderSortIcon("investorId")}</TableHead>}
-              {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>} {/* Renamed from project */}
+              {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>}
               {columnVisibility.cardUsed && <TableHead onClick={() => handleSort("cardId")}>Card Used {renderSortIcon("cardId")}</TableHead>}
               {columnVisibility.reconciled && <TableHead onClick={() => handleSort("reconciled")}>Reconciled {renderSortIcon("reconciled")}</TableHead>}
               {columnVisibility.receiptLink && <TableHead>Receipt</TableHead>}
               {columnVisibility.sourceType && <TableHead onClick={() => handleSort("sourceType")}>Source {renderSortIcon("sourceType")}</TableHead>}
               <TableHead>Actions</TableHead>
-            </TableRow>
+            </TableRow>{/* End Table Header Row */}
           </TableHeader>
           <TableBody>
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((tx) => (
-                <TableRow key={tx.id}>
+                <TableRow key={tx.id}>{/* Start Table Body Row */}
                   <TableCell>{format(parseISO(tx.date), "MMM dd, yyyy")}</TableCell>
                   <TableCell className="font-medium">{tx.vendor}</TableCell>
                   <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
@@ -371,7 +372,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                     <Badge variant="outline">{tx.category}</Badge>
                   </TableCell>
                   {columnVisibility.investor && <TableCell>{getInvestorName(tx.investorId)}</TableCell>}
-                  {columnVisibility.property && <TableCell>{tx.property}</TableCell>} {/* Renamed from project */}
+                  {columnVisibility.property && <TableCell>{tx.property}</TableCell>}
                   {columnVisibility.cardUsed && <TableCell>{getCardName(tx.cardId)}</TableCell>}
                   {columnVisibility.reconciled && (
                     <TableCell>
@@ -418,7 +419,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                         )}
                     </div>
                   </TableCell>
-                </TableRow>
+                </TableRow> 
               ))
             ) : (
               <TableRow>
