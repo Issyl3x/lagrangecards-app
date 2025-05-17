@@ -34,7 +34,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-// import { Switch } from "@/components/ui/switch"; // Removed Switch import for reconciled
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
 import { mockInvestors, mockProjects, mockCards, mockCategories } from "@/lib/mock-data";
@@ -53,17 +52,18 @@ interface TransactionFormProps {
 export function TransactionForm({ initialData, onSubmit, isLoading }: TransactionFormProps) {
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
+    // Default values are set here and then potentially overridden by the useEffect below if initialData is present
     defaultValues: {
-      date: initialData?.date ? parseISO(initialData.date) : new Date(),
+      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || 0,
       category: initialData?.category || "",
       cardId: initialData?.cardId || "",
       investorId: initialData?.investorId || "",
+      investorName: "", // This will be populated by useEffect
       project: initialData?.project || "",
       receiptLink: initialData?.receiptLink || "",
-      // reconciled: initialData?.reconciled || false, // Reconciled is no longer managed by this form
       sourceType: initialData?.sourceType || 'manual',
     },
   });
@@ -73,32 +73,57 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const [cards, setCards] = React.useState<UserCard[]>(mockCards);
   const [categories] = React.useState<(string)[]>(mockCategories);
 
+  // Effect to reset form when initialData prop changes
+  React.useEffect(() => {
+    if (initialData) {
+      const investorName = initialData.investorId 
+        ? (investors.find(inv => inv.id === initialData.investorId)?.name || "") 
+        : "";
+      
+      form.reset({
+        date: initialData.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
+        vendor: initialData.vendor || "",
+        description: initialData.description || "",
+        amount: initialData.amount || 0,
+        category: initialData.category || "",
+        cardId: initialData.cardId || "",
+        investorId: initialData.investorId || "",
+        investorName: investorName,
+        project: initialData.project || "",
+        receiptLink: initialData.receiptLink || "",
+        sourceType: initialData.sourceType || 'manual',
+      });
+
+      if (initialData.investorId) {
+        setCards(mockCards.filter(card => card.investorId === initialData.investorId));
+      } else {
+        setCards(mockCards);
+      }
+    }
+  }, [initialData, form, investors]); // form.reset is stable, so effectively [initialData, investors]
+
   const selectedInvestorId = form.watch("investorId");
 
+  // Effect to update investorName and filter cards when investorId form field changes
   React.useEffect(() => {
     if (selectedInvestorId) {
       const investor = investors.find(inv => inv.id === selectedInvestorId);
       if (investor) form.setValue("investorName", investor.name);
-      setCards(mockCards.filter(card => card.investorId === selectedInvestorId));
-      // form.setValue("cardId", ""); // Reset card if investor changes
+      
+      // Filter cards and check if current cardId is valid for the new investor
+      const filteredCards = mockCards.filter(card => card.investorId === selectedInvestorId);
+      setCards(filteredCards);
+      
+      const currentCardId = form.getValues("cardId");
+      if (currentCardId && !filteredCards.find(card => card.id === currentCardId)) {
+        form.setValue("cardId", ""); // Reset cardId if it's no longer valid
+      }
+
     } else {
-      setCards(mockCards); // Show all cards if no investor selected, or handle as needed
       form.setValue("investorName", "");
+      setCards(mockCards); // Show all cards if no investor selected
     }
   }, [selectedInvestorId, form, investors]);
-
-  React.useEffect(() => {
-    if (initialData?.date) {
-      const parsedDate = parseISO(initialData.date);
-      if (isValid(parsedDate)) {
-        form.setValue("date", parsedDate);
-      }
-    }
-    if (initialData?.vendor) form.setValue("vendor", initialData.vendor);
-    if (initialData?.amount) form.setValue("amount", initialData.amount);
-    // if (typeof initialData?.reconciled === 'boolean') form.setValue("reconciled", initialData.reconciled); // No longer setting reconciled here
-    // For other fields, defaultValues in useForm should handle them.
-  }, [initialData, form]);
 
 
   function handleSubmit(data: TransactionFormValues) {
@@ -203,7 +228,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
@@ -289,7 +314,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Project</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedInvestorId}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a project" />
@@ -312,7 +337,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Card Used</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedInvestorId}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a card" />
