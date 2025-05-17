@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
-import { mockInvestors, mockProperties, mockCards, mockCategories } from "@/lib/mock-data"; // mockProperties
+import { mockInvestors, mockProperties, mockCards, mockCategories } from "@/lib/mock-data";
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
@@ -53,29 +53,30 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
+      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : undefined, // Default to undefined if no initialData.date
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || 0,
       category: initialData?.category || "",
       cardId: initialData?.cardId || "",
       investorId: initialData?.investorId || "",
-      investorName: "", 
-      property: initialData?.property || "", // Renamed from project
+      investorName: "",
+      property: initialData?.property || "",
       receiptLink: initialData?.receiptLink || "",
       sourceType: initialData?.sourceType || 'manual',
     },
   });
 
   const [investors] = React.useState<Investor[]>(mockInvestors);
-  const [properties] = React.useState<string[]>(mockProperties); // Renamed from projects
+  const [properties] = React.useState<string[]>(mockProperties);
   const [cards, setCards] = React.useState<UserCard[]>(mockCards);
   const [categories] = React.useState<(string)[]>(mockCategories);
 
+  // Effect to handle pre-filling form from initialData (for edit/OCR)
   React.useEffect(() => {
     if (initialData) {
-      const investorName = initialData.investorId 
-        ? (investors.find(inv => inv.id === initialData.investorId)?.name || "") 
+      const investorName = initialData.investorId
+        ? (investors.find(inv => inv.id === initialData.investorId)?.name || "")
         : "";
       
       form.reset({
@@ -87,7 +88,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         cardId: initialData.cardId || "",
         investorId: initialData.investorId || "",
         investorName: investorName,
-        property: initialData.property || "", // Renamed from project
+        property: initialData.property || "",
         receiptLink: initialData.receiptLink || "",
         sourceType: initialData.sourceType || 'manual',
       });
@@ -98,7 +99,15 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         setCards(mockCards);
       }
     }
-  }, [initialData, form, investors]); 
+  }, [initialData, form, investors]);
+
+  // Effect to set default date to new Date() on the client-side for "Add" scenario (no initialData)
+  React.useEffect(() => {
+    // Only set if there's no initialData and the form's date field is currently undefined
+    if (!initialData && form.getValues('date') === undefined) {
+      form.setValue('date', new Date());
+    }
+  }, [initialData, form]);
 
   const selectedInvestorId = form.watch("investorId");
 
@@ -112,12 +121,12 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       
       const currentCardId = form.getValues("cardId");
       if (currentCardId && !filteredCards.find(card => card.id === currentCardId)) {
-        form.setValue("cardId", ""); 
+        form.setValue("cardId", "");
       }
 
     } else {
       form.setValue("investorName", "");
-      setCards(mockCards); 
+      setCards(mockCards);
     }
   }, [selectedInvestorId, form, investors]);
 
@@ -209,7 +218,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
               <FormItem>
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field} 
+                  <Input type="number" step="0.01" placeholder="0.00" {...field}
                     onChange={event => field.onChange(+event.target.value)}
                   />
                 </FormControl>
@@ -306,10 +315,10 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           
           <FormField
             control={form.control}
-            name="property" // Renamed from project
+            name="property"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Property</FormLabel> 
+                <FormLabel>Property</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
                   <FormControl>
                     <SelectTrigger>
@@ -317,7 +326,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {properties.map(property => ( // Renamed from projects
+                    {properties.map(property => (
                       <SelectItem key={property} value={property}>{property}</SelectItem>
                     ))}
                   </SelectContent>
@@ -375,3 +384,5 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     </Form>
   );
 }
+
+    
