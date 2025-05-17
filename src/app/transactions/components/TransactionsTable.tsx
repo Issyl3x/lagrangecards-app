@@ -35,7 +35,7 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 // Simulate a logged-in user. In a real app, this would come from an auth context.
 const mockCurrentUser = {
   id: 'investor1', // Example: 'investor1' (Gualter) is the admin
-  isAdmin: false,  // Set to false to demonstrate non-admin view
+  isAdmin: true,  // Set to true to demonstrate admin view
 };
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
@@ -117,7 +117,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         else if (typeof valA === 'number' && typeof valB === 'number') {
           comparison = valA - valB;
         } else if (sortKey === 'date') { // Explicitly handle date sorting
-          comparison = parseISO(String(valA)).getTime() - parseISO(String(valB)).getTime();
+          comparison = parseISO(String(valA)).getTime() - parseISO(String(Bval)).getTime();
         } else {
           comparison = String(valA).localeCompare(String(valB));
         }
