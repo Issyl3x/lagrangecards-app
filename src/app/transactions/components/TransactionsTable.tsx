@@ -16,17 +16,17 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react";
-import type { Transaction, Card as UserCard } from "@/lib/types"; // Added UserCard
-import { mockInvestors, mockProjects, mockCards } from "@/lib/mock-data";
+import type { Transaction, Card as UserCard } from "@/lib/types";
+import { mockInvestors, mockProjects, mockCards, mockTransactions as globalMockTransactions } from "@/lib/mock-data"; // Renamed import
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import type { DateRange } from "react-day-picker";
-import { useRouter } from "next/navigation"; // Added for navigation
-import { useToast } from "@/hooks/use-toast"; // Added for toast notifications
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface TransactionsTableProps {
-  transactions: Transaction[];
+  transactions: Transaction[]; // This prop will be named initialTransactions in the component
 }
 
 type SortKey = keyof Transaction | "";
@@ -34,15 +34,15 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 // Simulate a logged-in user. In a real app, this would come from an auth context.
 const mockCurrentUser = {
-  id: 'investor1', // Example: 'investor1' (Gualter) is the admin
-  isAdmin: true,  // Set to true to demonstrate admin view
+  id: 'investor1',
+  isAdmin: true,
 };
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
-  const router = useRouter(); // Initialize router
-  const { toast } = useToast(); // Initialize toast
+  const router = useRouter();
+  const { toast } = useToast();
 
   const [investorFilter, setInvestorFilter] = React.useState<string>("");
   const [projectFilter, setProjectFilter] = React.useState<string>("");
@@ -67,12 +67,11 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
-    // Update initialTransactions in state if the prop changes
     setTransactions(initialTransactions);
   }, [initialTransactions]);
 
   React.useEffect(() => {
-    let tempTransactions = [...transactions]; // Use the local 'transactions' state for filtering
+    let tempTransactions = [...transactions];
 
     if (investorFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
@@ -93,7 +92,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         tempTransactions = tempTransactions.filter(tx => {
             const txDate = parseISO(tx.date);
             const toDate = new Date(dateRangeFilter.to as Date);
-            toDate.setDate(toDate.getDate() + 1); // Include the 'to' date
+            toDate.setDate(toDate.getDate() + 1);
             return txDate < toDate;
         });
     }
@@ -108,16 +107,16 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
 
     if (sortKey) {
       tempTransactions.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
+        const valA = a[sortKey as keyof Transaction];
+        const valB = b[sortKey as keyof Transaction];
 
         let comparison = 0;
         if (valA === undefined || valA === null) comparison = -1;
         else if (valB === undefined || valB === null) comparison = 1;
         else if (typeof valA === 'number' && typeof valB === 'number') {
           comparison = valA - valB;
-        } else if (sortKey === 'date') { // Explicitly handle date sorting
-          comparison = parseISO(String(valA)).getTime() - parseISO(String(Bval)).getTime();
+        } else if (sortKey === 'date') {
+          comparison = parseISO(String(valA)).getTime() - parseISO(String(valB)).getTime();
         } else {
           comparison = String(valA).localeCompare(String(valB));
         }
@@ -125,7 +124,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       });
     }
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactions]); // Depend on 'transactions' state
+  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactions]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -160,13 +159,19 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       });
       return;
     }
-    const updatedTransactions = transactions.filter(tx => tx.id !== id);
-    setTransactions(updatedTransactions); // Update the local state
-    // In a real app, you would also call an API to delete the transaction from the backend
+
+    // Modify the globalMockTransactions array
+    const indexInGlobalMock = globalMockTransactions.findIndex(tx => tx.id === id);
+    if (indexInGlobalMock !== -1) {
+      globalMockTransactions.splice(indexInGlobalMock, 1);
+    }
+
+    // Update local state to reflect the change immediately
+    setTransactions(prevTransactions => prevTransactions.filter(tx => tx.id !== id));
+    
     toast({
       title: "Transaction Deleted",
       description: `Transaction with ID ${id} has been removed.`,
-      variant: "default",
     });
   };
 
@@ -393,4 +398,3 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
-
