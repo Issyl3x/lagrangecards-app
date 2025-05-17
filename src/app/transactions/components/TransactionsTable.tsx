@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown } from "lucide-react";
+import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react";
 import type { Transaction, Card as UserCard } from "@/lib/types"; // Added UserCard
 import { mockInvestors, mockProjects, mockCards } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -95,7 +95,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         const lowerSearchTerm = searchTerm.toLowerCase();
         tempTransactions = tempTransactions.filter(tx =>
             tx.vendor.toLowerCase().includes(lowerSearchTerm) ||
-            tx.description.toLowerCase().includes(lowerSearchTerm) ||
+            (tx.description && tx.description.toLowerCase().includes(lowerSearchTerm)) ||
             tx.category.toLowerCase().includes(lowerSearchTerm)
         );
     }
@@ -158,6 +158,35 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
 
   const handleEdit = (id: string) => {
     router.push(`/transactions/edit/${id}`);
+  };
+
+  const handleCopySnippet = async (id: string) => {
+    const transaction = transactions.find(tx => tx.id === id);
+    if (!transaction) {
+      toast({
+        title: "Error",
+        description: "Transaction not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProject: ${transaction.project}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`;
+
+    try {
+      await navigator.clipboard.writeText(snippet);
+      toast({
+        title: "Copied to Clipboard",
+        description: "Transaction details copied successfully.",
+      });
+    } catch (err) {
+      console.error("Failed to copy snippet: ", err);
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy details to clipboard.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -318,8 +347,9 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                   {columnVisibility.sourceType && <TableCell>{tx.sourceType.toUpperCase()}</TableCell>}
                   <TableCell>
                     <div className="flex space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)}><Edit3 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleCopySnippet(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} title="Delete Transaction" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -337,3 +367,6 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
+
+
+    
