@@ -24,7 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import type { DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils"; // Added missing import
+import { cn } from "@/lib/utils";
 
 interface TransactionsTableProps {
   transactions: Transaction[]; // This prop will be named initialTransactions in the component
@@ -399,7 +399,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                     <TableCell>
                       {tx.receiptLink ? (
                         <Button variant="ghost" size="icon" asChild>
-                          <a href={tx.receiptLink} target="_blank" rel="noopener noreferrer">
+                          <a 
+                            href={tx.receiptLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            title={`Open receipt: ${tx.receiptLink}`}
+                          >
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
