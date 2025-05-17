@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import type { DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils"; // Added missing import
 
 interface TransactionsTableProps {
   transactions: Transaction[]; // This prop will be named initialTransactions in the component
@@ -44,9 +45,9 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   const router = useRouter();
   const { toast } = useToast();
 
-  const [investorFilter, setInvestorFilter] = React.useState<string>("");
-  const [projectFilter, setProjectFilter] = React.useState<string>("");
-  const [cardFilter, setCardFilter] = React.useState<string>("");
+  const [investorFilter, setInvestorFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
+  const [projectFilter, setProjectFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
+  const [cardFilter, setCardFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
   const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
 
@@ -256,8 +257,8 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         />
         <div className="flex gap-2 flex-wrap">
           <Select
-            value={investorFilter === "" ? ALL_ITEMS_FILTER_VALUE : investorFilter}
-            onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            value={investorFilter}
+            onValueChange={(value) => setInvestorFilter(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Investor" />
@@ -268,8 +269,8 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
             </SelectContent>
           </Select>
           <Select
-            value={projectFilter === "" ? ALL_ITEMS_FILTER_VALUE : projectFilter}
-            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            value={projectFilter}
+            onValueChange={(value) => setProjectFilter(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Project" />
@@ -280,8 +281,8 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
             </SelectContent>
           </Select>
           <Select
-            value={cardFilter === "" ? ALL_ITEMS_FILTER_VALUE : cardFilter}
-            onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+            value={cardFilter}
+            onValueChange={(value) => setCardFilter(value)}
           >
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Filter by Card" />
