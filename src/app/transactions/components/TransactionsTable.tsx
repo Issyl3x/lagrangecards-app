@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3 } from "lucide-react";
-import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
+import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown } from "lucide-react";
+import type { Transaction } from "@/lib/types";
 import { mockInvestors, mockProjects, mockCards } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -28,6 +28,7 @@ interface TransactionsTableProps {
 }
 
 type SortKey = keyof Transaction | "";
+const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactions);
@@ -35,7 +36,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   
   const [investorFilter, setInvestorFilter] = React.useState<string>("");
   const [projectFilter, setProjectFilter] = React.useState<string>("");
-  const [cardFilter, setCardFilter] = React.useState<string>("");
+  const [cardFilter, setCardFilter] = React.useState<string>(""); // Assuming card filter might also need this pattern if it has an "All Cards" option.
   const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
 
@@ -64,7 +65,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     if (projectFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.project === projectFilter);
     }
-    if (cardFilter) {
+    if (cardFilter) { // Assuming card filter logic will be added similarly
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
     }
     if (dateRangeFilter?.from) {
@@ -149,21 +150,27 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
             className="max-w-sm"
         />
         <div className="flex gap-2 flex-wrap">
-          <Select value={investorFilter} onValueChange={setInvestorFilter}>
+          <Select 
+            value={investorFilter === "" ? ALL_ITEMS_FILTER_VALUE : investorFilter} 
+            onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Investor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Investors</SelectItem>
+              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Investors</SelectItem>
               {investors.map(inv => <SelectItem key={inv.id} value={inv.id}>{inv.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
+          <Select 
+            value={projectFilter === "" ? ALL_ITEMS_FILTER_VALUE : projectFilter} 
+            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Projects</SelectItem>
+              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Projects</SelectItem>
               {projects.map(proj => <SelectItem key={proj} value={proj}>{proj}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -282,7 +289,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={Object.values(columnVisibility).filter(Boolean).length + 4} className="h-24 text-center">
+                <TableCell colSpan={Object.values(columnVisibility).filter(Boolean).length + 5} className="h-24 text-center"> {/* Adjusted colSpan */}
                   No transactions found.
                 </TableCell>
               </TableRow>
@@ -295,4 +302,3 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   );
 }
 
-import { ChevronsUpDown } from 'lucide-react'; // Already imported but for clarity
