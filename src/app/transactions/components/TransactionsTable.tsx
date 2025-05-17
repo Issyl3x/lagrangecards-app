@@ -22,6 +22,8 @@ import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import type { DateRange } from "react-day-picker";
+import { useRouter } from "next/navigation"; // Added for navigation
+import { useToast } from "@/hooks/use-toast"; // Added for toast notifications
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -33,10 +35,12 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
   const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
-  
+  const router = useRouter(); // Initialize router
+  const { toast } = useToast(); // Initialize toast
+
   const [investorFilter, setInvestorFilter] = React.useState<string>("");
   const [projectFilter, setProjectFilter] = React.useState<string>("");
-  const [cardFilter, setCardFilter] = React.useState<string>(""); // Assuming card filter might also need this pattern if it has an "All Cards" option.
+  const [cardFilter, setCardFilter] = React.useState<string>("");
   const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
 
@@ -54,10 +58,15 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
 
   const investors = mockInvestors;
   const projects = mockProjects;
-  const cards: UserCard[] = mockCards; // Explicitly type cards
+  const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
-    let tempTransactions = [...initialTransactions];
+    // Update initialTransactions in state if the prop changes
+    setTransactions(initialTransactions);
+  }, [initialTransactions]);
+
+  React.useEffect(() => {
+    let tempTransactions = [...transactions]; // Use the local 'transactions' state for filtering
 
     if (investorFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
@@ -65,7 +74,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     if (projectFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.project === projectFilter);
     }
-    if (cardFilter) { 
+    if (cardFilter) {
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
     }
     if (dateRangeFilter?.from) {
@@ -77,7 +86,6 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     if (dateRangeFilter?.to) {
         tempTransactions = tempTransactions.filter(tx => {
             const txDate = parseISO(tx.date);
-            // Add 1 day to 'to' date to make it inclusive
             const toDate = new Date(dateRangeFilter.to as Date);
             toDate.setDate(toDate.getDate() + 1);
             return txDate < toDate;
@@ -85,7 +93,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     }
     if (searchTerm) {
         const lowerSearchTerm = searchTerm.toLowerCase();
-        tempTransactions = tempTransactions.filter(tx => 
+        tempTransactions = tempTransactions.filter(tx =>
             tx.vendor.toLowerCase().includes(lowerSearchTerm) ||
             tx.description.toLowerCase().includes(lowerSearchTerm) ||
             tx.category.toLowerCase().includes(lowerSearchTerm)
@@ -102,10 +110,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         else if (valB === undefined || valB === null) comparison = 1;
         else if (typeof valA === 'number' && typeof valB === 'number') {
           comparison = valA - valB;
-        } else if (valA instanceof Date && valB instanceof Date) {
-          comparison = valA.getTime() - valB.getTime();
-        }
-         else if (sortKey === 'date') {
+        } else if (sortKey === 'date') { // Explicitly handle date sorting
           comparison = parseISO(String(valA)).getTime() - parseISO(String(valB)).getTime();
         } else {
           comparison = String(valA).localeCompare(String(valB));
@@ -114,7 +119,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       });
     }
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, initialTransactions]);
+  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactions]); // Depend on 'transactions' state
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -124,9 +129,9 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       setSortOrder("asc");
     }
   };
-  
+
   const getInvestorName = (id: string) => investors.find(i => i.id === id)?.name || 'N/A';
-  
+
   const getCardName = (id: string) => {
     const card = cards.find(c => c.id === id);
     if (!card) return 'N/A';
@@ -140,23 +145,34 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     return <ArrowUpDown className="ml-2 h-4 w-4 inline opacity-50" />;
   };
 
-  // Mock actions
-  const handleDelete = (id: string) => alert(`Delete transaction ${id}? (Not implemented)`);
-  const handleEdit = (id: string) => alert(`Edit transaction ${id}? (Not implemented)`);
+  const handleDelete = (id: string) => {
+    const updatedTransactions = transactions.filter(tx => tx.id !== id);
+    setTransactions(updatedTransactions); // Update the local state
+    // In a real app, you would also call an API to delete the transaction from the backend
+    toast({
+      title: "Transaction Deleted",
+      description: `Transaction with ID ${id} has been removed.`,
+      variant: "default",
+    });
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/transactions/edit/${id}`);
+  };
 
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
-        <Input 
+        <Input
             placeholder="Search vendor, description, category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
         />
         <div className="flex gap-2 flex-wrap">
-          <Select 
-            value={investorFilter === "" ? ALL_ITEMS_FILTER_VALUE : investorFilter} 
+          <Select
+            value={investorFilter === "" ? ALL_ITEMS_FILTER_VALUE : investorFilter}
             onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
             <SelectTrigger className="w-[180px]">
@@ -167,8 +183,8 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
               {investors.map(inv => <SelectItem key={inv.id} value={inv.id}>{inv.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select 
-            value={projectFilter === "" ? ALL_ITEMS_FILTER_VALUE : projectFilter} 
+          <Select
+            value={projectFilter === "" ? ALL_ITEMS_FILTER_VALUE : projectFilter}
             onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
             <SelectTrigger className="w-[180px]">
@@ -179,11 +195,11 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
               {projects.map(proj => <SelectItem key={proj} value={proj}>{proj}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select // Adding Card Filter
+          <Select
             value={cardFilter === "" ? ALL_ITEMS_FILTER_VALUE : cardFilter}
             onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? "" : value)}
           >
-            <SelectTrigger className="w-[220px]"> {/* Adjusted width for card names */}
+            <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Filter by Card" />
             </SelectTrigger>
             <SelectContent>
@@ -281,7 +297,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
                   {columnVisibility.cardUsed && <TableCell>{getCardName(tx.cardId)}</TableCell>}
                   {columnVisibility.reconciled && (
                     <TableCell>
-                      <Badge variant={tx.reconciled ? "default" : "secondary"} className={tx.reconciled ? "bg-green-500 hover:bg-green-600" : ""}>
+                      <Badge variant={tx.reconciled ? "default" : "secondary"} className={tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : ""}>
                         {tx.reconciled ? "Yes" : "No"}
                       </Badge>
                     </TableCell>
@@ -310,7 +326,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={Object.values(columnVisibility).filter(Boolean).length + 5} className="h-24 text-center"> {/* Adjusted colSpan */}
+                <TableCell colSpan={Object.values(columnVisibility).filter(Boolean).length + 5} className="h-24 text-center">
                   No transactions found.
                 </TableCell>
               </TableRow>
@@ -318,8 +334,6 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
           </TableBody>
         </Table>
       </div>
-      {/* TODO: Add pagination controls */}
     </div>
   );
 }
-
