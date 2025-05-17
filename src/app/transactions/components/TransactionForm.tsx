@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
-import { mockInvestors, mockProperties, mockCards, mockCategories } from "@/lib/mock-data";
+import { mockInvestors, mockProperties, mockCards, mockCategories, getMockTransactions } from "@/lib/mock-data";
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
@@ -53,7 +53,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : undefined, // Default to undefined if no initialData.date
+      date: undefined, // Will be set by useEffect on client if no initialData.date
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || 0,
@@ -72,14 +72,23 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const [cards, setCards] = React.useState<UserCard[]>(mockCards);
   const [categories] = React.useState<(string)[]>(mockCategories);
 
-  // Effect to handle pre-filling form from initialData (for edit/OCR)
+  const [isVendorPopoverOpen, setIsVendorPopoverOpen] = React.useState(false);
+  const [uniqueVendors, setUniqueVendors] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    const transactions = getMockTransactions();
+    const vendors = Array.from(new Set(transactions.map(tx => tx.vendor).filter(Boolean).map(v => v.trim())))
+                       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    setUniqueVendors(vendors);
+  }, []);
+
   React.useEffect(() => {
     if (initialData) {
       const investorName = initialData.investorId
         ? (investors.find(inv => inv.id === initialData.investorId)?.name || "")
         : "";
       
-      form.reset({
+      const resetValues: TransactionFormValues = {
         date: initialData.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
         vendor: initialData.vendor || "",
         description: initialData.description || "",
@@ -91,7 +100,8 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         property: initialData.property || "",
         receiptLink: initialData.receiptLink || "",
         sourceType: initialData.sourceType || 'manual',
-      });
+      };
+      form.reset(resetValues);
 
       if (initialData.investorId) {
         setCards(mockCards.filter(card => card.investorId === initialData.investorId));
@@ -101,10 +111,8 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     }
   }, [initialData, form, investors]);
 
-  // Effect to set default date to new Date() on the client-side for "Add" scenario (no initialData)
   React.useEffect(() => {
-    // Only set if there's no initialData and the form's date field is currently undefined
-    if (!initialData && form.getValues('date') === undefined) {
+    if (!initialData?.date && form.getValues('date') === undefined) {
       form.setValue('date', new Date());
     }
   }, [initialData, form]);
@@ -185,11 +193,75 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             control={form.control}
             name="vendor"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Vendor</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Home Depot" {...field} />
-                </FormControl>
+                <Popover open={isVendorPopoverOpen} onOpenChange={setIsVendorPopoverOpen} modal={true}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={isVendorPopoverOpen}
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        onClick={() => setIsVendorPopoverOpen(!isVendorPopoverOpen)}
+                      >
+                        {field.value || "Select or type vendor..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    onCloseAutoFocus={(e) => e.preventDefault()} // Prevents re-focusing trigger
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search or type new vendor..."
+                        value={field.value || ''}
+                        onValueChange={(currentValue) => {
+                          field.onChange(currentValue);
+                          if (!isVendorPopoverOpen && currentValue) setIsVendorPopoverOpen(true);
+                        }}
+                        ref={field.ref} // RHF ref
+                        onBlur={field.onBlur} // RHF blur
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {field.value?.trim() ? (
+                            <span>Press Enter or Tab to add "<strong>{field.value.trim()}</strong>"</span>
+                          ) : (
+                            "No results found. Type to add new."
+                          )}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {uniqueVendors.map((vendorName) => (
+                            <CommandItem
+                              value={vendorName}
+                              key={vendorName}
+                              onSelect={() => {
+                                form.setValue("vendor", vendorName, { shouldValidate: true });
+                                setIsVendorPopoverOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  vendorName.toLowerCase() === (field.value || "").toLowerCase()
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {vendorName}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
