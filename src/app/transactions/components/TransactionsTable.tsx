@@ -17,7 +17,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react";
 import type { Transaction, Card as UserCard } from "@/lib/types";
-import { mockInvestors, mockProjects, mockCards, mockTransactions as globalMockTransactions } from "@/lib/mock-data"; // Renamed import
+import { 
+  mockInvestors, 
+  mockProjects, 
+  mockCards, 
+  deleteTransactionFromMockData,
+  updateTransactionInMockData,
+  getMockTransactions
+} from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,20 +34,19 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface TransactionsTableProps {
-  transactions: Transaction[]; // This prop will be named initialTransactions in the component
+  transactions: Transaction[]; 
 }
 
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
-// Simulate a logged-in user. In a real app, this would come from an auth context.
 const mockCurrentUser = {
   id: 'investor1',
-  isAdmin: true, // Set to true to see admin controls
+  isAdmin: true, 
 };
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
-  const [transactions, setTransactions] = React.useState<Transaction[]>(initialTransactions);
+  const [transactionsData, setTransactionsData] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
   const router = useRouter();
   const { toast } = useToast();
@@ -68,11 +74,11 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
-    setTransactions(initialTransactions);
+    setTransactionsData(initialTransactions);
   }, [initialTransactions]);
 
   React.useEffect(() => {
-    let tempTransactions = [...transactions];
+    let tempTransactions = [...transactionsData];
 
     if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
@@ -93,7 +99,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
         tempTransactions = tempTransactions.filter(tx => {
             const txDate = parseISO(tx.date);
             const toDate = new Date(dateRangeFilter.to as Date);
-            toDate.setDate(toDate.getDate() + 1); // Include the 'to' date
+            toDate.setDate(toDate.getDate() + 1); 
             return txDate < toDate;
         });
     }
@@ -125,7 +131,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       });
     }
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactions]);
+  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -161,14 +167,8 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
 
-    // Modify the globalMockTransactions array
-    const indexInGlobalMock = globalMockTransactions.findIndex(tx => tx.id === id);
-    if (indexInGlobalMock !== -1) {
-      globalMockTransactions.splice(indexInGlobalMock, 1);
-    }
-
-    // Update local state to reflect the change immediately
-    setTransactions(prevTransactions => prevTransactions.filter(tx => tx.id !== id));
+    deleteTransactionFromMockData(id);
+    setTransactionsData(getMockTransactions()); // Refresh local state from source
     
     toast({
       title: "Transaction Deleted",
@@ -198,17 +198,12 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       return;
     }
 
-    const indexInGlobalMock = globalMockTransactions.findIndex(tx => tx.id === id);
-    if (indexInGlobalMock !== -1) {
-      globalMockTransactions[indexInGlobalMock].reconciled = !globalMockTransactions[indexInGlobalMock].reconciled;
-      const updatedTransaction = globalMockTransactions[indexInGlobalMock];
+    const transactionToUpdate = transactionsData.find(tx => tx.id === id);
+    if (transactionToUpdate) {
+      const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
+      updateTransactionInMockData(updatedTransaction);
+      setTransactionsData(getMockTransactions()); // Refresh local state from source
       
-      // Update local state to re-render
-      setTransactions(prevTransactions => 
-        prevTransactions.map(tx => 
-          tx.id === id ? { ...tx, reconciled: updatedTransaction.reconciled } : tx
-        )
-      );
       toast({
         title: "Reconciliation Status Updated",
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
@@ -217,7 +212,7 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
   };
 
   const handleCopySnippet = async (id: string) => {
-    const transaction = transactions.find(tx => tx.id === id);
+    const transaction = transactionsData.find(tx => tx.id === id);
     if (!transaction) {
       toast({
         title: "Error",
@@ -244,7 +239,6 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
       });
     }
   };
-
 
   return (
     <div className="space-y-4">
@@ -440,4 +434,3 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
-

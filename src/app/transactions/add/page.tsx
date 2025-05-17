@@ -5,11 +5,11 @@ import * as React from "react";
 import { TransactionForm, type TransactionFormValues } from "../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation"; // For redirecting after submit
+import { useRouter } from "next/navigation"; 
 import { format } from "date-fns";
-import { mockTransactions } from "@/lib/mock-data"; // Import the array
-import type { Transaction } from "@/lib/types";   // Import the type
-import { v4 as uuidv4 } from 'uuid'; // For generating new IDs
+import { addTransactionToMockData } from "@/lib/mock-data"; 
+import type { Transaction } from "@/lib/types";   
+import { v4 as uuidv4 } from 'uuid'; 
 
 
 export default function AddTransactionPage() {
@@ -17,24 +17,19 @@ export default function AddTransactionPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // In a real app, this would send data to a backend API
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
 
     const newTransactionData: Transaction = {
-      id: uuidv4(), // Generate a new unique ID
+      id: uuidv4(), 
       ...data,
-      date: format(data.date, "yyyy-MM-dd"), // Format date to string for storage
+      date: format(data.date, "yyyy-MM-dd"), 
       reconciled: false, // New transactions default to not reconciled
-      // sourceType is already in 'data' from the form
     };
 
-    // Add to the beginning of the mockTransactions array
-    mockTransactions.unshift(newTransactionData);
-    console.log("New Transaction Added to mockData:", newTransactionData);
+    addTransactionToMockData(newTransactionData);
+    console.log("New Transaction Added via addTransactionToMockData:", newTransactionData);
 
-
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     toast({
@@ -42,7 +37,6 @@ export default function AddTransactionPage() {
       description: `Transaction for ${data.vendor} of $${data.amount} has been saved.`,
     });
     setIsLoading(false);
-    // Refresh data on the target page and then navigate
     router.refresh(); 
     router.push("/transactions"); 
   };
@@ -59,4 +53,3 @@ export default function AddTransactionPage() {
     </Card>
   );
 }
-

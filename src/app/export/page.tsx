@@ -4,15 +4,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Download, Send } from "lucide-react";
-import { mockTransactions } from "@/lib/mock-data";
+import { getMockTransactions } from "@/lib/mock-data";
 import { convertToCSV, downloadCSV } from "@/lib/export";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ExportPage() {
   const { toast } = useToast();
+  const transactions = getMockTransactions();
 
   const handleDownloadCSV = () => {
-    const csvData = convertToCSV(mockTransactions);
+    const csvData = convertToCSV(transactions);
     downloadCSV(csvData, `estateflow_transactions_${new Date().toISOString().split('T')[0]}.csv`);
     toast({
       title: "CSV Downloaded",
@@ -25,9 +26,9 @@ export default function ExportPage() {
     toast({
       title: "Send to Google Sheets (Mock)",
       description: "This feature is not yet implemented. In a real app, data would be sent to Google Sheets.",
-      variant: "default", // 'default' was 'info', but info is not a variant
+      variant: "default", 
     });
-    console.log("Attempting to send to Google Sheets (mocked). Data:", mockTransactions);
+    console.log("Attempting to send to Google Sheets (mocked). Data:", transactions);
   };
 
   return (

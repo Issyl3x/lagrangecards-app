@@ -1,15 +1,14 @@
 
 import { TransactionsTable } from "./components/TransactionsTable";
-import { mockTransactions } from "@/lib/mock-data"; // Using mock data for now
+import { getMockTransactions } from "@/lib/mock-data"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 
 export default function ViewTransactionsPage() {
-  // In a real app, this data would be fetched
-  // Create a shallow copy to ensure TransactionsTable detects prop change
-  const currentTransactions = [...mockTransactions];
+  // Fetch the current state of transactions
+  const currentTransactions = getMockTransactions();
 
   return (
     <Card>

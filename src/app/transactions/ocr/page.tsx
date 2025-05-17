@@ -7,15 +7,18 @@ import { TransactionForm, type TransactionFormValues } from "../components/Trans
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ParsedReceiptData, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns"; // parseISO might not be needed here
 import { Button } from "@/components/ui/button";
 import { ClipboardCopy } from "lucide-react";
+import { addTransactionToMockData } from "@/lib/mock-data"; // Import the centralized function
+import { v4 as uuidv4 } from 'uuid';
 
 export default function OcrTransactionPage() {
-  const [parsedData, setParsedData] = React.useState<Partial<Transaction> | null>(null);
-  const [isParsingOrSaving, setIsParsingOrSaving] = React.useState(false); // Combined state for OCR parsing and form submission
+  const [parsedDataForForm, setParsedDataForForm] = React.useState<Partial<Transaction> | null>(null);
+  const [isParsingOrSaving, setIsParsingOrSaving] = React.useState(false); 
   const { toast } = useToast();
-
+  const router = useRouter(); // Import and use useRouter
+  
   const handleParseSuccess = (data: ParsedReceiptData) => {
     toast({
       title: "Receipt Parsed Successfully!",
@@ -25,32 +28,42 @@ export default function OcrTransactionPage() {
     const initialTransactionData: Partial<Transaction> = {
         vendor: data.vendor,
         amount: data.amount,
-        date: data.date, // This is already "YYYY-MM-DD"
+        date: data.date, 
         sourceType: 'OCR',
+        reconciled: false, // OCR transactions are initially not reconciled
     };
-    setParsedData(initialTransactionData);
+    setParsedDataForForm(initialTransactionData);
     setIsParsingOrSaving(false); 
   };
   
-  const handleFormSubmit = async (data: TransactionFormValues) => {
+  const handleFormSubmit = async (formData: TransactionFormValues) => {
     setIsParsingOrSaving(true); 
-    console.log("OCR-Prefilled Transaction Data:", {
-        ...data,
-        date: format(data.date, "yyyy-MM-dd"), 
-    });
+    
+    const newTransactionData: Transaction = {
+      id: uuidv4(),
+      ...formData,
+      date: format(formData.date, "yyyy-MM-dd"), 
+      reconciled: false, // Still default to false, user reconciles later
+      // sourceType is already in formData
+    };
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    addTransactionToMockData(newTransactionData);
+    console.log("OCR-Prefilled Transaction Data Saved:", newTransactionData);
+
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
     toast({
       title: "Transaction Saved",
-      description: `Transaction for ${data.vendor} of $${data.amount.toFixed(2)} (from OCR) has been saved.`,
+      description: `Transaction for ${newTransactionData.vendor} of $${newTransactionData.amount.toFixed(2)} (from OCR) has been saved.`,
     });
-    setParsedData(null); 
+    setParsedDataForForm(null); 
     setIsParsingOrSaving(false);
+    router.refresh(); // Refresh data on other pages
+    router.push("/transactions"); // Navigate to transactions list
   };
 
   const handleCopyParsedSnippet = async () => {
-    if (!parsedData || typeof parsedData.vendor === 'undefined' || typeof parsedData.amount === 'undefined' || typeof parsedData.date === 'undefined') {
+    if (!parsedDataForForm || typeof parsedDataForForm.vendor === 'undefined' || typeof parsedDataForForm.amount === 'undefined' || typeof parsedDataForForm.date === 'undefined') {
       toast({
         title: "Error",
         description: "No parsed data available to copy or data is incomplete.",
@@ -59,7 +72,7 @@ export default function OcrTransactionPage() {
       return;
     }
 
-    const snippet = `Parsed Receipt Details:\nVendor: ${parsedData.vendor}\nAmount: $${parsedData.amount.toFixed(2)}\nDate: ${parsedData.date}`;
+    const snippet = `Parsed Receipt Details:\nVendor: ${parsedDataForForm.vendor}\nAmount: $${parsedDataForForm.amount.toFixed(2)}\nDate: ${parsedDataForForm.date}`;
 
     try {
       await navigator.clipboard.writeText(snippet);
@@ -89,13 +102,11 @@ export default function OcrTransactionPage() {
         <CardContent>
           <ReceiptUploadForm 
             onParseSuccess={handleParseSuccess} 
-            // Pass isParsingOrSaving to ReceiptUploadForm if it needs to disable itself during parent's saving phase
-            // For now, ReceiptUploadForm handles its own isLoading state for the actual OCR call.
           />
         </CardContent>
       </Card>
 
-      {parsedData && (
+      {parsedDataForForm && (
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -112,7 +123,7 @@ export default function OcrTransactionPage() {
           </CardHeader>
           <CardContent>
             <TransactionForm 
-              initialData={parsedData} 
+              initialData={parsedDataForForm} 
               onSubmit={handleFormSubmit}
               isLoading={isParsingOrSaving} 
             />
@@ -122,3 +133,6 @@ export default function OcrTransactionPage() {
     </div>
   );
 }
+
+// Need useRouter from next/navigation for the redirect
+import { useRouter } from "next/navigation";

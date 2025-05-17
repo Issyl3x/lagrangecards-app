@@ -9,8 +9,9 @@ import {
   ChartConfig,
 } from "@/components/ui/chart";
 import type { Transaction } from "@/lib/types";
+// import { getMockTransactions } from "@/lib/mock-data"; // No longer needed here directly if passed as prop
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from "recharts";
-import { format, parseISO, getMonth, getYear, startOfMonth } from "date-fns";
+import { format, parseISO, subMonths, startOfMonth } from "date-fns"; // Combined imports
 import { useState, useEffect } from "react";
 
 interface MonthlySpendChartProps {
@@ -31,7 +32,7 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
     const monthlySpend: Record<string, number> = {};
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
 
-
+    // Use the passed 'transactions' prop
     transactions.forEach(tx => {
       const txDate = parseISO(tx.date);
       if (txDate >= sixMonthsAgo) {
@@ -40,28 +41,14 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
       }
     });
 
-    const sortedMonths = Object.keys(monthlySpend).sort((a,b) => {
-      const dateA = parseISO(`01 ${a}`); // Recharts needs full date for proper sort
-      const dateB = parseISO(`01 ${b}`);
-      return dateA.getTime() - dateB.getTime();
-    });
-    
-    const newChartData = sortedMonths.map(month => ({
-      month,
-      spend: monthlySpend[month],
-    }));
-
-    // Ensure we have data for the last 6 months, even if spend is 0
     const lastSixMonthsData: { month: string; spend: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthKey = format(date, "MMM yyyy");
-      const existingData = newChartData.find(d => d.month === monthKey);
-      if (existingData) {
-        lastSixMonthsData.push(existingData);
-      } else {
-        lastSixMonthsData.push({ month: monthKey, spend: 0 });
-      }
+      lastSixMonthsData.push({
+        month: monthKey,
+        spend: monthlySpend[monthKey] || 0,
+      });
     }
     
     setChartData(lastSixMonthsData);
@@ -69,7 +56,7 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
   }, [transactions]);
 
 
-  if (chartData.length === 0) {
+  if (chartData.length === 0 && transactions.length === 0) { // Check if original transactions were also empty
      return (
        <Card>
         <CardHeader>
@@ -122,6 +109,3 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
     </Card>
   );
 }
-
-// Need subMonths from date-fns
-import { subMonths } from 'date-fns';

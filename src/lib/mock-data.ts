@@ -17,118 +17,139 @@ export const mockCards: Card[] = [
   { id: 'card3', cardName: 'Alice - Skyline - Card 1', investorId: 'investor2', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 4000, last4Digits: '3333' },
   { id: 'card4', cardName: 'Bob - Mountain - Card 1', investorId: 'investor3', project: 'Mountain Retreat', isPersonal: true, spendLimitMonthly: 1000, last4Digits: '4444' },
   { id: 'card5', cardName: 'Alice - Personal - Card 1', investorId: 'investor2', project: 'N/A', isPersonal: true, last4Digits: '5555' },
-  { 
-    id: 'card6', 
-    cardName: 'Greg - Blue Haven Ink Visa 2627', 
-    investorId: 'investor4', 
-    project: 'Skyline Towers', // Placeholder project, please confirm or update
-    isPersonal: false, 
-    last4Digits: '2627' 
-    // spendLimitMonthly: undefined (can be added)
+  {
+    id: 'card6',
+    cardName: 'Greg - Blue Haven Ink Visa 2627',
+    investorId: 'investor4',
+    project: 'Skyline Towers',
+    isPersonal: false,
+    last4Digits: '2627'
   },
 ];
 
 export const mockCategories: (TransactionCategory | string)[] = [
-  "Repairs", "Utilities", "Supplies", "Mortgage", "Insurance", "HOA Fees", 
+  "Repairs", "Utilities", "Supplies", "Mortgage", "Insurance", "HOA Fees",
   "Property Management", "Travel", "Marketing", "Legal & Professional Fees",
   "Furnishings", "Landscaping", "Other"
 ];
 
 
 const today = new Date();
-export const mockTransactions: Transaction[] = [
-  { 
-    id: 'txn1', 
-    date: formatISO(subDays(today, 5), { representation: 'date' }), 
-    vendor: 'Home Depot', 
-    description: 'Lumber for deck repair', 
-    amount: 250.75, 
-    category: 'Repairs', 
-    cardId: 'card1', 
-    investorId: 'investor1', 
-    project: 'Skyline Towers', 
-    receiptLink: 'https://docs.google.com/receipt1', 
-    reconciled: true, 
-    sourceType: 'manual' 
+let updatableMockTransactions: Transaction[] = [
+  {
+    id: 'txn1',
+    date: formatISO(subDays(today, 5), { representation: 'date' }),
+    vendor: 'Home Depot',
+    description: 'Lumber for deck repair',
+    amount: 250.75,
+    category: 'Repairs',
+    cardId: 'card1',
+    investorId: 'investor1',
+    project: 'Skyline Towers',
+    receiptLink: 'https://docs.google.com/receipt1',
+    reconciled: true,
+    sourceType: 'manual'
   },
-  { 
-    id: 'txn2', 
-    date: formatISO(subDays(today, 10), { representation: 'date' }), 
-    vendor: 'City Electric', 
-    description: 'Monthly electricity bill', 
-    amount: 120.00, 
-    category: 'Utilities', 
-    cardId: 'card2', 
-    investorId: 'investor1', 
-    project: 'Oceanview Villas', 
-    reconciled: false, 
-    sourceType: 'OCR' 
+  {
+    id: 'txn2',
+    date: formatISO(subDays(today, 10), { representation: 'date' }),
+    vendor: 'City Electric',
+    description: 'Monthly electricity bill',
+    amount: 120.00,
+    category: 'Utilities',
+    cardId: 'card2',
+    investorId: 'investor1',
+    project: 'Oceanview Villas',
+    receiptLink: '',
+    reconciled: false,
+    sourceType: 'OCR'
   },
-  { 
-    id: 'txn3', 
-    date: formatISO(subDays(today, 15), { representation: 'date' }), 
-    vendor: 'Staples', 
-    description: 'Office supplies', 
-    amount: 45.50, 
-    category: 'Supplies', 
-    cardId: 'card3', 
-    investorId: 'investor2', 
-    project: 'Skyline Towers', 
-    receiptLink: 'https://docs.google.com/receipt2', 
-    reconciled: true, 
-    sourceType: 'manual' 
+  {
+    id: 'txn3',
+    date: formatISO(subDays(today, 15), { representation: 'date' }),
+    vendor: 'Staples',
+    description: 'Office supplies',
+    amount: 45.50,
+    category: 'Supplies',
+    cardId: 'card3',
+    investorId: 'investor2',
+    project: 'Skyline Towers',
+    receiptLink: 'https://docs.google.com/receipt2',
+    reconciled: true,
+    sourceType: 'manual'
   },
-  { 
-    id: 'txn4', 
-    date: formatISO(subDays(today, 2), { representation: 'date' }), 
-    vendor: 'Local Hardware', 
-    description: 'Paint and brushes', 
-    amount: 78.22, 
-    category: 'Repairs', 
-    cardId: 'card1', 
-    investorId: 'investor1', 
-    project: 'Skyline Towers', 
-    reconciled: false, 
-    sourceType: 'OCR' 
+  {
+    id: 'txn4',
+    date: formatISO(subDays(today, 2), { representation: 'date' }),
+    vendor: 'Local Hardware',
+    description: 'Paint and brushes',
+    amount: 78.22,
+    category: 'Repairs',
+    cardId: 'card1',
+    investorId: 'investor1',
+    project: 'Skyline Towers',
+    receiptLink: '',
+    reconciled: false,
+    sourceType: 'OCR'
   },
-  { 
-    id: 'txn5', 
-    date: formatISO(subDays(subMonths(today, 1), 5), { representation: 'date' }), 
-    vendor: 'Best Buy', 
-    description: 'New office monitor', 
-    amount: 299.99, 
-    category: 'Furnishings', 
-    cardId: 'card3', 
-    investorId: 'investor2', 
-    project: 'Skyline Towers', 
-    reconciled: true, 
-    sourceType: 'manual' 
+  {
+    id: 'txn5',
+    date: formatISO(subDays(subMonths(today, 1), 5), { representation: 'date' }),
+    vendor: 'Best Buy',
+    description: 'New office monitor',
+    amount: 299.99,
+    category: 'Furnishings',
+    cardId: 'card3',
+    investorId: 'investor2',
+    project: 'Skyline Towers',
+    receiptLink: '',
+    reconciled: true,
+    sourceType: 'manual'
   },
-   { 
-    id: 'txn6', 
-    date: formatISO(subDays(subMonths(today, 1), 10), { representation: 'date' }), 
-    vendor: 'Gas Company', 
-    description: 'Monthly gas bill', 
-    amount: 85.00, 
-    category: 'Utilities', 
-    cardId: 'card2', 
-    investorId: 'investor1', 
-    project: 'Oceanview Villas', 
-    reconciled: true, 
-    sourceType: 'import' 
+   {
+    id: 'txn6',
+    date: formatISO(subDays(subMonths(today, 1), 10), { representation: 'date' }),
+    vendor: 'Gas Company',
+    description: 'Monthly gas bill',
+    amount: 85.00,
+    category: 'Utilities',
+    cardId: 'card2',
+    investorId: 'investor1',
+    project: 'Oceanview Villas',
+    receiptLink: '',
+    reconciled: true,
+    sourceType: 'import'
   },
-  { 
-    id: 'txn7', 
-    date: formatISO(subDays(subMonths(today, 2), 1), { representation: 'date' }), 
-    vendor: 'Cleaning Services Inc.', 
-    description: 'Monthly cleaning for common areas', 
-    amount: 300.00, 
-    category: 'Property Management', 
-    cardId: 'card1', 
-    investorId: 'investor1', 
-    project: 'Skyline Towers', 
-    reconciled: true, 
-    sourceType: 'manual' 
+  {
+    id: 'txn7',
+    date: formatISO(subDays(subMonths(today, 2), 1), { representation: 'date' }),
+    vendor: 'Cleaning Services Inc.',
+    description: 'Monthly cleaning for common areas',
+    amount: 300.00,
+    category: 'Property Management',
+    cardId: 'card1',
+    investorId: 'investor1',
+    project: 'Skyline Towers',
+    receiptLink: '',
+    reconciled: true,
+    sourceType: 'manual'
   },
 ];
 
+export const getMockTransactions = (): Transaction[] => {
+  return [...updatableMockTransactions]; // Return a copy to encourage immutability at the consumer level
+};
+
+export const addTransactionToMockData = (newTx: Transaction): void => {
+  updatableMockTransactions = [newTx, ...updatableMockTransactions];
+};
+
+export const updateTransactionInMockData = (updatedTx: Transaction): void => {
+  updatableMockTransactions = updatableMockTransactions.map(tx =>
+    tx.id === updatedTx.id ? { ...updatedTx } : tx
+  );
+};
+
+export const deleteTransactionFromMockData = (txId: string): void => {
+  updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
+};

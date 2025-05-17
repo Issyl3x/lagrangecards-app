@@ -6,9 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import { TransactionForm, type TransactionFormValues } from "../../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { mockTransactions } from "@/lib/mock-data"; // Using mock data
+import { getMockTransactions, updateTransactionInMockData } from "@/lib/mock-data"; 
 import type { Transaction } from "@/lib/types";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button"; 
 
@@ -18,17 +18,15 @@ export default function EditTransactionPage() {
   const params = useParams();
   const transactionId = params.id as string;
 
-  // Store a copy of the transaction to be edited.
-  // This copy is used to pre-fill the form.
   const [transactionForForm, setTransactionForForm] = React.useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(true);
 
   React.useEffect(() => {
     if (transactionId) {
-      const foundTransaction = mockTransactions.find(tx => tx.id === transactionId);
+      const allTransactions = getMockTransactions();
+      const foundTransaction = allTransactions.find(tx => tx.id === transactionId);
       if (foundTransaction) {
-        // Set a *copy* for the form's initial data to avoid direct mutation of mockData via form state
         setTransactionForForm({ ...foundTransaction });
       } else {
         toast({
@@ -44,41 +42,41 @@ export default function EditTransactionPage() {
 
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("Receipt link submitted from form:", data.receiptLink); // For debugging
+    console.log("Receipt link submitted from form:", data.receiptLink); 
 
-    const transactionToUpdate = mockTransactions.find(tx => tx.id === transactionId);
+    const currentTransaction = getMockTransactions().find(tx => tx.id === transactionId);
 
-    if (!transactionToUpdate) {
+    if (!currentTransaction) {
         toast({
             title: "Error",
-            description: "Cannot update transaction, original data not found in mock data.",
+            description: "Cannot update transaction, original data not found.",
             variant: "destructive",
         });
         setIsLoading(false);
         return;
     }
     
-    // Directly update the properties of the transaction object *within* the mockTransactions array
-    transactionToUpdate.date = format(data.date, "yyyy-MM-dd");
-    transactionToUpdate.vendor = data.vendor;
-    transactionToUpdate.description = data.description || ""; // Ensure empty string if optional and not provided
-    transactionToUpdate.amount = data.amount;
-    transactionToUpdate.category = data.category;
-    transactionToUpdate.investorId = data.investorId;
-    transactionToUpdate.project = data.project;
-    transactionToUpdate.cardId = data.cardId;
-    transactionToUpdate.receiptLink = data.receiptLink || ""; // Ensure empty string if optional and not provided
-    // sourceType is not changed by this form
-    // reconciled status is NOT updated by this form anymore. It's handled directly in the table.
+    const updatedTransactionData: Transaction = {
+        ...currentTransaction, // Preserve existing fields like 'reconciled' and 'sourceType'
+        date: format(data.date, "yyyy-MM-dd"),
+        vendor: data.vendor,
+        description: data.description || "",
+        amount: data.amount,
+        category: data.category,
+        investorId: data.investorId,
+        project: data.project,
+        cardId: data.cardId,
+        receiptLink: data.receiptLink || "",
+    };
     
-    console.log("Updated transaction directly in mockData (ID: " + transactionId + "):", transactionToUpdate);
+    updateTransactionInMockData(updatedTransactionData);
+    console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", updatedTransactionData);
 
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     toast({
       title: "Transaction Updated",
-      description: `Transaction for ${transactionToUpdate.vendor} of $${transactionToUpdate.amount} has been updated.`,
+      description: `Transaction for ${updatedTransactionData.vendor} of $${updatedTransactionData.amount} has been updated.`,
     });
     setIsLoading(false);
     
