@@ -34,12 +34,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Switch } from "@/components/ui/switch"; // Added Switch import
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard, ParsedReceiptData } from "@/lib/types";
 import { mockInvestors, mockProjects, mockCards, mockCategories } from "@/lib/mock-data";
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
-import { transactionSchema } from '@/lib/schemas'; // To be created
+import { transactionSchema } from '@/lib/schemas';
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
 
@@ -95,6 +96,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     }
     if (initialData?.vendor) form.setValue("vendor", initialData.vendor);
     if (initialData?.amount) form.setValue("amount", initialData.amount);
+    if (typeof initialData?.reconciled === 'boolean') form.setValue("reconciled", initialData.reconciled);
     // For other fields, defaultValues in useForm should handle them.
   }, [initialData, form]);
 
@@ -341,6 +343,27 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
               </FormControl>
               <FormDescription>Link to the receipt on Google Drive or other storage.</FormDescription>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="reconciled"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Reconciled</FormLabel>
+                <FormDescription>
+                  Has this transaction been matched with your bank/card statement?
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />
