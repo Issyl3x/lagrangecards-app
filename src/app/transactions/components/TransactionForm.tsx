@@ -53,7 +53,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: undefined, // Will be set by useEffect on client if no initialData.date
+      date: undefined, 
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || 0,
@@ -215,7 +215,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                   </PopoverTrigger>
                   <PopoverContent 
                     className="w-[--radix-popover-trigger-width] p-0"
-                    onCloseAutoFocus={(e) => e.preventDefault()} // Prevents re-focusing trigger
+                    onCloseAutoFocus={(e) => e.preventDefault()} 
                   >
                     <Command>
                       <CommandInput
@@ -225,8 +225,8 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                           field.onChange(currentValue);
                           if (!isVendorPopoverOpen && currentValue) setIsVendorPopoverOpen(true);
                         }}
-                        ref={field.ref} // RHF ref
-                        onBlur={field.onBlur} // RHF blur
+                        ref={field.ref} 
+                        onBlur={field.onBlur} 
                       />
                       <CommandList>
                         <CommandEmpty>
@@ -290,8 +290,24 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
               <FormItem>
                 <FormLabel>Amount</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" {...field}
-                    onChange={event => field.onChange(+event.target.value)}
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    {...field}
+                    onChange={event => {
+                      const value = event.target.value;
+                      if (value === '' || value === null || value === undefined) {
+                        field.onChange(undefined); 
+                      } else {
+                        const numericValue = parseFloat(value);
+                        if (isNaN(numericValue)) {
+                          field.onChange(undefined); 
+                        } else {
+                          field.onChange(numericValue); 
+                        }
+                      }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -456,5 +472,3 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     </Form>
   );
 }
-
-    
