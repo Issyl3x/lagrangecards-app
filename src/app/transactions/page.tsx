@@ -8,7 +8,8 @@ import { PlusCircle } from "lucide-react";
 
 export default function ViewTransactionsPage() {
   // In a real app, this data would be fetched
-  const transactions = mockTransactions;
+  // Create a shallow copy to ensure TransactionsTable detects prop change
+  const currentTransactions = [...mockTransactions];
 
   return (
     <Card>
@@ -24,7 +25,7 @@ export default function ViewTransactionsPage() {
         </Button>
       </CardHeader>
       <CardContent>
-        <TransactionsTable transactions={transactions} />
+        <TransactionsTable transactions={currentTransactions} />
       </CardContent>
     </Card>
   );
