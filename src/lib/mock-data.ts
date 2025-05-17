@@ -17,6 +17,15 @@ export const mockCards: Card[] = [
   { id: 'card3', cardName: 'Alice - Skyline - Card 1', investorId: 'investor2', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 4000, last4Digits: '3333' },
   { id: 'card4', cardName: 'Bob - Mountain - Card 1', investorId: 'investor3', project: 'Mountain Retreat', isPersonal: true, spendLimitMonthly: 1000, last4Digits: '4444' },
   { id: 'card5', cardName: 'Alice - Personal - Card 1', investorId: 'investor2', project: 'N/A', isPersonal: true, last4Digits: '5555' },
+  { 
+    id: 'card6', 
+    cardName: 'Greg - Blue Haven Ink Visa 2627', 
+    investorId: 'investor4', 
+    project: 'Skyline Towers', // Placeholder project, please confirm or update
+    isPersonal: false, 
+    last4Digits: '2627' 
+    // spendLimitMonthly: undefined (can be added)
+  },
 ];
 
 export const mockCategories: (TransactionCategory | string)[] = [
