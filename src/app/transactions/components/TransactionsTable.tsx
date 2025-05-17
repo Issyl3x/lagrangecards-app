@@ -35,7 +35,7 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 // Simulate a logged-in user. In a real app, this would come from an auth context.
 const mockCurrentUser = {
   id: 'investor1', // Example: 'investor1' (Gualter) is the admin
-  isAdmin: true,  // Set to true for admin, false for regular user
+  isAdmin: false,  // Set to false to demonstrate non-admin view
 };
 
 export function TransactionsTable({ transactions: initialTransactions }: TransactionsTableProps) {
@@ -393,3 +393,4 @@ export function TransactionsTable({ transactions: initialTransactions }: Transac
     </div>
   );
 }
+
