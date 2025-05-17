@@ -4,7 +4,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertTriangle, Info } from "lucide-react";
 import type { Card as UserCard, Transaction } from "@/lib/types";
-// import { getMockTransactions, mockCards } from "@/lib/mock-data"; // Data will be passed as props
 import { getMonth, getYear, parseISO } from "date-fns";
 import { useState, useEffect } from "react";
 
@@ -28,7 +27,6 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
     const currentYear = getYear(new Date());
     const newAlerts: AlertItem[] = [];
 
-    // Use passed 'cards' and 'transactions' props
     cards.forEach(card => {
       if (card.spendLimitMonthly && card.spendLimitMonthly > 0) {
         const cardSpendThisMonth = transactions
@@ -42,7 +40,7 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
           newAlerts.push({
             id: `alert-${card.id}`,
             type: 'warning',
-            title: `Over Budget: ${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`,
+            title: `Over Budget: ${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''} ${card.property ? ` (${card.property})` : ''}`, // Added property display
             message: `Spent $${cardSpendThisMonth.toFixed(2)} of $${card.spendLimitMonthly.toFixed(2)} limit.`,
           });
         }
@@ -66,7 +64,7 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
     <Card>
       <CardHeader>
         <CardTitle>Alerts</CardTitle>
-        <CardDescription>Notifications for over-budget cards or projects.</CardDescription>
+        <CardDescription>Notifications for over-budget cards or properties.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 max-h-60 overflow-y-auto">
         {alerts.length > 0 ? (
@@ -84,8 +82,6 @@ export function AlertsList({ transactions, cards }: AlertsListProps) {
             </div>
           ))
         ) : (
-           // This case should be covered by the default 'All Clear!' alert if newAlerts was empty.
-           // However, to be safe, if alerts somehow ends up empty after logic:
           <div className="flex items-center space-x-3 p-3 rounded-md border bg-card">
             <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
             <div>

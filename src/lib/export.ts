@@ -18,7 +18,7 @@ export function convertToCSV(transactions: Transaction[]): string {
 
   const headers = [
     "Date", "Vendor", "Description", "Amount", "Category", 
-    "Investor", "Project", "Card Used", "Receipt Link", "Reconciled (Yes/No)"
+    "Investor", "Property", "Card Used", "Receipt Link", "Reconciled (Yes/No)" // Renamed Project to Property
   ];
   
   const rows = transactions.map(tx => [
@@ -28,7 +28,7 @@ export function convertToCSV(transactions: Transaction[]): string {
     tx.amount.toFixed(2),
     tx.category,
     getInvestorName(tx.investorId),
-    tx.project,
+    tx.property, // Renamed from project
     getCardName(tx.cardId),
     tx.receiptLink || '',
     tx.reconciled ? 'Yes' : 'No'
@@ -64,4 +64,3 @@ export function downloadCSV(csvContent: string, filename: string): void {
     document.body.removeChild(link);
   }
 }
-

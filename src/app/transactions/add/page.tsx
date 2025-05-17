@@ -24,21 +24,20 @@ export default function AddTransactionPage() {
       id: uuidv4(), 
       ...data,
       date: format(data.date, "yyyy-MM-dd"), 
-      reconciled: false, // New transactions default to not reconciled
-      // sourceType is already included from form data if schema has default
+      property: data.property, // Ensure property is included
+      reconciled: false, 
     };
 
     addTransactionToMockData(newTransactionData);
     console.log("New Transaction Added via addTransactionToMockData:", newTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
 
     toast({
       title: "Transaction Saved",
       description: `Transaction for ${data.vendor} of $${data.amount} has been saved.`,
     });
     setIsLoading(false);
-    // router.refresh(); // Removed this line
     router.push("/transactions"); 
   };
 

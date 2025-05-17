@@ -7,7 +7,7 @@ import { mockCategories as allCategories } from "./mock-data";
 const stringCategories = allCategories.filter(c => typeof c === 'string') as string[];
 
 // Ensure there's at least one category for the enum, or provide a fallback
-const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other"];
+const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other", "Appliances"];
 
 
 const categoryEnum = z.enum(categoriesForEnum);
@@ -22,7 +22,7 @@ export const transactionSchema = z.object({
   category: categoryEnum.or(z.string().min(1, {message: "Category is required."})), // Allows custom categories if not in enum
   investorId: z.string().min(1, { message: "Investor is required." }),
   investorName: z.string().optional(), // For display or internal use, not directly submitted
-  project: z.string().min(1, { message: "Project is required." }),
+  property: z.string().min(1, { message: "Property is required." }), // Renamed from project
   cardId: z.string().min(1, { message: "Card is required." }),
   receiptLink: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal("")),
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),

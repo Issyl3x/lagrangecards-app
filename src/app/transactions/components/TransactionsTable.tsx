@@ -19,11 +19,10 @@ import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, Clipb
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { 
   mockInvestors, 
-  mockProjects, 
+  mockProperties, // Renamed from mockProjects
   mockCards, 
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  // getMockTransactions // No longer needed here for direct fetching after prop change
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -35,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 interface TransactionsTableProps {
   transactions: Transaction[]; 
-  onTransactionUpdate: () => void; // Callback to notify parent of data change
+  onTransactionUpdate: () => void; 
 }
 
 type SortKey = keyof Transaction | "";
@@ -53,7 +52,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const { toast } = useToast();
 
   const [investorFilter, setInvestorFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
-  const [projectFilter, setProjectFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
+  const [propertyFilter, setPropertyFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE); // Renamed from projectFilter
   const [cardFilter, setCardFilter] = React.useState<string>(ALL_ITEMS_FILTER_VALUE);
   const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -63,7 +62,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
   const [columnVisibility, setColumnVisibility] = React.useState({
     investor: true,
-    project: true,
+    property: true, // Renamed from project
     cardUsed: true,
     reconciled: true,
     receiptLink: true,
@@ -71,24 +70,21 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   });
 
   const investors = mockInvestors;
-  const projects = mockProjects;
+  const properties = mockProperties; // Renamed from projects
   const cards: UserCard[] = mockCards;
 
   React.useEffect(() => {
-    // console.log("TransactionsTable: initialTransactions prop changed, updating local state.");
     setTransactionsData(initialTransactions);
-    // No need to setFilteredTransactions here, the next effect will handle it.
   }, [initialTransactions]);
 
   React.useEffect(() => {
-    // console.log("TransactionsTable: Filtering/sorting effect triggered. transactionsData length:", transactionsData.length);
-    let tempTransactions = [...transactionsData]; // Use the local transactionsData state
+    let tempTransactions = [...transactionsData]; 
 
     if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
     }
-    if (projectFilter && projectFilter !== ALL_ITEMS_FILTER_VALUE) {
-      tempTransactions = tempTransactions.filter(tx => tx.project === projectFilter);
+    if (propertyFilter && propertyFilter !== ALL_ITEMS_FILTER_VALUE) { // Renamed from projectFilter
+      tempTransactions = tempTransactions.filter(tx => tx.property === propertyFilter); // Renamed from project
     }
     if (cardFilter && cardFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.cardId === cardFilter);
@@ -134,9 +130,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         return sortOrder === "asc" ? comparison : -comparison;
       });
     }
-    // console.log("TransactionsTable: Setting filteredTransactions. Count:", tempTransactions.length);
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, projectFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]);
+  }, [investorFilter, propertyFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]); // Renamed projectFilter
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -177,7 +172,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       title: "Transaction Moved to Deleted",
       description: `Transaction with ID ${id} has been moved to deleted items.`,
     });
-    onTransactionUpdate(); // Notify parent to refresh its state
+    onTransactionUpdate(); 
   };
 
   const handleEdit = (id: string) => {
@@ -211,7 +206,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         title: "Reconciliation Status Updated",
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
       });
-      onTransactionUpdate(); // Notify parent to refresh its state
+      onTransactionUpdate(); 
     }
   };
 
@@ -226,7 +221,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       return;
     }
 
-    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProject: ${transaction.project}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`;
+    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`; // Renamed Project to Property
 
     try {
       await navigator.clipboard.writeText(snippet);
@@ -267,15 +262,15 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
             </SelectContent>
           </Select>
           <Select
-            value={projectFilter}
-            onValueChange={(value) => setProjectFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
+            value={propertyFilter} // Renamed from projectFilter
+            onValueChange={(value) => setPropertyFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)} // Renamed from projectFilter
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Project" />
+              <SelectValue placeholder="Filter by Property" /> 
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Projects</SelectItem>
-              {projects.map(proj => <SelectItem key={proj} value={proj}>{proj}</SelectItem>)}
+              <SelectItem value={ALL_ITEMS_FILTER_VALUE}>All Properties</SelectItem> 
+              {properties.map(prop => <SelectItem key={prop} value={prop}>{prop}</SelectItem>)} 
             </SelectContent>
           </Select>
           <Select
@@ -341,7 +336,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                     setColumnVisibility((prev) => ({ ...prev, [key]: Boolean(checked) }))
                   }
                 >
-                  {key.replace(/([A-Z])/g, ' $1')}
+                  {key.replace(/([A-Z])/g, ' $1')} 
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -357,7 +352,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
               <TableHead onClick={() => handleSort("amount")} className="text-right">Amount {renderSortIcon("amount")}</TableHead>
               <TableHead onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</TableHead>
               {columnVisibility.investor && <TableHead onClick={() => handleSort("investorId")}>Investor {renderSortIcon("investorId")}</TableHead>}
-              {columnVisibility.project && <TableHead onClick={() => handleSort("project")}>Project {renderSortIcon("project")}</TableHead>}
+              {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>} {/* Renamed from project */}
               {columnVisibility.cardUsed && <TableHead onClick={() => handleSort("cardId")}>Card Used {renderSortIcon("cardId")}</TableHead>}
               {columnVisibility.reconciled && <TableHead onClick={() => handleSort("reconciled")}>Reconciled {renderSortIcon("reconciled")}</TableHead>}
               {columnVisibility.receiptLink && <TableHead>Receipt</TableHead>}
@@ -376,7 +371,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                     <Badge variant="outline">{tx.category}</Badge>
                   </TableCell>
                   {columnVisibility.investor && <TableCell>{getInvestorName(tx.investorId)}</TableCell>}
-                  {columnVisibility.project && <TableCell>{tx.project}</TableCell>}
+                  {columnVisibility.property && <TableCell>{tx.property}</TableCell>} {/* Renamed from project */}
                   {columnVisibility.cardUsed && <TableCell>{getCardName(tx.cardId)}</TableCell>}
                   {columnVisibility.reconciled && (
                     <TableCell>

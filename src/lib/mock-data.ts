@@ -4,24 +4,19 @@ import { formatISO, subDays, subMonths } from 'date-fns';
 
 export const mockInvestors: Investor[] = [
   { id: 'investor1', name: 'Gualter', email: 'gualter@example.com' },
-  { id: 'investor2', name: 'Alice Smith', email: 'alice@example.com' },
-  { id: 'investor3', name: 'Bob Johnson', email: 'bob@example.com' },
   { id: 'investor4', name: 'Greg', email: 'greg@example.com' },
 ];
 
-export const mockProjects: string[] = ["Skyline Towers", "Oceanview Villas", "Mountain Retreat", "Downtown Lofts", "Suburban Homes"];
+export const mockProperties: string[] = ["Blue Haven", "Brick Haven", "Fountain Commons"]; // Renamed from mockProjects
 
 export const mockCards: Card[] = [
-  { id: 'card1', cardName: 'Gualter - Skyline - Card 1', investorId: 'investor1', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 5000, last4Digits: '1111' },
-  { id: 'card2', cardName: 'Gualter - Oceanview - Card 1', investorId: 'investor1', project: 'Oceanview Villas', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
-  { id: 'card3', cardName: 'Alice - Skyline - Card 1', investorId: 'investor2', project: 'Skyline Towers', isPersonal: false, spendLimitMonthly: 4000, last4Digits: '3333' },
-  { id: 'card4', cardName: 'Bob - Mountain - Card 1', investorId: 'investor3', project: 'Mountain Retreat', isPersonal: true, spendLimitMonthly: 1000, last4Digits: '4444' },
-  { id: 'card5', cardName: 'Alice - Personal - Card 1', investorId: 'investor2', project: 'N/A', isPersonal: true, last4Digits: '5555' },
+  { id: 'card1', cardName: 'Gualter - Blue Haven - Card 1', investorId: 'investor1', property: 'Blue Haven', isPersonal: false, spendLimitMonthly: 5000, last4Digits: '1111' },
+  { id: 'card2', cardName: 'Gualter - Brick Haven - Card 1', investorId: 'investor1', property: 'Brick Haven', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
   {
     id: 'card6',
-    cardName: 'Greg - Blue Haven Ink Visa 2627',
+    cardName: 'Greg - Fountain Commons - Visa 2627',
     investorId: 'investor4',
-    project: 'Skyline Towers',
+    property: 'Fountain Commons',
     isPersonal: false,
     last4Digits: '2627'
   },
@@ -43,9 +38,9 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Lumber for deck repair',
     amount: 250.75,
     category: 'Repairs',
-    cardId: 'card1',
+    cardId: 'card1', // Gualter
     investorId: 'investor1',
-    project: 'Skyline Towers',
+    property: 'Blue Haven', // Updated
     receiptLink: 'https://docs.google.com/receipt1',
     reconciled: true,
     sourceType: 'manual'
@@ -57,27 +52,14 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly electricity bill',
     amount: 120.00,
     category: 'Utilities',
-    cardId: 'card2',
+    cardId: 'card2', // Gualter
     investorId: 'investor1',
-    project: 'Oceanview Villas',
+    property: 'Brick Haven', // Updated
     receiptLink: '',
     reconciled: false,
     sourceType: 'OCR'
   },
-  {
-    id: 'txn3',
-    date: formatISO(subDays(today, 15), { representation: 'date' }),
-    vendor: 'Staples',
-    description: 'Office supplies',
-    amount: 45.50,
-    category: 'Supplies',
-    cardId: 'card3',
-    investorId: 'investor2',
-    project: 'Skyline Towers',
-    receiptLink: 'https://docs.google.com/receipt2',
-    reconciled: true,
-    sourceType: 'manual'
-  },
+  // Transactions for Alice (txn3, txn5) and Bob are removed.
   {
     id: 'txn4',
     date: formatISO(subDays(today, 2), { representation: 'date' }),
@@ -85,26 +67,12 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Paint and brushes',
     amount: 78.22,
     category: 'Repairs',
-    cardId: 'card1',
+    cardId: 'card1', // Gualter
     investorId: 'investor1',
-    project: 'Skyline Towers',
+    property: 'Blue Haven', // Updated
     receiptLink: '',
     reconciled: false,
     sourceType: 'OCR'
-  },
-  {
-    id: 'txn5',
-    date: formatISO(subDays(subMonths(today, 1), 5), { representation: 'date' }),
-    vendor: 'Best Buy',
-    description: 'New office monitor',
-    amount: 299.99,
-    category: 'Furnishings',
-    cardId: 'card3',
-    investorId: 'investor2',
-    project: 'Skyline Towers',
-    receiptLink: '',
-    reconciled: true,
-    sourceType: 'manual'
   },
    {
     id: 'txn6',
@@ -113,9 +81,9 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly gas bill',
     amount: 85.00,
     category: 'Utilities',
-    cardId: 'card2',
+    cardId: 'card2', // Gualter
     investorId: 'investor1',
-    project: 'Oceanview Villas',
+    property: 'Brick Haven', // Updated
     receiptLink: '',
     reconciled: true,
     sourceType: 'import'
@@ -127,13 +95,28 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly cleaning for common areas',
     amount: 300.00,
     category: 'Property Management',
-    cardId: 'card1',
+    cardId: 'card1', // Gualter
     investorId: 'investor1',
-    project: 'Skyline Towers',
+    property: 'Blue Haven', // Updated
     receiptLink: '',
     reconciled: true,
     sourceType: 'manual'
   },
+  // Example transaction for Greg
+  {
+    id: 'txn8',
+    date: formatISO(subDays(today, 7), { representation: 'date' }),
+    vendor: 'Office Depot',
+    description: 'Stationery for Fountain Commons',
+    amount: 55.90,
+    category: 'Supplies',
+    cardId: 'card6', // Greg
+    investorId: 'investor4',
+    property: 'Fountain Commons', // Updated
+    receiptLink: '',
+    reconciled: false,
+    sourceType: 'manual'
+  }
 ];
 
 let updatableDeletedTransactions: Transaction[] = [];

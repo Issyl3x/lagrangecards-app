@@ -9,10 +9,10 @@ export interface Card {
   id: string;
   cardName: string;
   investorId: string;
-  project: string;
+  property: string; // Renamed from project
   isPersonal: boolean;
   spendLimitMonthly?: number;
-  last4Digits?: string; // Added field for last 4 digits
+  last4Digits?: string;
 }
 
 export type TransactionCategory = 
@@ -28,6 +28,7 @@ export type TransactionCategory =
   | "Legal & Professional Fees"
   | "Furnishings"
   | "Landscaping"
+  | "Appliances" 
   | "Other";
 
 export interface Transaction {
@@ -39,7 +40,7 @@ export interface Transaction {
   category: TransactionCategory | string; // Allow string for flexibility or new categories
   cardId: string;
   investorId: string;
-  project: string;
+  property: string; // Renamed from project
   receiptLink?: string;
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
@@ -52,4 +53,3 @@ export interface ParsedReceiptData {
   amount: number;
   date: string; // YYYY-MM-DD
 }
-

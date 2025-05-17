@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { Transaction, Investor, Card as UserCard } from "@/lib/types";
-import { mockInvestors, mockProjects, mockCards, mockCategories } from "@/lib/mock-data";
+import { mockInvestors, mockProperties, mockCards, mockCategories } from "@/lib/mock-data"; // mockProperties
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
@@ -52,7 +52,6 @@ interface TransactionFormProps {
 export function TransactionForm({ initialData, onSubmit, isLoading }: TransactionFormProps) {
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    // Default values are set here and then potentially overridden by the useEffect below if initialData is present
     defaultValues: {
       date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
       vendor: initialData?.vendor || "",
@@ -61,19 +60,18 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       category: initialData?.category || "",
       cardId: initialData?.cardId || "",
       investorId: initialData?.investorId || "",
-      investorName: "", // This will be populated by useEffect
-      project: initialData?.project || "",
+      investorName: "", 
+      property: initialData?.property || "", // Renamed from project
       receiptLink: initialData?.receiptLink || "",
       sourceType: initialData?.sourceType || 'manual',
     },
   });
 
   const [investors] = React.useState<Investor[]>(mockInvestors);
-  const [projects] = React.useState<string[]>(mockProjects);
+  const [properties] = React.useState<string[]>(mockProperties); // Renamed from projects
   const [cards, setCards] = React.useState<UserCard[]>(mockCards);
   const [categories] = React.useState<(string)[]>(mockCategories);
 
-  // Effect to reset form when initialData prop changes
   React.useEffect(() => {
     if (initialData) {
       const investorName = initialData.investorId 
@@ -89,7 +87,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         cardId: initialData.cardId || "",
         investorId: initialData.investorId || "",
         investorName: investorName,
-        project: initialData.project || "",
+        property: initialData.property || "", // Renamed from project
         receiptLink: initialData.receiptLink || "",
         sourceType: initialData.sourceType || 'manual',
       });
@@ -100,28 +98,26 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         setCards(mockCards);
       }
     }
-  }, [initialData, form, investors]); // form.reset is stable, so effectively [initialData, investors]
+  }, [initialData, form, investors]); 
 
   const selectedInvestorId = form.watch("investorId");
 
-  // Effect to update investorName and filter cards when investorId form field changes
   React.useEffect(() => {
     if (selectedInvestorId) {
       const investor = investors.find(inv => inv.id === selectedInvestorId);
       if (investor) form.setValue("investorName", investor.name);
       
-      // Filter cards and check if current cardId is valid for the new investor
       const filteredCards = mockCards.filter(card => card.investorId === selectedInvestorId);
       setCards(filteredCards);
       
       const currentCardId = form.getValues("cardId");
       if (currentCardId && !filteredCards.find(card => card.id === currentCardId)) {
-        form.setValue("cardId", ""); // Reset cardId if it's no longer valid
+        form.setValue("cardId", ""); 
       }
 
     } else {
       form.setValue("investorName", "");
-      setCards(mockCards); // Show all cards if no investor selected
+      setCards(mockCards); 
     }
   }, [selectedInvestorId, form, investors]);
 
@@ -310,19 +306,19 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           
           <FormField
             control={form.control}
-            name="project"
+            name="property" // Renamed from project
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Project</FormLabel>
+                <FormLabel>Property</FormLabel> 
                 <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a project" />
+                      <SelectValue placeholder="Select a property" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {projects.map(project => (
-                      <SelectItem key={project} value={project}>{project}</SelectItem>
+                    {properties.map(property => ( // Renamed from projects
+                      <SelectItem key={property} value={property}>{property}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -379,4 +375,3 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     </Form>
   );
 }
-
