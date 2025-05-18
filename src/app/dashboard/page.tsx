@@ -5,7 +5,7 @@ import * as React from "react";
 import { TotalSpendCard } from "./components/TotalSpendCard";
 import { SpendByCategoryChart } from "./components/SpendByCategoryChart";
 import { MonthlySpendChart } from "./components/MonthlySpendChart";
-import { AlertsList } from "./components/AlertsList";
+// import { AlertsList } from "./components/AlertsList"; // Removed AlertsList import
 import { getMockTransactions, getMockCards } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -49,11 +49,14 @@ export default function DashboardPage() {
         </div>
       </div>
       
+      {/* Alerts section removed */}
+      {/* 
       <Separator />
       
       <div>
         <AlertsList transactions={transactions} cards={cards} />
-      </div>
+      </div> 
+      */}
     </div>
   );
 }
