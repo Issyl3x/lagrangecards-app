@@ -11,7 +11,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { PropertySpendSummary } from "./components/PropertySpendSummary";
 import { RecentTransactionsList } from "./components/RecentTransactionsList";
-import { CreditCardPaymentsList } from "./components/CreditCardPaymentsList"; // Import new component
+import { CreditCardPaymentsList } from "./components/CreditCardPaymentsList"; 
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
@@ -37,15 +37,15 @@ export default function DashboardPage() {
       </div>
       
       <Separator /> 
+      
+      <PropertySpendSummary transactions={transactions} />
+      
+      <Separator />
 
       <div>
         <RecentTransactionsList transactions={transactions} itemsToShow={5} />
       </div>
 
-      <Separator />
-      
-      <PropertySpendSummary transactions={transactions} />
-      
       <Separator />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">

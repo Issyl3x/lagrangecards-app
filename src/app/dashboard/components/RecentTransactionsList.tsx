@@ -26,11 +26,11 @@ export function RecentTransactionsList({ transactions, itemsToShow = 5 }: Recent
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Payments</CardTitle>
+          <CardTitle>Recent Transactions</CardTitle>
           <CardDescription>No transactions recorded yet.</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[150px]">
-          <p className="text-muted-foreground">No payments to display</p>
+          <p className="text-muted-foreground">No transactions to display</p>
         </CardContent>
       </Card>
     );
@@ -40,11 +40,11 @@ export function RecentTransactionsList({ transactions, itemsToShow = 5 }: Recent
      return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Payments</CardTitle>
-          <CardDescription>No transactions match the criteria for recent payments (this should not normally happen if transactions exist).</CardDescription>
+          <CardTitle>Recent Transactions</CardTitle>
+          <CardDescription>No transactions match the criteria for recent transactions (this should not normally happen if transactions exist).</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[150px]">
-          <p className="text-muted-foreground">No recent payments to display</p>
+          <p className="text-muted-foreground">No recent transactions to display</p>
         </CardContent>
       </Card>
     );
@@ -54,7 +54,7 @@ export function RecentTransactionsList({ transactions, itemsToShow = 5 }: Recent
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Recent Payments</CardTitle>
+          <CardTitle>Recent Transactions</CardTitle>
           <CardDescription>A quick look at your latest transactions.</CardDescription>
         </div>
         <Button asChild variant="outline" size="sm">
@@ -87,3 +87,4 @@ export function RecentTransactionsList({ transactions, itemsToShow = 5 }: Recent
     </Card>
   );
 }
+
