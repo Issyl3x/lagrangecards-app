@@ -14,30 +14,31 @@ import {
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from 'react';
-import { usePathname } from 'next/navigation'; // Import usePathname
+import { usePathname } from 'next/navigation'; 
 
-// Placeholder for page title
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/dashboard")) return "Dashboard";
   if (pathname.startsWith("/transactions/add")) return "Add Transaction";
   if (pathname.startsWith("/transactions/ocr")) return "Upload Receipt (OCR)";
-  if (pathname.startsWith("/transactions/edit")) return "Edit Transaction"; // Added for completeness
-  if (pathname.startsWith("/transactions/deleted")) return "Deleted Items"; // Added for completeness
+  if (pathname.startsWith("/transactions/edit")) return "Edit Transaction";
+  if (pathname.startsWith("/transactions/deleted")) return "Deleted Items";
   if (pathname.startsWith("/transactions")) return "View Transactions";
   if (pathname.startsWith("/export")) return "Export Data";
-  if (pathname.startsWith("/settings")) return "Settings"; // Added Settings
+  if (pathname.startsWith("/investors")) return "Manage Investors";
+  if (pathname.startsWith("/properties")) return "Manage Properties";
+  if (pathname.startsWith("/cards")) return "Manage Cards";
   return "EstateFlow";
 };
 
 export function AppHeader() {
   const { isMobile } = useSidebar(); 
   const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' };
-  const pathname = usePathname(); // Get current pathname
+  const pathname = usePathname(); 
   const [currentPageTitle, setCurrentPageTitle] = React.useState("EstateFlow");
 
   React.useEffect(() => {
     setCurrentPageTitle(getPageTitle(pathname));
-  }, [pathname]); // Update title when pathname changes
+  }, [pathname]); 
 
 
   return (

@@ -16,11 +16,11 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Settings, Building2, Trash2 } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Users, Building2, CreditCard, Trash2 } from 'lucide-react'; // Added Users, Building2, CreditCard
 import { AppHeader } from '@/components/layout/AppHeader';
 import { EstateFlowLogo } from '@/components/icons/EstateFlowLogo';
 import { cn } from '@/lib/utils';
-import ErrorBoundary from '@/components/ErrorBoundary'; // Import ErrorBoundary
+import ErrorBoundary from '@/components/ErrorBoundary'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,11 +39,17 @@ export const metadata: Metadata = {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { type: 'separator' as const },
   { href: '/transactions/add', label: 'Add Transaction', icon: PlusCircle },
   { href: '/transactions', label: 'View Transactions', icon: List },
   { href: '/transactions/ocr', label: 'Upload Receipt', icon: ScanLine },
-  { href: '/export', label: 'Export Data', icon: FileOutput },
   { href: '/transactions/deleted', label: 'Deleted Items', icon: Trash2 },
+  { type: 'separator' as const },
+  { href: '/export', label: 'Export Data', icon: FileOutput },
+  { type: 'separator' as const },
+  { href: '/investors', label: 'Investors', icon: Users },
+  { href: '/properties', label: 'Properties', icon: Building2 },
+  { href: '/cards', label: 'Cards', icon: CreditCard },
 ];
 
 export default function RootLayout({
@@ -73,7 +79,9 @@ export default function RootLayout({
                 </SidebarHeader>
                 <SidebarContent className="flex-1">
                   <SidebarMenu className="p-2">
-                    {navItems.map((item) => (
+                    {navItems.map((item, index) => (
+                      item.type === 'separator' ? 
+                      <div key={`sep-${index}`} className="my-2 border-t border-sidebar-border group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-3/4" /> :
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                           asChild
@@ -90,23 +98,7 @@ export default function RootLayout({
                     ))}
                   </SidebarMenu>
                 </SidebarContent>
-                <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
-                   <SidebarMenu>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          variant="ghost"
-                          className="w-full justify-start"
-                          tooltip={{ children: "Settings", className: "ml-2"}}
-                        >
-                          <Link href="/settings">
-                            <Settings className="h-5 w-5" />
-                            <span>Settings</span>
-                          </Link>
-                        </SidebarMenuButton>
-                     </SidebarMenuItem>
-                   </SidebarMenu>
-                </SidebarFooter>
+                {/* Footer can be added back if general app settings are needed later */}
               </Sidebar>
               <div className="flex flex-1 flex-col sm:gap-4 sm:py-4">
                 <AppHeader />
