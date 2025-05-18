@@ -14,12 +14,11 @@ import { addInvestor, getMockInvestors } from "@/lib/mock-data";
 import type { Investor } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, UserCircle2 } from "lucide-react";
 
-// Mock current user for permission check
 const mockCurrentUser = {
-  id: 'user1', // Can be any ID for simulation
-  isAdmin: true,  // Set to false to show restricted view
+  id: 'user1', 
+  isAdmin: true,  
 };
 
 function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
@@ -120,11 +119,14 @@ export default function InvestorsPage() {
         </CardHeader>
         <CardContent>
           {investors.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {investors.map(investor => (
-                <li key={investor.id} className="p-2 border rounded-md text-sm">
-                  <span className="font-medium">{investor.name}</span>
-                  {investor.email && <span className="text-muted-foreground ml-2">({investor.email})</span>}
+                <li key={investor.id} className="flex items-center p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
+                  <UserCircle2 className="h-6 w-6 mr-3 text-primary" />
+                  <div>
+                    <span className="font-medium text-card-foreground">{investor.name}</span>
+                    {investor.email && <span className="block text-xs text-muted-foreground">{investor.email}</span>}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -136,4 +138,3 @@ export default function InvestorsPage() {
     </div>
   );
 }
-

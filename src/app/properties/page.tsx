@@ -13,12 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { addProperty, getMockProperties } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Home } from "lucide-react";
 
-// Mock current user for permission check
 const mockCurrentUser = {
-  id: 'user1', // Can be any ID for simulation
-  isAdmin: true,  // Set to false to show restricted view
+  id: 'user1', 
+  isAdmin: true,  
 };
 
 function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
@@ -108,10 +107,11 @@ export default function PropertiesPage() {
         </CardHeader>
         <CardContent>
           {properties.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {properties.map(property => (
-                <li key={property} className="p-2 border rounded-md text-sm font-medium">
-                  {property}
+                <li key={property} className="flex items-center p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
+                  <Home className="h-6 w-6 mr-3 text-primary" />
+                  <span className="font-medium text-card-foreground">{property}</span>
                 </li>
               ))}
             </ul>
@@ -123,4 +123,3 @@ export default function PropertiesPage() {
     </div>
   );
 }
-

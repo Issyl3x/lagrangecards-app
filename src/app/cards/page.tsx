@@ -12,9 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, Edit3 } from "lucide-react";
 import Link from "next/link";
-import { CardForm } from "./components/CardForm"; // Import the reusable form
+import { CardForm } from "./components/CardForm";
 
-// Mock current user for permission check
 const mockCurrentUser = {
   id: 'user1',
   isAdmin: true,
@@ -44,7 +43,7 @@ export default function CardsPage() {
     try {
       addCard(data);
       toast({ title: "Card Added", description: `${data.cardName} has been added.` });
-      refreshData(); // Refresh list after adding
+      refreshData(); 
     } catch (error) {
       toast({ title: "Error", description: "Failed to add card.", variant: "destructive" });
       console.error("Failed to add card:", error);
@@ -88,12 +87,12 @@ export default function CardsPage() {
         </CardHeader>
         <CardContent>
           {cards.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {cards.map(card => (
-                <li key={card.id} className="p-4 border rounded-md shadow-sm">
+                <li key={card.id} className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold text-lg">{card.cardName}</p>
+                      <p className="font-semibold text-lg text-primary">{card.cardName}</p>
                       <p className="text-sm text-muted-foreground">Property: {card.property}</p>
                       <p className="text-sm text-muted-foreground">Investor: {getInvestorName(card.investorId)}</p>
                       {card.last4Digits && <p  className="text-sm text-muted-foreground">Last 4: **** {card.last4Digits}</p>}
