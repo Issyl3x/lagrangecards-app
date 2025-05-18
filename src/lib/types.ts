@@ -46,6 +46,7 @@ export interface Transaction {
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
   statementMatchId?: string;
+  isDuplicateConfirmed?: boolean; // Added to track user-confirmed duplicates
 }
 
 // For OCR Output (matches ocrReceiptParser output)
@@ -83,3 +84,4 @@ export interface AllDataBackup {
   timestamp: string;
   version: string;
 }
+

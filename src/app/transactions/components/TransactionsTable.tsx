@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon, FileText } from "lucide-react"; // Added AlertTriangle
+import { AlertTriangle, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon, FileText, CheckSquare } from "lucide-react"; // Added AlertTriangle, CheckSquare
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Transaction, Card as UserCard, Investor } from "@/lib/types";
 import { 
@@ -85,17 +85,19 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   }, []); 
 
   React.useEffect(() => {
-    setFilteredTransactions(initialTransactions);
-
     // Duplicate detection logic
     if (!initialTransactions || initialTransactions.length === 0) {
       setDuplicateTransactionIds(new Set());
+      setFilteredTransactions(initialTransactions || []);
       return;
     }
 
     const signatures = new Map<string, string[]>(); // Map signature to array of transaction IDs
     initialTransactions.forEach(tx => {
-      // Define signature: date-vendor(lowercase)-amount
+      // Only consider transactions not already confirmed as duplicates for new flagging
+      if (tx.isDuplicateConfirmed) {
+        return;
+      }
       const signature = `${tx.date}-${tx.vendor.toLowerCase()}-${tx.amount.toFixed(2)}`;
       if (!signatures.has(signature)) {
         signatures.set(signature, []);
@@ -104,12 +106,13 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     });
 
     const newDuplicateIds = new Set<string>();
-    signatures.forEach((ids) => {
-      if (ids.length > 1) { // If more than one transaction has this signature
-        ids.forEach(id => newDuplicateIds.add(id));
+    signatures.forEach((idsInGroup) => {
+      if (idsInGroup.length > 1) { // If more than one transaction has this signature (and they aren't confirmed)
+        idsInGroup.forEach(id => newDuplicateIds.add(id));
       }
     });
     setDuplicateTransactionIds(newDuplicateIds);
+    setFilteredTransactions(initialTransactions); // Update filtered transactions as well
 
   }, [initialTransactions]);
 
@@ -206,7 +209,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     deleteTransactionFromMockData(id); 
     toast({
       title: "Transaction Moved to Deleted",
-      description: `Transaction with ID ${id} has been moved to deleted items.`,
+      description: `Transaction has been moved to deleted items.`,
     });
     onTransactionUpdate(); 
   };
@@ -241,6 +244,26 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
       });
       onTransactionUpdate(); 
+    }
+  };
+  
+  const handleConfirmDuplicate = (transactionId: string) => {
+    if (!mockCurrentUser.isAdmin) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to confirm transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const transactionToConfirm = initialTransactions.find(tx => tx.id === transactionId);
+    if (transactionToConfirm) {
+      updateTransactionInMockData({ ...transactionToConfirm, isDuplicateConfirmed: true });
+      onTransactionUpdate(); 
+      toast({
+        title: "Transaction Confirmed",
+        description: "This transaction will no longer be flagged as a potential duplicate.",
+      });
     }
   };
 
@@ -399,22 +422,29 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
               filteredTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>{format(parseISO(tx.date), "MMM dd, yyyy")}</TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium flex items-center">
                     {tx.vendor}
-                    {duplicateTransactionIds.has(tx.id) && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span // Using span to avoid TooltipTrigger warning with non-button child
-                           className="inline-block ml-2"
-                           aria-label="Potential duplicate transaction"
-                          >
-                             <AlertTriangle className="h-4 w-4 text-destructive inline" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Potential duplicate transaction.</p>
-                        </TooltipContent>
-                      </Tooltip>
+                    {duplicateTransactionIds.has(tx.id) && !tx.isDuplicateConfirmed && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block ml-2" aria-label="Potential duplicate transaction">
+                               <AlertTriangle className="h-4 w-4 text-destructive inline" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Potential duplicate transaction.</p></TooltipContent>
+                        </Tooltip>
+                        {mockCurrentUser.isAdmin && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => handleConfirmDuplicate(tx.id)} className="ml-1">
+                                        <CheckSquare className="h-4 w-4 text-green-600" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Confirm this transaction (remove duplicate flag)</p></TooltipContent>
+                            </Tooltip>
+                        )}
+                      </>
                     )}
                   </TableCell>
                   <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
