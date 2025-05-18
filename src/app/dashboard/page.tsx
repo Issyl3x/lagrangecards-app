@@ -5,12 +5,12 @@ import * as React from "react";
 import { TotalSpendCard } from "./components/TotalSpendCard";
 import { SpendByCategoryChart } from "./components/SpendByCategoryChart";
 import { MonthlySpendChart } from "./components/MonthlySpendChart";
-// import { AlertsList } from "./components/AlertsList"; // Removed AlertsList import
 import { getMockTransactions, getMockCards } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { PropertySpendSummary } from "./components/PropertySpendSummary";
+import { RecentTransactionsList } from "./components/RecentTransactionsList"; // Import new component
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
@@ -20,14 +20,13 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
 
   const fetchDashboardData = React.useCallback(() => {
-    // console.log("DashboardPage: Fetching dashboard data");
     setTransactions(getMockTransactions());
     setCards(getMockCards());
   }, []);
 
   React.useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData, pathname, searchParams]); // Re-fetch on navigation
+  }, [fetchDashboardData, pathname, searchParams]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,14 +48,11 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* Alerts section removed */}
-      {/* 
       <Separator />
       
       <div>
-        <AlertsList transactions={transactions} cards={cards} />
-      </div> 
-      */}
+        <RecentTransactionsList transactions={transactions} itemsToShow={5} />
+      </div>
     </div>
   );
 }
