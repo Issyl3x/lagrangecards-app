@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown, UploadCloud } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -46,6 +46,7 @@ import {
 import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
+import Image from "next/image";
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
 
@@ -68,7 +69,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       investorId: initialData?.investorId || "",
       investorName: "",
       property: initialData?.property || "",
-      receiptSnippet: initialData?.receiptSnippet || "", // Changed from receiptLink
+      receiptImageURI: initialData?.receiptImageURI || "", 
       sourceType: initialData?.sourceType || 'manual',
     },
   });
@@ -80,6 +81,9 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
   const [isVendorPopoverOpen, setIsVendorPopoverOpen] = React.useState(false);
   const [uniqueVendors, setUniqueVendors] = React.useState<string[]>([]);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(initialData?.receiptImageURI || null);
+  const [fileName, setFileName] = React.useState<string | null>(null);
+
 
   React.useEffect(() => {
     setInvestors(getMockInvestors());
@@ -109,10 +113,12 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         investorId: initialData.investorId || "",
         investorName: investorName,
         property: initialData.property || "",
-        receiptSnippet: initialData.receiptSnippet || "", // Changed from receiptLink
+        receiptImageURI: initialData.receiptImageURI || "",
         sourceType: initialData.sourceType || 'manual',
       };
       form.reset(resetValues);
+      setImagePreview(initialData.receiptImageURI || null);
+      setFileName(null); // Reset filename on initial data load
 
       if (initialData.investorId) {
         setCards(getMockCards().filter(card => card.investorId === initialData.investorId));
@@ -155,6 +161,24 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   function handleSubmit(data: TransactionFormValues) {
     onSubmit(data);
   }
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUri = reader.result as string;
+        setImagePreview(dataUri);
+        form.setValue("receiptImageURI", dataUri, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFileName(null);
+      setImagePreview(null);
+      form.setValue("receiptImageURI", "", { shouldValidate: true });
+    }
+  };
 
   return (
     <Form {...form}>
@@ -468,14 +492,32 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
         <FormField
           control={form.control}
-          name="receiptSnippet"
-          render={({ field }) => (
+          name="receiptImageURI"
+          render={({ field }) => ( // field prop is not directly used for input type file but for form state
             <FormItem>
-              <FormLabel>Receipt Snippet (Optional)</FormLabel>
+              <FormLabel>Receipt Image (Optional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Enter a short note or key details from the receipt..." {...field} />
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileChange}
+                  className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
               </FormControl>
-              <FormDescription>A brief text snippet related to the receipt.</FormDescription>
+              {fileName && <p className="text-sm text-muted-foreground mt-1">Selected file: {fileName}</p>}
+              {imagePreview && (
+                <div className="mt-2 border rounded-md p-2 max-w-xs">
+                  <Image 
+                    src={imagePreview} 
+                    alt="Receipt preview" 
+                    width={200} 
+                    height={200} 
+                    className="object-contain rounded-md" 
+                    data-ai-hint="receipt image"
+                  />
+                </div>
+              )}
+              <FormDescription>Upload an image of the receipt (PNG, JPG, WEBP).</FormDescription>
               <FormMessage />
             </FormItem>
           )}

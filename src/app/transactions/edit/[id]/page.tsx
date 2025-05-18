@@ -42,7 +42,7 @@ export default function EditTransactionPage() {
 
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("Receipt snippet submitted from form:", data.receiptSnippet); 
+    console.log("Receipt Image URI submitted from form:", data.receiptImageURI ? data.receiptImageURI.substring(0,50) + "..." : "empty"); 
 
     const currentTransaction = getMockTransactions().find(tx => tx.id === transactionId);
 
@@ -66,11 +66,11 @@ export default function EditTransactionPage() {
         investorId: data.investorId,
         property: data.property, 
         cardId: data.cardId,
-        receiptSnippet: data.receiptSnippet || "", // Changed from receiptLink
+        receiptImageURI: data.receiptImageURI || "",
     };
     
     updateTransactionInMockData(updatedTransactionData);
-    console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", updatedTransactionData);
+    console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", {...updatedTransactionData, receiptImageURI: updatedTransactionData.receiptImageURI ? updatedTransactionData.receiptImageURI.substring(0,50) + "..." : "empty" });
 
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     toast({
@@ -78,6 +78,7 @@ export default function EditTransactionPage() {
       description: `Transaction for ${updatedTransactionData.vendor} of $${updatedTransactionData.amount} has been updated.`,
     });
     setIsLoading(false);
+    // router.refresh(); // Removed to rely on ViewTransactionsPage useEffect
     router.push("/transactions"); 
   };
 

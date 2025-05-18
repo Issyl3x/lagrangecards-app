@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react"; // Changed ExternalLink to FileText
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip imports
+import { FileText, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { 
   getMockInvestors, 
@@ -33,6 +33,7 @@ import type { DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface TransactionsTableProps {
   transactions: Transaction[]; 
@@ -48,7 +49,6 @@ const mockCurrentUser = {
 };
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
-  const [transactionsData, setTransactionsData] = React.useState<Transaction[]>(initialTransactions);
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
   const router = useRouter();
   const { toast } = useToast();
@@ -67,7 +67,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     property: true,
     cardUsed: true,
     reconciled: true,
-    receiptSnippet: true, // Changed from receiptLink
+    receiptImageURI: true, 
     sourceType: false,
   });
 
@@ -82,11 +82,11 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   }, []); 
 
   React.useEffect(() => {
-    setTransactionsData(initialTransactions);
+    setFilteredTransactions(initialTransactions);
   }, [initialTransactions]);
 
   React.useEffect(() => {
-    let tempTransactions = [...transactionsData]; 
+    let tempTransactions = [...initialTransactions]; 
 
     if (investorFilter && investorFilter !== ALL_ITEMS_FILTER_VALUE) {
       tempTransactions = tempTransactions.filter(tx => tx.investorId === investorFilter);
@@ -139,7 +139,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
     }
     setFilteredTransactions(tempTransactions);
-  }, [investorFilter, propertyFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, transactionsData]);
+  }, [investorFilter, propertyFilter, cardFilter, dateRangeFilter, searchTerm, sortKey, sortOrder, initialTransactions]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -174,7 +174,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-
     deleteTransactionFromMockData(id); 
     toast({
       title: "Transaction Moved to Deleted",
@@ -204,12 +203,10 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-
     const transactionToUpdate = getMockTransactions().find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
       updateTransactionInMockData(updatedTransaction); 
-      
       toast({
         title: "Reconciliation Status Updated",
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Reconciled" : "Not Reconciled"}.`,
@@ -218,8 +215,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     }
   };
 
-  const handleCopySnippet = async (id: string) => {
-    const transaction = transactionsData.find(tx => tx.id === id);
+  const handleCopyDetails = async (id: string) => {
+    const transaction = initialTransactions.find(tx => tx.id === id);
     if (!transaction) {
       toast({
         title: "Error",
@@ -228,17 +225,15 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-
-    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptSnippet ? `\nSnippet: ${transaction.receiptSnippet}` : ''}`;
-
+    const details = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptImageURI ? `\nReceipt Image Attached` : ''}`;
     try {
-      await navigator.clipboard.writeText(snippet);
+      await navigator.clipboard.writeText(details);
       toast({
         title: "Copied to Clipboard",
         description: "Transaction details copied successfully.",
       });
     } catch (err) {
-      console.error("Failed to copy snippet: ", err);
+      console.error("Failed to copy details: ", err);
       toast({
         title: "Copy Failed",
         description: "Could not copy details to clipboard.",
@@ -345,7 +340,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                     setColumnVisibility((prev) => ({ ...prev, [key]: Boolean(checked) }))
                   }
                 >
-                  {key.replace(/([A-Z])/g, ' $1')} 
+                  {key.replace(/([A-Z])/g, ' $1').replace('URI', ' URI')} 
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -364,7 +359,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
               {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>}
               {columnVisibility.cardUsed && <TableHead onClick={() => handleSort("cardId")}>Card Used {renderSortIcon("cardId")}</TableHead>}
               {columnVisibility.reconciled && <TableHead onClick={() => handleSort("reconciled")}>Reconciled {renderSortIcon("reconciled")}</TableHead>}
-              {columnVisibility.receiptSnippet && <TableHead>Snippet</TableHead>}
+              {columnVisibility.receiptImageURI && <TableHead>Receipt</TableHead>}
               {columnVisibility.sourceType && <TableHead onClick={() => handleSort("sourceType")}>Source {renderSortIcon("sourceType")}</TableHead>}
               <TableHead>Actions</TableHead>
             </TableRow>{/* End Table Header Row */}
@@ -388,7 +383,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                         variant={tx.reconciled ? "default" : "secondary"} 
                         className={cn(
                           "cursor-pointer",
-                          tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent"
+                          mockCurrentUser.isAdmin ? (tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent") : "",
+                          !mockCurrentUser.isAdmin && "cursor-not-allowed opacity-70"
                         )}
                         onClick={() => mockCurrentUser.isAdmin && handleToggleReconciled(tx.id)}
                         title={mockCurrentUser.isAdmin ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
@@ -397,17 +393,24 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                       </Badge>
                     </TableCell>
                   )}
-                  {columnVisibility.receiptSnippet && (
+                  {columnVisibility.receiptImageURI && (
                     <TableCell>
-                      {tx.receiptSnippet ? (
+                      {tx.receiptImageURI ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <FileText className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="cursor-default">
+                              <ImageIcon className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent side="top" align="center" className="max-w-xs break-words">
-                            <p className="text-sm whitespace-pre-wrap">{tx.receiptSnippet}</p>
+                          <TooltipContent side="top" align="center" className="max-w-xs p-0 border-0 bg-transparent shadow-xl">
+                             <Image 
+                                src={tx.receiptImageURI} 
+                                alt="Receipt" 
+                                width={200} 
+                                height={200} 
+                                className="rounded-md object-contain"
+                                data-ai-hint="receipt image"
+                              />
                           </TooltipContent>
                         </Tooltip>
                       ) : (
@@ -418,7 +421,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                   {columnVisibility.sourceType && <TableCell>{tx.sourceType.toUpperCase()}</TableCell>}
                   <TableCell>
                     <div className="flex space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleCopySnippet(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleCopyDetails(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
                         {mockCurrentUser.isAdmin && (
                           <>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>

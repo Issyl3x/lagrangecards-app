@@ -41,7 +41,7 @@ export interface Transaction {
   cardId: string;
   investorId: string;
   property: string;
-  receiptSnippet?: string; // Changed from receiptLink
+  receiptImageURI?: string; // Changed from receiptSnippet to store image Data URI
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
   statementMatchId?: string;

@@ -42,7 +42,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptSnippet: 'Receipt #12345, SKU 98765 (Lumber 2x4x8)',
+    receiptImageURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // Placeholder 1x1 transparent png
     reconciled: true,
     sourceType: 'manual'
   },
@@ -56,7 +56,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
-    receiptSnippet: '',
+    receiptImageURI: '',
     reconciled: false,
     sourceType: 'OCR'
   },
@@ -70,7 +70,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptSnippet: 'Invoice: INV-007, Paint (Blue), Brushes (Assorted)',
+    receiptImageURI: '', // Example of no image
     reconciled: false,
     sourceType: 'OCR'
   },
@@ -84,7 +84,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
-    receiptSnippet: '',
+    receiptImageURI: '',
     reconciled: true,
     sourceType: 'import'
   },
@@ -98,7 +98,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptSnippet: '',
+    receiptImageURI: '',
     reconciled: true,
     sourceType: 'manual'
   },
@@ -112,7 +112,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card6', 
     investorId: 'investor4',
     property: 'Fountain Commons',
-    receiptSnippet: 'Pens, Paper, Order #99887',
+    receiptImageURI: '',
     reconciled: false,
     sourceType: 'manual'
   }

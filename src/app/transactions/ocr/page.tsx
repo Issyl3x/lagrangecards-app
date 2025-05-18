@@ -7,7 +7,7 @@ import { TransactionForm, type TransactionFormValues } from "../components/Trans
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ParsedReceiptData, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns"; 
+import { format, parseISO } from "date-fns"; 
 import { Button } from "@/components/ui/button";
 import { ClipboardCopy } from "lucide-react";
 import { addTransactionToMockData } from "@/lib/mock-data"; 
@@ -26,13 +26,30 @@ export default function OcrTransactionPage() {
       description: `Vendor: ${data.vendor}, Amount: $${data.amount.toFixed(2)}, Date: ${data.date}`,
     });
     
+    // Attempt to parse the date string from OCR (YYYY-MM-DD)
+    let parsedDate;
+    try {
+        parsedDate = parseISO(data.date); // data.date should be YYYY-MM-DD
+        if (isNaN(parsedDate.getTime())) { // Check if parseISO returned a valid date
+            throw new Error("Invalid date format from OCR");
+        }
+    } catch (e) {
+        console.error("Error parsing date from OCR, defaulting to today:", e);
+        parsedDate = new Date(); 
+        toast({
+            title: "Date Parsing Warning",
+            description: "Could not parse date from receipt, defaulting to today. Please verify.",
+            variant: "default" // Using "default" as variant "warning" is not standard ShadCN
+        });
+    }
+    
     const initialTransactionData: Partial<Transaction> = {
         vendor: data.vendor,
         amount: data.amount,
-        date: data.date, 
+        date: format(parsedDate, "yyyy-MM-dd"), // Store as ISO string
         sourceType: 'OCR',
         reconciled: false, 
-        receiptSnippet: "", // Initialize receiptSnippet
+        receiptImageURI: "", // Initialize receiptImageURI - user can upload separately if desired
     };
     setParsedDataForForm(initialTransactionData);
     setIsParsingOrSaving(false); 
@@ -46,7 +63,7 @@ export default function OcrTransactionPage() {
       ...formData,
       date: format(formData.date, "yyyy-MM-dd"), 
       reconciled: false, 
-      receiptSnippet: formData.receiptSnippet || "", // Ensure receiptSnippet is included
+      receiptImageURI: formData.receiptImageURI || "", 
     };
 
     addTransactionToMockData(newTransactionData);
@@ -60,7 +77,6 @@ export default function OcrTransactionPage() {
     });
     setParsedDataForForm(null); 
     setIsParsingOrSaving(false);
-    router.refresh(); 
     router.push("/transactions"); 
   };
 
@@ -73,8 +89,8 @@ export default function OcrTransactionPage() {
       });
       return;
     }
-
-    const snippet = `Parsed Receipt Details:\nVendor: ${parsedDataForForm.vendor}\nAmount: $${parsedDataForForm.amount.toFixed(2)}\nDate: ${parsedDataForForm.date}`;
+    const dateToDisplay = parsedDataForForm.date ? format(parseISO(parsedDataForForm.date), "yyyy-MM-dd") : "N/A";
+    const snippet = `Parsed Receipt Details:\nVendor: ${parsedDataForForm.vendor}\nAmount: $${parsedDataForForm.amount.toFixed(2)}\nDate: ${dateToDisplay}`;
 
     try {
       await navigator.clipboard.writeText(snippet);
@@ -115,7 +131,7 @@ export default function OcrTransactionPage() {
               <div>
                 <CardTitle>Review and Save Transaction</CardTitle>
                 <CardDescription>
-                  Verify the extracted details and complete any missing fields.
+                  Verify the extracted details and complete any missing fields. You can upload the receipt image below if desired.
                 </CardDescription>
               </div>
               <Button variant="outline" onClick={handleCopyParsedSnippet} className="w-full sm:w-auto mt-2 sm:mt-0">

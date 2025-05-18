@@ -1,5 +1,5 @@
 
-import type { Transaction, Card as UserCard } from './types'; 
+import type { Transaction } from './types'; 
 import { getMockInvestors, getMockCards } from './mock-data'; 
 import { format, parseISO } from 'date-fns';
 
@@ -22,7 +22,7 @@ export function convertToCSV(transactions: Transaction[]): string {
 
   const headers = [
     "Date", "Vendor", "Description", "Amount", "Category", 
-    "Investor", "Property", "Card Used", "Receipt Snippet", "Reconciled (Yes/No)" // Changed header
+    "Investor", "Property", "Card Used", "Receipt Image URI", "Reconciled (Yes/No)" 
   ];
   
   const rows = transactions.map(tx => [
@@ -34,7 +34,7 @@ export function convertToCSV(transactions: Transaction[]): string {
     getInvestorNameById(tx.investorId),
     tx.property,
     getCardNameById(tx.cardId),
-    tx.receiptSnippet || '', // Changed to receiptSnippet
+    tx.receiptImageURI ? (tx.receiptImageURI.length > 50 ? tx.receiptImageURI.substring(0,50) + "... (DataURI)" : tx.receiptImageURI) : '', // Truncate long Data URIs for CSV
     tx.reconciled ? 'Yes' : 'No'
   ]);
 
