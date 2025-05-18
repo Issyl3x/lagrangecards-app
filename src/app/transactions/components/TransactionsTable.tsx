@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon, FileText } from "lucide-react"; // Added AlertTriangle
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { Transaction, Card as UserCard } from "@/lib/types";
+import type { Transaction, Card as UserCard, Investor } from "@/lib/types";
 import { 
   getMockInvestors, 
   getMockProperties, 
@@ -65,16 +65,18 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const [columnVisibility, setColumnVisibility] = React.useState({
     investor: true,
     property: true,
-    unitNumber: true, // Added Unit Number
+    unitNumber: true,
     cardUsed: true,
     reconciled: true,
     receiptImageURI: true, 
     sourceType: false,
   });
 
-  const [investors, setInvestors] = React.useState(getMockInvestors());
-  const [properties, setProperties] = React.useState(getMockProperties());
-  const [cards, setCards] = React.useState<UserCard[]>(getMockCards());
+  const [investors, setInvestors] = React.useState<Investor[]>([]);
+  const [properties, setProperties] = React.useState<string[]>([]);
+  const [cards, setCards] = React.useState<UserCard[]>([]);
+  const [duplicateTransactionIds, setDuplicateTransactionIds] = React.useState<Set<string>>(new Set());
+
 
   React.useEffect(() => {
     setInvestors(getMockInvestors());
@@ -84,6 +86,31 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
   React.useEffect(() => {
     setFilteredTransactions(initialTransactions);
+
+    // Duplicate detection logic
+    if (!initialTransactions || initialTransactions.length === 0) {
+      setDuplicateTransactionIds(new Set());
+      return;
+    }
+
+    const signatures = new Map<string, string[]>(); // Map signature to array of transaction IDs
+    initialTransactions.forEach(tx => {
+      // Define signature: date-vendor(lowercase)-amount
+      const signature = `${tx.date}-${tx.vendor.toLowerCase()}-${tx.amount.toFixed(2)}`;
+      if (!signatures.has(signature)) {
+        signatures.set(signature, []);
+      }
+      signatures.get(signature)!.push(tx.id);
+    });
+
+    const newDuplicateIds = new Set<string>();
+    signatures.forEach((ids) => {
+      if (ids.length > 1) { // If more than one transaction has this signature
+        ids.forEach(id => newDuplicateIds.add(id));
+      }
+    });
+    setDuplicateTransactionIds(newDuplicateIds);
+
   }, [initialTransactions]);
 
   React.useEffect(() => {
@@ -117,7 +144,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         tempTransactions = tempTransactions.filter(tx =>
             tx.vendor.toLowerCase().includes(lowerSearchTerm) ||
             (tx.description && tx.description.toLowerCase().includes(lowerSearchTerm)) ||
-            (tx.unitNumber && tx.unitNumber.toLowerCase().includes(lowerSearchTerm)) || // Search by unit number
+            (tx.unitNumber && tx.unitNumber.toLowerCase().includes(lowerSearchTerm)) || 
             tx.category.toLowerCase().includes(lowerSearchTerm)
         );
     }
@@ -227,7 +254,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-    const details = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.unitNumber ? `\nUnit: ${transaction.unitNumber}` : ''}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptImageURI ? `\nReceipt Image Attached` : ''}`;
+    const details = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.unitNumber ? `\nUnit: ${transaction.unitNumber}` : ''}${transaction.receiptImageURI ? `\nReceipt Image Attached` : ''}`;
     try {
       await navigator.clipboard.writeText(details);
       toast({
@@ -372,7 +399,24 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
               filteredTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>{format(parseISO(tx.date), "MMM dd, yyyy")}</TableCell>
-                  <TableCell className="font-medium">{tx.vendor}</TableCell>
+                  <TableCell className="font-medium">
+                    {tx.vendor}
+                    {duplicateTransactionIds.has(tx.id) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span // Using span to avoid TooltipTrigger warning with non-button child
+                           className="inline-block ml-2"
+                           aria-label="Potential duplicate transaction"
+                          >
+                             <AlertTriangle className="h-4 w-4 text-destructive inline" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Potential duplicate transaction.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{tx.category}</Badge>
@@ -450,3 +494,4 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     </TooltipProvider>
   );
 }
+
