@@ -26,8 +26,8 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
     resolver: zodResolver(cardSchema),
     defaultValues: {
       cardName: "",
-      investorId: undefined, // Default to undefined
-      property: undefined,   // Default to undefined
+      investorId: undefined,
+      property: undefined,
       last4Digits: "",
       spendLimitMonthly: undefined,
     },
@@ -45,7 +45,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
     try {
       const newCard = addCard({
         ...data,
-        spendLimitMonthly: data.spendLimitMonthly ? Number(data.spendLimitMonthly) : undefined,
+        // spendLimitMonthly is already correctly a number or undefined due to schema
       });
       toast({
         title: "Card Added",
@@ -89,7 +89,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Investor</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} defaultValue={undefined}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an investor" />
@@ -112,7 +112,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Property</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} defaultValue={undefined}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a property" />
@@ -151,7 +151,28 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
               <FormItem>
                 <FormLabel>Monthly Spend Limit (Optional)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="5000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                  <Input
+                    type="number"
+                    placeholder="5000"
+                    {...field}
+                    value={field.value === undefined ? '' : String(field.value)} // Ensure value is string or empty
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        field.onChange(undefined);
+                      } else {
+                        const num = parseFloat(val);
+                        if (!isNaN(num)) {
+                          field.onChange(num);
+                        } else {
+                          // Optionally, handle invalid input differently, e.g., keep old value or set to undefined
+                          // For now, if it's not a number and not empty, react-hook-form will hold the invalid string
+                          // and zod will catch it on submit. Or, to be stricter:
+                           field.onChange(undefined); // Or field.onChange(field.value) to revert
+                        }
+                      }
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
