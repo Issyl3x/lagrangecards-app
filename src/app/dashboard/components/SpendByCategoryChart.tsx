@@ -7,8 +7,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
+  ChartLegend, // This is RechartsPrimitive.Legend
+  ChartLegendContent, // This is the custom ShadCN component
 } from "@/components/ui/chart";
 import type { Transaction } from "@/lib/types";
 import { PieChart, Pie, Cell, LabelList } from "recharts";
@@ -35,7 +35,7 @@ const categoryColors: Record<string, string> = {
   "Travel": "hsl(var(--chart-3))",
   "Marketing": "hsl(var(--chart-4))",
   "Appliances": "hsl(var(--chart-5))",
-  "Other": "hsl(var(--chart-5))", 
+  "Other": "hsl(var(--chart-5))",
 };
 
 export function SpendByCategoryChart({ transactions: allTransactions }: SpendByCategoryChartProps) {
@@ -57,7 +57,7 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
       return inRange;
     });
   }, [allTransactions, dateRangeFilter]);
-  
+
   const spendByCategory: Record<string, number> = {};
   if (filteredTransactions && filteredTransactions.length > 0) {
     filteredTransactions.forEach(tx => {
@@ -89,7 +89,9 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
     console.log("[SpendByCategoryChart] Filtered Transactions (length):", filteredTransactions?.length);
     console.log("[SpendByCategoryChart] spendByCategory calculated:", JSON.stringify(spendByCategory));
     console.log("[SpendByCategoryChart] chartData for pie (length):", chartData.length);
+    console.log("[SpendByCategoryChart] chartData for pie (content):", JSON.stringify(chartData));
   }
+
 
   let descriptionText = "Breakdown of expenses by category.";
   if (dateRangeFilter?.from) {
@@ -100,16 +102,16 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
   } else {
     descriptionText += " For all transactions.";
   }
-  
+
   if (chartData.length === 0) {
     let emptyDataDescription = "No transaction data available for the selected period.";
     if (allTransactions && allTransactions.length > 0 && filteredTransactions.length === 0 && dateRangeFilter?.from) {
       emptyDataDescription = "No transactions found for the selected date range.";
     } else if (allTransactions && allTransactions.length > 0 && chartData.length === 0) {
-       emptyDataDescription = "Transactions are present, but no spend was recorded for any category in the selected period, or amounts are not positive.";
+      emptyDataDescription = "Transactions are present, but no spend was recorded for any category in the selected period, or amounts are not positive.";
     }
     return (
-       <Card>
+      <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
@@ -156,43 +158,43 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
   return (
     <Card>
       <CardHeader>
-         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <div>
-              <CardTitle>Spend by Category</CardTitle>
-              <CardDescription>{descriptionText}</CardDescription>
-            </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                 <Button variant="outline" className="w-full sm:w-auto text-sm font-normal">
-                  <Filter className="mr-2 h-4 w-4" />
-                  {dateRangeFilter?.from ? (
-                    dateRangeFilter.to ? (
-                      <>
-                        {format(dateRangeFilter.from, "LLL dd, y")} - {format(dateRangeFilter.to, "LLL dd, y")}
-                      </>
-                    ) : (
-                      format(dateRangeFilter.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Filter by Date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={dateRangeFilter?.from}
-                  selected={dateRangeFilter}
-                  onSelect={setDateRangeFilter}
-                  numberOfMonths={1}
-                />
-              </PopoverContent>
-            </Popover>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <CardTitle>Spend by Category</CardTitle>
+            <CardDescription>{descriptionText}</CardDescription>
           </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto text-sm font-normal">
+                <Filter className="mr-2 h-4 w-4" />
+                {dateRangeFilter?.from ? (
+                  dateRangeFilter.to ? (
+                    <>
+                      {format(dateRangeFilter.from, "LLL dd, y")} - {format(dateRangeFilter.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRangeFilter.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Filter by Date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRangeFilter?.from}
+                selected={dateRangeFilter}
+                onSelect={setDateRangeFilter}
+                numberOfMonths={1}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-col items-center"> {/* Allow chart to take width, then legend below */}
-        <ChartContainer config={currentChartConfig} className="h-[250px] w-full max-w-[400px] aspect-square">
+      <CardContent className="flex flex-col items-center">
+        <ChartContainer config={currentChartConfig} className="h-[300px] w-full max-w-[400px]"> {/* Adjusted height for legend */}
           <PieChart>
             <ChartTooltip content={<ChartTooltipContent nameKey="category" />} />
             <Pie
@@ -207,21 +209,25 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
               {chartData.map((entry) => (
                 <Cell key={`cell-${entry.category}`} fill={entry.fill} />
               ))}
-              <LabelList 
-                dataKey="category" 
-                position="outside" 
-                offset={15} 
+              <LabelList
+                dataKey="category"
+                position="outside"
+                offset={15}
                 formatter={(value: string, entry: any) => {
-                    const percentage = entry.payload.percent;
-                    if (percentage * 100 < 5) return null; // Hide label if too small
-                    return `${value} (${(percentage * 100).toFixed(0)}%)`;
+                  const percentage = entry.payload.percent;
+                  if (percentage * 100 < 5) return null; // Hide label if too small
+                  return `${value} (${(percentage * 100).toFixed(0)}%)`;
                 }}
                 className="text-xs fill-muted-foreground"
               />
             </Pie>
+            <ChartLegend
+              content={<ChartLegendContent nameKey="category" className="flex-wrap justify-center gap-x-4 gap-y-1" />}
+              verticalAlign="bottom"
+              wrapperStyle={{ paddingTop: '10px' }} // Add some space above the legend
+            />
           </PieChart>
         </ChartContainer>
-        <ChartLegend content={<ChartLegendContent nameKey="category" />} className="mt-4 flex-wrap justify-center gap-x-4 gap-y-1" />
       </CardContent>
     </Card>
   );
