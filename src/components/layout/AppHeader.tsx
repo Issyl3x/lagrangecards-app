@@ -12,28 +12,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes"; // Assuming next-themes is or will be installed for theme toggling
+import { useTheme } from "next-themes";
+import * as React from 'react';
+import { usePathname } from 'next/navigation'; // Import usePathname
 
-// Placeholder for page title - ideally, this would come from a context or routing
+// Placeholder for page title
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/dashboard")) return "Dashboard";
   if (pathname.startsWith("/transactions/add")) return "Add Transaction";
   if (pathname.startsWith("/transactions/ocr")) return "Upload Receipt (OCR)";
+  if (pathname.startsWith("/transactions/edit")) return "Edit Transaction"; // Added for completeness
+  if (pathname.startsWith("/transactions/deleted")) return "Deleted Items"; // Added for completeness
   if (pathname.startsWith("/transactions")) return "View Transactions";
   if (pathname.startsWith("/export")) return "Export Data";
+  if (pathname.startsWith("/settings")) return "Settings"; // Added Settings
   return "EstateFlow";
 };
 
 export function AppHeader() {
-  const { isMobile } = useSidebar(); // Get isMobile from sidebar context
-  const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' }; // Provide default if useTheme is not set up
-  
-  // This is a client component, so window.location.pathname is available after mount
-  // For SSR compatibility and to avoid hydration errors, use a state that updates on mount
+  const { isMobile } = useSidebar(); 
+  const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' };
+  const pathname = usePathname(); // Get current pathname
   const [currentPageTitle, setCurrentPageTitle] = React.useState("EstateFlow");
+
   React.useEffect(() => {
-    setCurrentPageTitle(getPageTitle(window.location.pathname));
-  }, []);
+    setCurrentPageTitle(getPageTitle(pathname));
+  }, [pathname]); // Update title when pathname changes
 
 
   return (
@@ -74,6 +78,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-// A simple React import is needed for useEffect and useState
-import * as React from 'react';
