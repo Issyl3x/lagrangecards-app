@@ -36,6 +36,14 @@ export default function DashboardPage() {
         {/* Add more summary cards here if needed */}
       </div>
       
+      <Separator /> 
+
+      <div>
+        <RecentTransactionsList transactions={transactions} itemsToShow={5} />
+      </div>
+
+      <Separator />
+      
       <PropertySpendSummary transactions={transactions} />
       
       <Separator />
@@ -49,12 +57,6 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <Separator />
-      
-      <div>
-        <RecentTransactionsList transactions={transactions} itemsToShow={5} />
-      </div>
-
       <Separator /> 
 
       <div>
@@ -63,3 +65,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
