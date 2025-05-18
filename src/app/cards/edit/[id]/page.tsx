@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CardForm } from "../components/CardForm";
+import { CardForm } from "../../components/CardForm"; // Corrected path
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getMockCards, updateCard, getMockInvestors, getMockProperties } from "@/lib/mock-data";
