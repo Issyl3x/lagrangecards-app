@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { PropertySpendSummary } from "./components/PropertySpendSummary";
-import { RecentTransactionsList } from "./components/RecentTransactionsList"; // Import new component
+import { RecentTransactionsList } from "./components/RecentTransactionsList";
+import { CreditCardPaymentsList } from "./components/CreditCardPaymentsList"; // Import new component
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
@@ -52,6 +53,12 @@ export default function DashboardPage() {
       
       <div>
         <RecentTransactionsList transactions={transactions} itemsToShow={5} />
+      </div>
+
+      <Separator /> 
+
+      <div>
+        <CreditCardPaymentsList transactions={transactions} itemsToShow={5} />
       </div>
     </div>
   );

@@ -28,7 +28,8 @@ export type TransactionCategory =
   | "Legal & Professional Fees"
   | "Furnishings"
   | "Landscaping"
-  | "Appliances" 
+  | "Appliances"
+  | "Credit Card Payment" 
   | "Other";
 
 export interface Transaction {
@@ -38,7 +39,7 @@ export interface Transaction {
   description: string;
   amount: number;
   category: TransactionCategory | string; // Allow string for flexibility or new categories
-  cardId: string;
+  cardId: string; // For expenses, card used. For payments to card, card being paid.
   investorId: string;
   property: string;
   unitNumber?: string;
@@ -46,7 +47,7 @@ export interface Transaction {
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
   statementMatchId?: string;
-  isDuplicateConfirmed?: boolean; // Added to track user-confirmed duplicates
+  isDuplicateConfirmed?: boolean; 
 }
 
 // For OCR Output (matches ocrReceiptParser output)
@@ -84,4 +85,3 @@ export interface AllDataBackup {
   timestamp: string;
   version: string;
 }
-

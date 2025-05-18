@@ -3,7 +3,7 @@ import { z } from "zod";
 import { mockCategories as allCategories } from "./mock-data"; 
 
 const stringCategories = allCategories.filter(c => typeof c === 'string') as string[];
-const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other", "Appliances"]; 
+const categoriesForEnum: [string, ...string[]] = stringCategories.length > 0 ? stringCategories as [string, ...string[]] : ["Other", "Appliances", "Credit Card Payment"]; 
 const categoryEnum = z.enum(categoriesForEnum);
 
 export const transactionSchema = z.object({
@@ -17,7 +17,7 @@ export const transactionSchema = z.object({
   investorId: z.string().min(1, { message: "Investor is required." }),
   investorName: z.string().optional(),
   property: z.string().min(1, { message: "Property is required." }),
-  unitNumber: z.string().max(50, { message: "Unit number is too long." }).optional().or(z.literal("")), // Added Unit Number
+  unitNumber: z.string().max(50, { message: "Unit number is too long." }).optional().or(z.literal("")), 
   cardId: z.string().min(1, { message: "Card is required." }),
   receiptImageURI: z.string().optional().or(z.literal("")), 
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),

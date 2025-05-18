@@ -1,8 +1,8 @@
 
-import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewCardData, AllDataBackup } from './types';
+import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, AllDataBackup } from './types';
+import type { CardFormValues } from './schemas'; 
 import { formatISO, subDays, subMonths, parseISO, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { CardFormValues } from './schemas'; // Ensure CardFormValues is imported if used for typing
 
 const APP_VERSION = "1.0.0"; 
 
@@ -125,6 +125,36 @@ const defaultTransactions: Transaction[] = [
     reconciled: false,
     sourceType: 'manual',
     unitNumber: ''
+  },
+  {
+    id: 'ccpay1',
+    date: formatISO(subDays(today, 3), { representation: 'date' }),
+    vendor: 'Bank Transfer',
+    description: 'Payment to Blue Haven Card 1',
+    amount: 1000.00,
+    category: 'Credit Card Payment',
+    cardId: 'card1', // Card being paid
+    investorId: 'investor1',
+    property: 'Blue Haven', // Property associated with the card being paid
+    receiptImageURI: '',
+    reconciled: true,
+    sourceType: 'manual',
+    unitNumber: ''
+  },
+  {
+    id: 'ccpay2',
+    date: formatISO(subDays(subMonths(today,1), 5), { representation: 'date' }),
+    vendor: 'ACH Payment',
+    description: 'Payment for Greg Visa 2627',
+    amount: 750.00,
+    category: 'Credit Card Payment',
+    cardId: 'card6', // Card being paid
+    investorId: 'investor4',
+    property: 'Fountain Commons', // Property associated with the card being paid
+    receiptImageURI: '',
+    reconciled: true,
+    sourceType: 'manual',
+    unitNumber: ''
   }
 ];
 
@@ -137,7 +167,6 @@ function loadData<T>(key: string, defaultValue: T): T {
     if (storedValue) {
       try {
         const data = JSON.parse(storedValue);
-        // Basic validation for transactions array structure
         if ((key === TRANSACTIONS_KEY || key === DELETED_TRANSACTIONS_KEY) && Array.isArray(data)) {
           return data.map((item: any) => ({
             ...item,
@@ -147,7 +176,7 @@ function loadData<T>(key: string, defaultValue: T): T {
         return data as T;
       } catch (e) {
         console.error(`Error parsing ${key} from localStorage or invalid data structure, falling back to default. Error:`, e);
-        localStorage.removeItem(key); // Remove corrupted data
+        localStorage.removeItem(key); 
         return defaultValue;
       }
     }
@@ -172,7 +201,7 @@ let updatableDeletedTransactions: Transaction[] = loadData<Transaction[]>(DELETE
 export const mockCategories: (TransactionCategory | string)[] = [
   "Repairs", "Utilities", "Supplies", "Mortgage", "Insurance", "HOA Fees",
   "Property Management", "Travel", "Marketing", "Legal & Professional Fees",
-  "Furnishings", "Landscaping", "Appliances", "Other"
+  "Furnishings", "Landscaping", "Appliances", "Credit Card Payment", "Other"
 ];
 
 // Getters
@@ -181,7 +210,6 @@ export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
 export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
 export const getDeletedTransactions = (): Transaction[] => {
-  // console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions);
   return [...updatableDeletedTransactions];
 };
 
@@ -206,10 +234,10 @@ export const addProperty = (propertyName: string): string => {
   return propertyName;
 };
 
-export const addCard = (cardData: NewCardData): Card => {
+export const addCard = (cardData: CardFormValues): Card => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false, // Default to false for business cards
+    isPersonal: false, 
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
@@ -222,7 +250,6 @@ export const addTransactionToMockData = (newTx: Transaction): void => {
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
   
-  // Simulate webhook notification
   console.log("SIMULATING WEBHOOK NOTIFICATION TO WORK EMAIL:");
   console.log("New transaction added:", {
     id: newTx.id,
@@ -268,7 +295,6 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-    // console.log(`Transaction ${txId} moved to deleted. Total deleted: ${updatableDeletedTransactions.length}`);
   }
 };
 
@@ -297,7 +323,6 @@ export const getAllDataForBackup = (): AllDataBackup => {
 
 export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => {
   try {
-    // Basic validation
     if (
       !backupData ||
       !Array.isArray(backupData.investors) ||
@@ -312,8 +337,6 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
       return false;
     }
     
-    // Add more specific validation if needed (e.g., check for specific fields within objects)
-
     updatableInvestors = backupData.investors;
     updatableProperties = backupData.properties;
     updatableCards = backupData.cards;
@@ -360,7 +383,6 @@ export const clearAllMockDataFromLocalStorage = () => {
   }
 };
 
-// Expose the clear function to the window for easy access during development
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }
