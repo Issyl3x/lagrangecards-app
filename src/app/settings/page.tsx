@@ -10,6 +10,7 @@ import { AddCardForm } from "./components/AddCardForm";
 import { getMockInvestors, getMockProperties, getMockCards } from "@/lib/mock-data";
 import type { Investor, Card as UserCard } from "@/lib/types"; 
 import { Separator } from "@/components/ui/separator";
+import ErrorBoundary from "@/components/ErrorBoundary"; // Import the ErrorBoundary
 
 export default function SettingsPage() {
   const [investors, setInvestors] = React.useState<Investor[]>([]);
@@ -42,85 +43,91 @@ export default function SettingsPage() {
             </TabsList>
 
             <TabsContent value="investors" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add New Investor</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AddInvestorForm onInvestorAdded={refreshData} />
-                </CardContent>
-              </Card>
-              <Separator />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Investors</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {Array.isArray(investors) && investors.length > 0 ? (
-                    <ul className="list-disc pl-5 space-y-1">
-                      {investors.map(inv => <li key={inv.id}>{inv.name} {inv.email && `(${inv.email})`}</li>)}
-                    </ul>
-                  ) : <p>No investors added yet.</p>}
-                </CardContent>
-              </Card>
+              <ErrorBoundary fallbackMessage="Error loading Investor Management section.">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add New Investor</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AddInvestorForm onInvestorAdded={refreshData} />
+                  </CardContent>
+                </Card>
+                <Separator />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Investors</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {Array.isArray(investors) && investors.length > 0 ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {investors.map(inv => <li key={inv.id}>{inv.name} {inv.email && `(${inv.email})`}</li>)}
+                      </ul>
+                    ) : <p>No investors added yet.</p>}
+                  </CardContent>
+                </Card>
+              </ErrorBoundary>
             </TabsContent>
 
             <TabsContent value="properties" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add New Property</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AddPropertyForm onPropertyAdded={refreshData} />
-                </CardContent>
-              </Card>
-              <Separator />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Properties</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {Array.isArray(properties) && properties.length > 0 ? (
-                    <ul className="list-disc pl-5 space-y-1">
-                      {properties.map(prop => <li key={prop}>{prop}</li>)}
-                    </ul>
-                  ) : <p>No properties added yet.</p>}
-                </CardContent>
-              </Card>
+              <ErrorBoundary fallbackMessage="Error loading Property Management section.">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add New Property</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AddPropertyForm onPropertyAdded={refreshData} />
+                  </CardContent>
+                </Card>
+                <Separator />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Properties</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {Array.isArray(properties) && properties.length > 0 ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {properties.map(prop => <li key={prop}>{prop}</li>)}
+                      </ul>
+                    ) : <p>No properties added yet.</p>}
+                  </CardContent>
+                </Card>
+              </ErrorBoundary>
             </TabsContent>
 
             <TabsContent value="cards" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add New Card</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AddCardForm onCardAdded={refreshData} />
-                </CardContent>
-              </Card>
-              <Separator />
-               <Card>
-                <CardHeader>
-                  <CardTitle>Current Cards</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {Array.isArray(cards) && cards.length > 0 ? (
-                    <ul className="list-disc pl-5 space-y-1">
-                      {cards.map(card => {
-                        const investor = Array.isArray(investors) ? investors.find(inv => inv.id === card.investorId) : undefined;
-                        return (
-                          <li key={card.id}>
-                            {card.cardName}
-                            {card.last4Digits && ` (****${card.last4Digits})`}
-                            {investor && ` - ${investor.name}`}
-                            {card.property && ` - ${card.property}`}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : <p>No cards added yet.</p>}
-                </CardContent>
-              </Card>
+              <ErrorBoundary fallbackMessage="Error loading Card Management section.">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add New Card</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AddCardForm onCardAdded={refreshData} />
+                  </CardContent>
+                </Card>
+                <Separator />
+                 <Card>
+                  <CardHeader>
+                    <CardTitle>Current Cards</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {Array.isArray(cards) && cards.length > 0 ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {cards.map(card => {
+                          const investor = Array.isArray(investors) ? investors.find(inv => inv.id === card.investorId) : undefined;
+                          return (
+                            <li key={card.id}>
+                              {card.cardName}
+                              {card.last4Digits && ` (****${card.last4Digits})`}
+                              {investor && ` - ${investor.name}`}
+                              {card.property && ` - ${card.property}`}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : <p>No cards added yet.</p>}
+                  </CardContent>
+                </Card>
+              </ErrorBoundary>
             </TabsContent>
           </Tabs>
         </CardContent>
