@@ -13,6 +13,14 @@ import { useToast } from "@/hooks/use-toast";
 import { addInvestor, getMockInvestors } from "@/lib/mock-data";
 import type { Investor } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldAlert } from "lucide-react";
+
+// Mock current user for permission check
+const mockCurrentUser = {
+  id: 'user1', // Can be any ID for simulation
+  isAdmin: false,  // Set to false to show restricted view
+};
 
 function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
   const { toast } = useToast();
@@ -36,6 +44,18 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
       setIsLoading(false);
     }
   };
+
+  if (!mockCurrentUser.isAdmin) {
+    return (
+      <Alert variant="destructive">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Admin Access Required</AlertTitle>
+        <AlertDescription>
+          Adding new investors is an administrator-only feature.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Form {...form}>
