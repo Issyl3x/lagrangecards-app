@@ -20,6 +20,7 @@ import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Settings, Buil
 import { AppHeader } from '@/components/layout/AppHeader';
 import { EstateFlowLogo } from '@/components/icons/EstateFlowLogo';
 import { cn } from '@/lib/utils';
+import ErrorBoundary from '@/components/ErrorBoundary'; // Import ErrorBoundary
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -92,9 +93,9 @@ export default function RootLayout({
                 <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
                    <SidebarMenu>
                      <SidebarMenuItem>
-                        <SidebarMenuButton 
+                        <SidebarMenuButton
                           asChild
-                          variant="ghost" 
+                          variant="ghost"
                           className="w-full justify-start"
                           tooltip={{ children: "Settings", className: "ml-2"}}
                         >
@@ -110,7 +111,9 @@ export default function RootLayout({
               <div className="flex flex-1 flex-col sm:gap-4 sm:py-4">
                 <AppHeader />
                 <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-                  {children}
+                  <ErrorBoundary fallbackMessage="Error rendering page content. Check console for details.">
+                    {children}
+                  </ErrorBoundary>
                 </main>
               </div>
             </div>
