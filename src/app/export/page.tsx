@@ -13,6 +13,13 @@ export default function ExportPage() {
   const transactions = getMockTransactions();
 
   const handleDownloadCSV = () => {
+    if (transactions.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No transaction data available to export.",
+      });
+      return;
+    }
     const csvData = convertToCSV(transactions);
     downloadCSV(csvData, `estateflow_transactions_${new Date().toISOString().split('T')[0]}.csv`);
     toast({
@@ -22,11 +29,11 @@ export default function ExportPage() {
   };
 
   const handleSendToGoogleSheets = () => {
-    // This is a mock implementation. Real implementation requires Google Sheets API.
     toast({
       title: "Send to Google Sheets (Mock)",
-      description: "This feature is not yet implemented. In a real app, data would be sent to Google Sheets.",
-      variant: "default", 
+      description: "This feature is for demonstration. A real implementation would require Google Sheets API setup and authentication to send data directly. For now, please use the 'Download CSV' option and import it into Google Sheets.",
+      variant: "default",
+      duration: 8000, // Longer duration for more informative message
     });
     console.log("Attempting to send to Google Sheets (mocked). Data:", transactions);
   };
@@ -36,12 +43,12 @@ export default function ExportPage() {
       <CardHeader>
         <CardTitle>Export Transaction Data</CardTitle>
         <CardDescription>
-          Download your transaction data as a CSV file or send it to Google Sheets.
+          Download your transaction data as a CSV file. You can then import this CSV into Google Sheets or other spreadsheet software.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p>
-          Export all recorded transaction data for external analysis, reporting, or backup. 
+          Export all recorded transaction data for external analysis, reporting, or backup.
           The CSV format includes all key details for each transaction.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
@@ -54,6 +61,11 @@ export default function ExportPage() {
             Send to Google Sheets (Mock)
           </Button>
         </div>
+         {transactions.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No transactions available to export. Add some transactions first.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,6 +1,6 @@
 
-import type { Transaction } from './types'; 
-import { getMockInvestors, getMockCards } from './mock-data'; 
+import type { Transaction } from './types';
+import { getMockInvestors, getMockCards } from './mock-data';
 import { format, parseISO } from 'date-fns';
 
 const getInvestorNameById = (id: string) => {
@@ -11,7 +11,7 @@ const getInvestorNameById = (id: string) => {
 const getCardNameById = (id: string) => {
   const cards = getMockCards();
   const card = cards.find(c => c.id === id);
-  if (!card) return id; 
+  if (!card) return id;
   return `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`;
 };
 
@@ -21,21 +21,21 @@ export function convertToCSV(transactions: Transaction[]): string {
   }
 
   const headers = [
-    "Date", "Vendor", "Description", "Amount", "Category", 
-    "Investor", "Property", "Unit Number", "Card Used", "Receipt Image URI", "Reconciled (Yes/No)" 
+    "Date", "Vendor", "Description", "Amount", "Category",
+    "Investor", "Property", "Unit Number", "Card Used", "Receipt", "Reconciled (Yes/No)"
   ];
-  
+
   const rows = transactions.map(tx => [
     format(parseISO(tx.date), "yyyy-MM-dd"),
     tx.vendor,
-    tx.description || '', 
+    tx.description || '',
     tx.amount.toFixed(2),
     tx.category,
     getInvestorNameById(tx.investorId),
     tx.property,
-    tx.unitNumber || '', // Added Unit Number
+    tx.unitNumber || '',
     getCardNameById(tx.cardId),
-    tx.receiptImageURI ? (tx.receiptImageURI.length > 50 ? tx.receiptImageURI.substring(0,50) + "... (DataURI)" : tx.receiptImageURI) : '', 
+    tx.receiptImageURI ? "Image Attached" : "", // Indicate if an image is attached
     tx.reconciled ? 'Yes' : 'No'
   ]);
 
@@ -66,6 +66,6 @@ export function downloadCSV(csvContent: string, filename: string): void {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url); // Clean up the object URL
   }
 }
