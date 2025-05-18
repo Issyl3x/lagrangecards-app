@@ -18,12 +18,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react";
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { 
-  mockInvestors, 
-  mockProperties, 
-  mockCards, 
+  getMockInvestors, 
+  getMockProperties, 
+  getMockCards, 
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  getMockTransactions, // Import this
+  getMockTransactions, 
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -70,9 +70,15 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     sourceType: false,
   });
 
-  const investors = mockInvestors;
-  const properties = mockProperties;
-  const cards: UserCard[] = mockCards;
+  const [investors, setInvestors] = React.useState(getMockInvestors());
+  const [properties, setProperties] = React.useState(getMockProperties());
+  const [cards, setCards] = React.useState<UserCard[]>(getMockCards());
+
+  React.useEffect(() => {
+    setInvestors(getMockInvestors());
+    setProperties(getMockProperties());
+    setCards(getMockCards());
+  }, []); // Fetch on mount
 
   React.useEffect(() => {
     setTransactionsData(initialTransactions);
@@ -434,3 +440,4 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     </div>
   );
 }
+

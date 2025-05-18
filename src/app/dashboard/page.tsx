@@ -6,7 +6,7 @@ import { TotalSpendCard } from "./components/TotalSpendCard";
 import { SpendByCategoryChart } from "./components/SpendByCategoryChart";
 import { MonthlySpendChart } from "./components/MonthlySpendChart";
 import { AlertsList } from "./components/AlertsList";
-import { getMockTransactions, mockCards as getMockCards } from "@/lib/mock-data";
+import { getMockTransactions, getMockCards } from "@/lib/mock-data"; // Corrected import
 import { Separator } from "@/components/ui/separator";
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Transaction, Card as UserCard } from "@/lib/types";
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const fetchDashboardData = React.useCallback(() => {
     // console.log("DashboardPage: Fetching dashboard data");
     setTransactions(getMockTransactions());
-    setCards(getMockCards); // Assuming mockCards is stable or also fetched if dynamic
+    setCards(getMockCards()); // Correctly call getMockCards as a function
   }, []);
 
   React.useEffect(() => {
