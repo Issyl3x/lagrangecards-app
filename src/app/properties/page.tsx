@@ -107,11 +107,11 @@ export default function PropertiesPage() {
         </CardHeader>
         <CardContent>
           {properties.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {properties.map(property => (
-                <li key={property} className="flex items-center p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
-                  <Home className="h-6 w-6 mr-3 text-primary" />
-                  <span className="font-medium text-card-foreground">{property}</span>
+                <li key={property} className="flex items-center p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
+                  <Home className="h-6 w-6 mr-3 text-primary flex-shrink-0" />
+                  <span className="font-medium text-card-foreground truncate">{property}</span>
                 </li>
               ))}
             </ul>

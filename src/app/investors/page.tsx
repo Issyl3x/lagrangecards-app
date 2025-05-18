@@ -119,13 +119,13 @@ export default function InvestorsPage() {
         </CardHeader>
         <CardContent>
           {investors.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {investors.map(investor => (
-                <li key={investor.id} className="flex items-center p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
-                  <UserCircle2 className="h-6 w-6 mr-3 text-primary" />
-                  <div>
-                    <span className="font-medium text-card-foreground">{investor.name}</span>
-                    {investor.email && <span className="block text-xs text-muted-foreground">{investor.email}</span>}
+                <li key={investor.id} className="flex items-center p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
+                  <UserCircle2 className="h-6 w-6 mr-3 text-primary flex-shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-medium text-card-foreground truncate block">{investor.name}</span>
+                    {investor.email && <span className="block text-xs text-muted-foreground truncate">{investor.email}</span>}
                   </div>
                 </li>
               ))}
