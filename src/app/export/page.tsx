@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // Mock current user for permission check
 const mockCurrentUser = {
   id: 'investor1', // Can be any ID for simulation
-  isAdmin: true,  // Set to true for admin, false for non-admin
+  isAdmin: false,  // Set to true for admin, false for non-admin
 };
 
 export default function ExportPage() {

@@ -45,7 +45,7 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 const mockCurrentUser = {
   id: 'investor1',
-  isAdmin: true, 
+  isAdmin: false, 
 };
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
