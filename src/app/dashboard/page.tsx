@@ -6,10 +6,11 @@ import { TotalSpendCard } from "./components/TotalSpendCard";
 import { SpendByCategoryChart } from "./components/SpendByCategoryChart";
 import { MonthlySpendChart } from "./components/MonthlySpendChart";
 import { AlertsList } from "./components/AlertsList";
-import { getMockTransactions, getMockCards } from "@/lib/mock-data"; // Corrected import
+import { getMockTransactions, getMockCards } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Transaction, Card as UserCard } from "@/lib/types";
+import { PropertySpendSummary } from "./components/PropertySpendSummary";
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
@@ -21,7 +22,7 @@ export default function DashboardPage() {
   const fetchDashboardData = React.useCallback(() => {
     // console.log("DashboardPage: Fetching dashboard data");
     setTransactions(getMockTransactions());
-    setCards(getMockCards()); // Correctly call getMockCards as a function
+    setCards(getMockCards());
   }, []);
 
   React.useEffect(() => {
@@ -34,6 +35,8 @@ export default function DashboardPage() {
         <TotalSpendCard transactions={transactions} />
         {/* Add more summary cards here if needed */}
       </div>
+      
+      <PropertySpendSummary transactions={transactions} />
       
       <Separator />
 
