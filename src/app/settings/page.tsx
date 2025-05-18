@@ -48,7 +48,7 @@ export default function SettingsPage() {
               <TabsList>
                 <TabsTrigger value="investors">Manage Investors</TabsTrigger>
                 <TabsTrigger value="properties">Manage Properties</TabsTrigger>
-                {/* <TabsTrigger value="cards">Manage Cards</TabsTrigger> */}
+                <TabsTrigger value="cards">Manage Cards</TabsTrigger>
               </TabsList>
 
               <TabsContent value="investors" className="space-y-4">
@@ -103,7 +103,7 @@ export default function SettingsPage() {
                 </ErrorBoundary>
               </TabsContent>
 
-              {/* <TabsContent value="cards" className="space-y-4">
+              <TabsContent value="cards" className="space-y-4">
                 <ErrorBoundary fallbackMessage="Error loading Card Management section.">
                   <Card>
                     <CardHeader>
@@ -122,7 +122,6 @@ export default function SettingsPage() {
                       {Array.isArray(cards) && cards.length > 0 ? (
                         <ul className="list-disc pl-5 space-y-1">
                           {cards.map(card => {
-                            // Ensure investors is an array before finding
                             const investor = Array.isArray(investors) ? investors.find(inv => inv.id === card.investorId) : undefined;
                             return (
                               <li key={card.id}>
@@ -138,7 +137,7 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
                 </ErrorBoundary>
-              </TabsContent> */}
+              </TabsContent>
             </Tabs>
           </ErrorBoundary>
         </CardContent>
