@@ -3,7 +3,8 @@
 
 import * as React from "react";
 import { ReceiptUploadForm } from "./components/ReceiptUploadForm";
-import { CsvImportSection } from "./components/CsvImportSection"; // Import new component
+import { CsvImportSection } from "./components/CsvImportSection";
+import { AddPaymentForm } from "./components/AddPaymentForm"; // Import new component
 import { TransactionForm, type TransactionFormValues } from "../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ParsedReceiptData, Transaction } from "@/lib/types";
@@ -135,21 +136,6 @@ export default function OcrTransactionPage() {
         </CardContent>
       </Card>
 
-      <Separator />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Import Transactions from CSV</CardTitle>
-          <CardDescription>
-            Upload a CSV file to bulk import transactions. The system will attempt to match cards based on the last 4 digits.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CsvImportSection />
-        </CardContent>
-      </Card>
-
-
       {parsedDataForForm && (
         <>
           <Separator />
@@ -175,8 +161,38 @@ export default function OcrTransactionPage() {
               />
             </CardContent>
           </Card>
+          <Separator />
         </>
       )}
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Transactions from CSV</CardTitle>
+          <CardDescription>
+            Upload a CSV file to bulk import transactions. The system will attempt to match cards based on the last 4 digits.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CsvImportSection />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Payment to Card</CardTitle>
+          <CardDescription>
+            Record payments made towards your credit cards from a bank account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddPaymentForm />
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
+

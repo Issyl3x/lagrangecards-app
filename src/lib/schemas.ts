@@ -48,3 +48,13 @@ export const cardSchema = z.object({
   ),
 });
 export type CardFormValues = z.infer<typeof cardSchema>;
+
+export const paymentFormSchema = z.object({
+  cardId: z.string().min(1, { message: "Please select the card that was paid." }),
+  date: z.date({ required_error: "Payment date is required." }),
+  amount: z.number({ invalid_type_error: "Amount must be a number." }).positive({ message: "Amount must be positive." }),
+  bankAccountUsed: z.string().min(1, { message: "Bank account used is required." }).max(100, { message: "Bank account name is too long." }),
+  note: z.string().max(500, { message: "Note is too long." }).optional().or(z.literal("")),
+});
+export type PaymentFormValues = z.infer<typeof paymentFormSchema>;
+
