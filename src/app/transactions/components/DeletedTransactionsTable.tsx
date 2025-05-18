@@ -26,10 +26,10 @@ interface DeletedTransactionsTableProps {
   initialDeletedTransactions: Transaction[]; 
 }
 
-// Mock current user for permission check (align with TransactionsTable)
+// Mock current user for permission check
 const mockCurrentUser = {
-  id: 'investor1',
-  isAdmin: true, 
+  id: 'investor1', // Can be any ID for simulation
+  isAdmin: true,  // Set to true for admin, false for non-admin
 };
 
 export function DeletedTransactionsTable({ initialDeletedTransactions }: DeletedTransactionsTableProps) {
@@ -71,6 +71,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
               <TableHead>Vendor</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Property</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -84,19 +85,22 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
                   <TableCell>
                     <Badge variant="outline">{tx.category}</Badge>
                   </TableCell>
+                  <TableCell>{tx.property}</TableCell>
                   <TableCell>
-                    {mockCurrentUser.isAdmin && (
+                    {mockCurrentUser.isAdmin ? (
                         <Button variant="ghost" size="sm" onClick={() => handleRestore(tx.id)} title="Restore Transaction">
                             <Undo2 className="mr-2 h-4 w-4" />
                             Restore
                         </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Admin only</span>
                     )}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No deleted transactions found.
                 </TableCell>
               </TableRow>
@@ -107,3 +111,4 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
     </div>
   );
 }
+

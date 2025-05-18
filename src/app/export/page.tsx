@@ -4,13 +4,20 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Download, Send, Upload, Save } from "lucide-react";
+import { Download, Send, Upload, Save, ShieldAlert } from "lucide-react";
 import { getMockTransactions, getAllDataForBackup, restoreAllDataFromBackup } from "@/lib/mock-data";
 import { convertToCSV, downloadCSV } from "@/lib/export";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import type { AllDataBackup } from "@/lib/types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Mock current user for permission check
+const mockCurrentUser = {
+  id: 'investor1', // Can be any ID for simulation
+  isAdmin: true,  // Set to true for admin, false for non-admin
+};
 
 export default function ExportPage() {
   const { toast } = useToast();
@@ -25,7 +32,7 @@ export default function ExportPage() {
 
 
   const handleDownloadCSV = () => {
-    const currentTransactions = getMockTransactions(); // Fetch latest at time of download
+    const currentTransactions = getMockTransactions(); 
     if (currentTransactions.length === 0) {
       toast({
         title: "No Data",
@@ -81,7 +88,6 @@ export default function ExportPage() {
         if (typeof text === 'string') {
           try {
             const backupData = JSON.parse(text) as AllDataBackup;
-             // Validate basic structure
             if (backupData && backupData.investors && backupData.properties && backupData.cards && backupData.transactions && backupData.deletedTransactions && backupData.timestamp) {
                 const success = restoreAllDataFromBackup(backupData);
                 if (success) {
@@ -89,7 +95,6 @@ export default function ExportPage() {
                     title: "Restore Successful",
                     description: "Data has been restored from the backup file. Please refresh the application to see all changes.",
                 });
-                // Optionally, trigger a hard refresh or guide user
                  window.location.reload(); 
                 } else {
                 toast({
@@ -114,7 +119,6 @@ export default function ExportPage() {
             });
           }
         }
-        // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -132,6 +136,24 @@ export default function ExportPage() {
     }
   };
 
+  if (!mockCurrentUser.isAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Export & Backup Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              These features are available for administrators only.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -148,11 +170,11 @@ export default function ExportPage() {
             The CSV format includes all key details for each transaction.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto">
+            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
               <Download className="mr-2 h-4 w-4" />
               Download CSV
             </Button>
-            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
               <Send className="mr-2 h-4 w-4" />
               Send to Google Sheets (Demo)
             </Button>
@@ -181,7 +203,7 @@ export default function ExportPage() {
             <p className="text-sm text-muted-foreground mb-3">
               Creates a JSON file containing all your current EstateFlow data. Store this file in a safe place.
             </p>
-            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto">
+            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
               <Save className="mr-2 h-4 w-4" />
               Download Full Backup (JSON)
             </Button>
@@ -196,13 +218,13 @@ export default function ExportPage() {
                 type="file"
                 accept=".json"
                 onChange={handleRestoreFileChange}
-                disabled={isRestoring}
+                disabled={isRestoring || !mockCurrentUser.isAdmin}
                 ref={fileInputRef}
                 className="w-full sm:max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
               />
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
-                disabled={isRestoring} 
+                disabled={isRestoring || !mockCurrentUser.isAdmin} 
                 variant="outline"
                 className="w-full sm:w-auto"
               >
@@ -219,3 +241,4 @@ export default function ExportPage() {
     </div>
   );
 }
+
