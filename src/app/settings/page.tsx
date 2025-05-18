@@ -38,7 +38,7 @@ export default function SettingsPage() {
             <TabsList>
               <TabsTrigger value="investors">Manage Investors</TabsTrigger>
               <TabsTrigger value="properties">Manage Properties</TabsTrigger>
-              {/* <TabsTrigger value="cards">Manage Cards</TabsTrigger> */}
+              <TabsTrigger value="cards">Manage Cards</TabsTrigger>
             </TabsList>
 
             <TabsContent value="investors" className="space-y-4">
@@ -56,7 +56,7 @@ export default function SettingsPage() {
                   <CardTitle>Current Investors</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {investors.length > 0 ? (
+                  {Array.isArray(investors) && investors.length > 0 ? (
                     <ul className="list-disc pl-5 space-y-1">
                       {investors.map(inv => <li key={inv.id}>{inv.name} {inv.email && `(${inv.email})`}</li>)}
                     </ul>
@@ -80,7 +80,7 @@ export default function SettingsPage() {
                   <CardTitle>Current Properties</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {properties.length > 0 ? (
+                  {Array.isArray(properties) && properties.length > 0 ? (
                     <ul className="list-disc pl-5 space-y-1">
                       {properties.map(prop => <li key={prop}>{prop}</li>)}
                     </ul>
@@ -89,7 +89,7 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* <TabsContent value="cards" className="space-y-4">
+            <TabsContent value="cards" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Add New Card</CardTitle>
@@ -104,10 +104,10 @@ export default function SettingsPage() {
                   <CardTitle>Current Cards</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {cards.length > 0 ? (
+                  {Array.isArray(cards) && cards.length > 0 ? (
                     <ul className="list-disc pl-5 space-y-1">
                       {cards.map(card => {
-                        const investor = investors.find(inv => inv.id === card.investorId);
+                        const investor = Array.isArray(investors) ? investors.find(inv => inv.id === card.investorId) : undefined;
                         return (
                           <li key={card.id}>
                             {card.cardName}
@@ -121,7 +121,7 @@ export default function SettingsPage() {
                   ) : <p>No cards added yet.</p>}
                 </CardContent>
               </Card>
-            </TabsContent> */}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
