@@ -2,6 +2,7 @@
 import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewCardData, AllDataBackup } from './types';
 import { formatISO, subDays, subMonths, parseISO, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import type { CardFormValues } from './schemas'; // Ensure CardFormValues is imported if used for typing
 
 const APP_VERSION = "1.0.0"; 
 
@@ -28,7 +29,8 @@ const defaultCards: Card[] = [
     investorId: 'investor4',
     property: 'Fountain Commons',
     isPersonal: false,
-    last4Digits: '2627'
+    last4Digits: '2627',
+    spendLimitMonthly: 10000
   },
 ];
 
@@ -179,7 +181,7 @@ export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
 export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
 export const getDeletedTransactions = (): Transaction[] => {
-  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions);
+  // console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions);
   return [...updatableDeletedTransactions];
 };
 
@@ -191,6 +193,7 @@ export const addInvestor = (investorData: NewInvestorData): Investor => {
   };
   updatableInvestors = [...updatableInvestors, newInvestor];
   saveData(INVESTORS_KEY, updatableInvestors);
+  console.log("Added investor:", newInvestor, "Total investors:", updatableInvestors.length);
   return newInvestor;
 };
 
@@ -199,6 +202,7 @@ export const addProperty = (propertyName: string): string => {
     updatableProperties = [...updatableProperties, propertyName];
     saveData(PROPERTIES_KEY, updatableProperties);
   }
+  console.log("Added property:", propertyName, "Total properties:", updatableProperties.length);
   return propertyName;
 };
 
@@ -210,6 +214,7 @@ export const addCard = (cardData: NewCardData): Card => {
   };
   updatableCards = [...updatableCards, newCard];
   saveData(CARDS_KEY, updatableCards);
+  console.log("Added card:", newCard, "Total cards:", updatableCards.length);
   return newCard;
 };
 
@@ -242,6 +247,19 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
   }
 };
 
+export const updateCard = (updatedCardData: Card): Card | undefined => {
+  const cardIndex = updatableCards.findIndex(card => card.id === updatedCardData.id);
+  if (cardIndex !== -1) {
+    updatableCards[cardIndex] = { ...updatableCards[cardIndex], ...updatedCardData };
+    saveData(CARDS_KEY, updatableCards);
+    console.log("Updated card:", updatableCards[cardIndex]);
+    return updatableCards[cardIndex];
+  }
+  console.warn("Card not found for update:", updatedCardData.id);
+  return undefined;
+};
+
+
 // Deleters / Restorers
 export const deleteTransactionFromMockData = (txId: string): void => {
   const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
@@ -250,7 +268,7 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-    console.log(`Transaction ${txId} moved to deleted. Total deleted: ${updatableDeletedTransactions.length}`);
+    // console.log(`Transaction ${txId} moved to deleted. Total deleted: ${updatableDeletedTransactions.length}`);
   }
 };
 
