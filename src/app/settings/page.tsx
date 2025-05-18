@@ -1,14 +1,14 @@
 
-"use client"; // Explicitly client component
+"use client"; 
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Temporarily remove Tabs
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; 
 import { AddInvestorForm } from "./components/AddInvestorForm";
 import { AddPropertyForm } from "./components/AddPropertyForm";
 import { AddCardForm } from "./components/AddCardForm";
 import { getMockInvestors, getMockProperties, getMockCards } from "@/lib/mock-data";
-import type { Investor, Card as UserCard } from "@/lib/types"; // Property is string, already handled
+import type { Investor, Card as UserCard } from "@/lib/types"; 
 import { Separator } from "@/components/ui/separator";
 
 export default function SettingsPage() {
@@ -34,37 +34,11 @@ export default function SettingsPage() {
           <CardDescription>Manage investors, properties, and cards used in the application.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Simplified content - only Investor Management, no Tabs */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Investor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AddInvestorForm onInvestorAdded={refreshData} />
-              </CardContent>
-            </Card>
-            <Separator />
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Investors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {investors.length > 0 ? (
-                  <ul className="list-disc pl-5 space-y-1">
-                    {investors.map(inv => <li key={inv.id}>{inv.name} {inv.email && `(${inv.email})`}</li>)}
-                  </ul>
-                ) : <p>No investors added yet.</p>}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* 
           <Tabs defaultValue="investors" className="space-y-4">
             <TabsList>
               <TabsTrigger value="investors">Manage Investors</TabsTrigger>
               <TabsTrigger value="properties">Manage Properties</TabsTrigger>
-              {/* <TabsTrigger value="cards">Manage Cards</TabsTrigger> * /}
+              <TabsTrigger value="cards">Manage Cards</TabsTrigger>
             </TabsList>
 
             <TabsContent value="investors" className="space-y-4">
@@ -115,7 +89,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/*
             <TabsContent value="cards" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -149,9 +122,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-            * /}
           </Tabs>
-          */}
         </CardContent>
       </Card>
     </div>
