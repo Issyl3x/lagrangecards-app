@@ -206,16 +206,20 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
               outerRadius={80}
               labelLine={false}
             >
-              {chartData.map((entry) => (
-                <Cell key={`cell-${entry.category}`} fill={entry.fill} />
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${entry.category}-${index}`} fill={entry.fill} />
               ))}
               <LabelList
                 dataKey="category"
                 position="outside"
                 offset={15}
                 formatter={(value: string, entry: any) => {
-                  const percentage = entry.payload.percent;
-                  if (percentage * 100 < 5) return null; // Hide label if too small
+                  // Access percent directly from the entry object
+                  const percentage = entry.percent; 
+                  // Defensive check for percentage
+                  if (typeof percentage !== 'number' || (percentage * 100 < 5)) {
+                    return null; // Hide label if too small or percent is not available
+                  }
                   return `${value} (${(percentage * 100).toFixed(0)}%)`;
                 }}
                 className="text-xs fill-muted-foreground"
@@ -232,3 +236,4 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
     </Card>
   );
 }
+
