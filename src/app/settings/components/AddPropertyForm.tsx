@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { addProperty } from "@/lib/mock-data";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Not used
 
 interface AddPropertyFormProps {
   onPropertyAdded: () => void;
@@ -18,7 +18,7 @@ interface AddPropertyFormProps {
 
 export function AddPropertyForm({ onPropertyAdded }: AddPropertyFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
+  // const router = useRouter(); // Not used
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
@@ -38,7 +38,6 @@ export function AddPropertyForm({ onPropertyAdded }: AddPropertyFormProps) {
       });
       form.reset();
       onPropertyAdded();
-      // router.refresh();
     } catch (error) {
       toast({
         title: "Error",

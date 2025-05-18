@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { addInvestor } from "@/lib/mock-data";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Not used
 
 interface AddInvestorFormProps {
   onInvestorAdded: () => void;
@@ -18,7 +18,7 @@ interface AddInvestorFormProps {
 
 export function AddInvestorForm({ onInvestorAdded }: AddInvestorFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
+  // const router = useRouter(); // Not used
   const form = useForm<InvestorFormValues>({
     resolver: zodResolver(investorSchema),
     defaultValues: {
@@ -38,8 +38,7 @@ export function AddInvestorForm({ onInvestorAdded }: AddInvestorFormProps) {
         description: `${newInvestor.name} has been added to the list of investors.`,
       });
       form.reset();
-      onInvestorAdded(); // Callback to refresh data on parent page
-      // router.refresh(); // To ensure other parts of app can pick up changes if needed on navigation
+      onInvestorAdded(); 
     } catch (error) {
       toast({
         title: "Error",

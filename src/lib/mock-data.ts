@@ -1,5 +1,5 @@
 
-import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewPropertyData, NewCardData } from './types';
+import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewCardData } from './types';
 import { formatISO, subDays, subMonths } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,9 +15,9 @@ let updatableCards: Card[] = [
   { id: 'card2', cardName: 'Gualter - Brick Haven - Card 1', investorId: 'investor1', property: 'Brick Haven', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
   {
     id: 'card6',
-    cardName: 'Greg - Fountain Commons - Visa 2627',
+    cardName: 'Greg - Fountain Commons - Visa 2627', // Updated property
     investorId: 'investor4',
-    property: 'Fountain Commons',
+    property: 'Fountain Commons', // Updated property
     isPersonal: false,
     last4Digits: '2627'
   },
@@ -39,7 +39,7 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Lumber for deck repair',
     amount: 250.75,
     category: 'Repairs',
-    cardId: 'card1', // Gualter
+    cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
     receiptLink: 'https://docs.google.com/receipt1',
@@ -53,7 +53,7 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly electricity bill',
     amount: 120.00,
     category: 'Utilities',
-    cardId: 'card2', // Gualter
+    cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
     receiptLink: '',
@@ -67,7 +67,7 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Paint and brushes',
     amount: 78.22,
     category: 'Repairs',
-    cardId: 'card1', // Gualter
+    cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
     receiptLink: '',
@@ -81,7 +81,7 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly gas bill',
     amount: 85.00,
     category: 'Utilities',
-    cardId: 'card2', // Gualter
+    cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
     receiptLink: '',
@@ -95,7 +95,7 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Monthly cleaning for common areas',
     amount: 300.00,
     category: 'Property Management',
-    cardId: 'card1', // Gualter
+    cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
     receiptLink: '',
@@ -109,9 +109,9 @@ let updatableMockTransactions: Transaction[] = [
     description: 'Stationery for Fountain Commons',
     amount: 55.90,
     category: 'Supplies',
-    cardId: 'card6', // Greg
+    cardId: 'card6', 
     investorId: 'investor4',
-    property: 'Fountain Commons', 
+    property: 'Fountain Commons', // Updated property
     receiptLink: '',
     reconciled: false,
     sourceType: 'manual'
@@ -154,7 +154,7 @@ export const addProperty = (propertyName: string): string => {
 export const addCard = (cardData: NewCardData): Card => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false, // Default as per user instruction
+    isPersonal: false, 
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
