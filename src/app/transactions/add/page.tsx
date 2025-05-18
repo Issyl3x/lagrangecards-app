@@ -34,11 +34,18 @@ export default function AddTransactionPage() {
     addTransactionToMockData(newTransactionData);
     console.log("New Transaction Added via addTransactionToMockData:", newTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
+    // Simulate async operation
+    await new Promise(resolve => setTimeout(resolve, 100)); 
 
     toast({
       title: "Transaction Saved",
-      description: `Transaction for ${data.vendor} of $${data.amount} has been saved.`,
+      description: (
+        <>
+          Transaction for {data.vendor} of ${data.amount.toFixed(2)} has been saved.
+          <br />
+          <em className="text-xs text-muted-foreground">(Simulated: Webhook notification would be sent to work email.)</em>
+        </>
+      ),
     });
     setIsLoading(false);
     router.push("/transactions"); 

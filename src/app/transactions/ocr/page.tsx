@@ -73,11 +73,18 @@ export default function OcrTransactionPage() {
     addTransactionToMockData(newTransactionData);
     console.log("OCR-Prefilled/Manual Transaction Data Saved:", newTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
+    // Simulate async operation
+    await new Promise(resolve => setTimeout(resolve, 100)); 
 
     toast({
       title: "Transaction Saved",
-      description: `Transaction for ${newTransactionData.vendor} of $${newTransactionData.amount.toFixed(2)} has been saved.`,
+      description: (
+        <>
+          Transaction for {newTransactionData.vendor} of ${newTransactionData.amount.toFixed(2)} has been saved.
+          <br />
+          <em className="text-xs text-muted-foreground">(Simulated: Webhook notification would be sent to work email.)</em>
+        </>
+      ),
     });
     setParsedDataForForm(null); 
     setIsParsingOrSaving(false);

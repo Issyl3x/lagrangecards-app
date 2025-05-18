@@ -179,6 +179,7 @@ export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
 export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
 export const getDeletedTransactions = (): Transaction[] => {
+  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions);
   return [...updatableDeletedTransactions];
 };
 
@@ -204,7 +205,7 @@ export const addProperty = (propertyName: string): string => {
 export const addCard = (cardData: NewCardData): Card => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false,
+    isPersonal: false, // Default to false for business cards
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
@@ -215,6 +216,19 @@ export const addCard = (cardData: NewCardData): Card => {
 export const addTransactionToMockData = (newTx: Transaction): void => {
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
+  
+  // Simulate webhook notification
+  console.log("SIMULATING WEBHOOK NOTIFICATION TO WORK EMAIL:");
+  console.log("New transaction added:", {
+    id: newTx.id,
+    date: newTx.date,
+    vendor: newTx.vendor,
+    amount: newTx.amount,
+    category: newTx.category,
+    property: newTx.property,
+    investor: getMockInvestors().find(inv => inv.id === newTx.investorId)?.name || 'Unknown Investor',
+  });
+  console.log("---------------------------------------------");
 };
 
 // Updaters
@@ -236,6 +250,7 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+    console.log(`Transaction ${txId} moved to deleted. Total deleted: ${updatableDeletedTransactions.length}`);
   }
 };
 
@@ -318,6 +333,7 @@ export const clearAllMockDataFromLocalStorage = () => {
     localStorage.removeItem(DELETED_TRANSACTIONS_KEY);
     console.log("All mock data cleared from localStorage. Please refresh the application.");
     
+    // Reset in-memory arrays to defaults
     updatableInvestors = [...defaultInvestors];
     updatableProperties = [...defaultProperties];
     updatableCards = [...defaultCards];
@@ -326,6 +342,7 @@ export const clearAllMockDataFromLocalStorage = () => {
   }
 };
 
+// Expose the clear function to the window for easy access during development
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }
