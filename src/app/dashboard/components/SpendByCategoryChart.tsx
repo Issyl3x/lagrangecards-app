@@ -60,15 +60,16 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
 
   // For debugging in browser console
   if (typeof window !== 'undefined') {
-    console.log("[SpendByCategoryChart] Transactions received:", JSON.stringify(transactions.map(t => ({ amount: t.amount, category: t.category, id: t.id }))));
+    console.log("[SpendByCategoryChart] Transactions received (length):", transactions?.length);
     console.log("[SpendByCategoryChart] spendByCategory calculated:", JSON.stringify(spendByCategory));
-    console.log("[SpendByCategoryChart] chartData for pie:", JSON.stringify(chartData));
+    console.log("[SpendByCategoryChart] chartData for pie (length):", chartData.length);
+    console.log("[SpendByCategoryChart] chartData for pie (content):", JSON.stringify(chartData));
   }
 
   if (chartData.length === 0) {
     let descriptionText = "No transaction data available to display spend by category.";
     if (transactions && transactions.length > 0) {
-      descriptionText = "Transactions are present, but no spend was recorded for any category in the current period, or amounts are not positive.";
+      descriptionText = "Transactions are present, but no spend was recorded for any category, or amounts are not positive.";
     }
     return (
        <Card>
@@ -91,14 +92,23 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
       </CardHeader>
       <CardContent className="flex items-center justify-center">
         <ChartContainer config={currentChartConfig} className="mx-auto aspect-square max-h-[250px]">
-          <PieChart>
-            <ChartTooltip content={<ChartTooltipContent nameKey="value" hideLabel />} />
-            <Pie data={chartData} dataKey="value" nameKey="category" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`}>
-              {chartData.map((entry) => (
-                <Cell key={`cell-${entry.category}`} fill={entry.fill} />
+          <PieChart width={250} height={250}>
+            {/* <ChartTooltip content={<ChartTooltipContent nameKey="category" />} /> */}
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="category"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              fill="#8884d8" /* Default fill if cell fill fails */
+              labelLine={false}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
             </Pie>
-            <ChartLegend content={<ChartLegendContent nameKey="category" />} className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center" />
+            {/* <ChartLegend content={<ChartLegendContent nameKey="category" />} className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center" /> */}
           </PieChart>
         </ChartContainer>
       </CardContent>
