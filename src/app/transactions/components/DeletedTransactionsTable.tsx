@@ -29,7 +29,7 @@ interface DeletedTransactionsTableProps {
 // Mock current user for permission check
 const mockCurrentUser = {
   id: 'investor1', // Can be any ID for simulation
-  isAdmin: false,  // Set to true for admin, false for non-admin
+  isAdmin: true,  // Set to true for admin, false for non-admin
 };
 
 export function DeletedTransactionsTable({ initialDeletedTransactions }: DeletedTransactionsTableProps) {

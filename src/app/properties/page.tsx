@@ -18,7 +18,7 @@ import { ShieldAlert } from "lucide-react";
 // Mock current user for permission check
 const mockCurrentUser = {
   id: 'user1', // Can be any ID for simulation
-  isAdmin: false,  // Set to false to show restricted view
+  isAdmin: true,  // Set to false to show restricted view
 };
 
 function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
@@ -123,3 +123,4 @@ export default function PropertiesPage() {
     </div>
   );
 }
+
