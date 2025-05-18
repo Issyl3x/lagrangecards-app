@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Check, ChevronsUpDown, UploadCloud } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -69,6 +69,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       investorId: initialData?.investorId || "",
       investorName: "",
       property: initialData?.property || "",
+      unitNumber: initialData?.unitNumber || "", // Added Unit Number
       receiptImageURI: initialData?.receiptImageURI || "", 
       sourceType: initialData?.sourceType || 'manual',
     },
@@ -113,12 +114,13 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         investorId: initialData.investorId || "",
         investorName: investorName,
         property: initialData.property || "",
+        unitNumber: initialData.unitNumber || "", // Added Unit Number
         receiptImageURI: initialData.receiptImageURI || "",
         sourceType: initialData.sourceType || 'manual',
       };
       form.reset(resetValues);
       setImagePreview(initialData.receiptImageURI || null);
-      setFileName(null); // Reset filename on initial data load
+      setFileName(null); 
 
       if (initialData.investorId) {
         setCards(getMockCards().filter(card => card.investorId === initialData.investorId));
@@ -334,7 +336,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                     step="0.01" 
                     placeholder="0.00" 
                     {...field}
-                    value={field.value === undefined ? '' : field.value} 
+                    value={field.value === undefined ? '' : String(field.value)} 
                     onChange={event => {
                       const value = event.target.value;
                       if (value === '' || value === null || value === undefined) {
@@ -379,7 +381,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-end">
           <FormField
             control={form.control}
             name="investorId"
@@ -463,6 +465,21 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
               </FormItem>
             )}
           />
+          
+          <FormField
+            control={form.control}
+            name="unitNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Unit # (Optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Apt 101" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
 
           <FormField
             control={form.control}
@@ -493,7 +510,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         <FormField
           control={form.control}
           name="receiptImageURI"
-          render={({ field }) => ( // field prop is not directly used for input type file but for form state
+          render={({ field }) => ( 
             <FormItem>
               <FormLabel>Receipt Image (Optional)</FormLabel>
               <FormControl>

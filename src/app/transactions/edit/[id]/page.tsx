@@ -65,6 +65,7 @@ export default function EditTransactionPage() {
         category: data.category,
         investorId: data.investorId,
         property: data.property, 
+        unitNumber: data.unitNumber || "", // Added Unit Number
         cardId: data.cardId,
         receiptImageURI: data.receiptImageURI || "",
     };
@@ -78,7 +79,6 @@ export default function EditTransactionPage() {
       description: `Transaction for ${updatedTransactionData.vendor} of $${updatedTransactionData.amount} has been updated.`,
     });
     setIsLoading(false);
-    // router.refresh(); // Removed to rely on ViewTransactionsPage useEffect
     router.push("/transactions"); 
   };
 

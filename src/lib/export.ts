@@ -22,7 +22,7 @@ export function convertToCSV(transactions: Transaction[]): string {
 
   const headers = [
     "Date", "Vendor", "Description", "Amount", "Category", 
-    "Investor", "Property", "Card Used", "Receipt Image URI", "Reconciled (Yes/No)" 
+    "Investor", "Property", "Unit Number", "Card Used", "Receipt Image URI", "Reconciled (Yes/No)" 
   ];
   
   const rows = transactions.map(tx => [
@@ -33,8 +33,9 @@ export function convertToCSV(transactions: Transaction[]): string {
     tx.category,
     getInvestorNameById(tx.investorId),
     tx.property,
+    tx.unitNumber || '', // Added Unit Number
     getCardNameById(tx.cardId),
-    tx.receiptImageURI ? (tx.receiptImageURI.length > 50 ? tx.receiptImageURI.substring(0,50) + "... (DataURI)" : tx.receiptImageURI) : '', // Truncate long Data URIs for CSV
+    tx.receiptImageURI ? (tx.receiptImageURI.length > 50 ? tx.receiptImageURI.substring(0,50) + "... (DataURI)" : tx.receiptImageURI) : '', 
     tx.reconciled ? 'Yes' : 'No'
   ]);
 

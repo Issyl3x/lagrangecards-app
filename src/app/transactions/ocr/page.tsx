@@ -26,11 +26,10 @@ export default function OcrTransactionPage() {
       description: `Vendor: ${data.vendor}, Amount: $${data.amount.toFixed(2)}, Date: ${data.date}`,
     });
     
-    // Attempt to parse the date string from OCR (YYYY-MM-DD)
     let parsedDate;
     try {
-        parsedDate = parseISO(data.date); // data.date should be YYYY-MM-DD
-        if (isNaN(parsedDate.getTime())) { // Check if parseISO returned a valid date
+        parsedDate = parseISO(data.date); 
+        if (isNaN(parsedDate.getTime())) { 
             throw new Error("Invalid date format from OCR");
         }
     } catch (e) {
@@ -39,17 +38,18 @@ export default function OcrTransactionPage() {
         toast({
             title: "Date Parsing Warning",
             description: "Could not parse date from receipt, defaulting to today. Please verify.",
-            variant: "default" // Using "default" as variant "warning" is not standard ShadCN
+            variant: "default" 
         });
     }
     
     const initialTransactionData: Partial<Transaction> = {
         vendor: data.vendor,
         amount: data.amount,
-        date: format(parsedDate, "yyyy-MM-dd"), // Store as ISO string
+        date: format(parsedDate, "yyyy-MM-dd"), 
         sourceType: 'OCR',
         reconciled: false, 
-        receiptImageURI: "", // Initialize receiptImageURI - user can upload separately if desired
+        unitNumber: "", // Initialize unitNumber
+        receiptImageURI: "", 
     };
     setParsedDataForForm(initialTransactionData);
     setIsParsingOrSaving(false); 
@@ -63,6 +63,7 @@ export default function OcrTransactionPage() {
       ...formData,
       date: format(formData.date, "yyyy-MM-dd"), 
       reconciled: false, 
+      unitNumber: formData.unitNumber || "", // Ensure unitNumber is included
       receiptImageURI: formData.receiptImageURI || "", 
     };
 

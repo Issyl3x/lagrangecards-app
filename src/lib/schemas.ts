@@ -17,8 +17,9 @@ export const transactionSchema = z.object({
   investorId: z.string().min(1, { message: "Investor is required." }),
   investorName: z.string().optional(),
   property: z.string().min(1, { message: "Property is required." }),
+  unitNumber: z.string().max(50, { message: "Unit number is too long." }).optional().or(z.literal("")), // Added Unit Number
   cardId: z.string().min(1, { message: "Card is required." }),
-  receiptImageURI: z.string().optional().or(z.literal("")), // Changed from receiptSnippet, stores Data URI
+  receiptImageURI: z.string().optional().or(z.literal("")), 
   sourceType: z.enum(['manual', 'OCR', 'import']).default('manual'),
 });
 export type TransactionFormValues = z.infer<typeof transactionSchema>;

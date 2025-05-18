@@ -42,7 +42,8 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptImageURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // Placeholder 1x1 transparent png
+    unitNumber: 'Unit 10A',
+    receiptImageURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 
     reconciled: true,
     sourceType: 'manual'
   },
@@ -56,6 +57,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
+    unitNumber: '',
     receiptImageURI: '',
     reconciled: false,
     sourceType: 'OCR'
@@ -70,7 +72,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptImageURI: '', // Example of no image
+    receiptImageURI: '', 
     reconciled: false,
     sourceType: 'OCR'
   },

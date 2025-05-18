@@ -25,6 +25,7 @@ export default function AddTransactionPage() {
       ...data,
       date: format(data.date, "yyyy-MM-dd"), 
       property: data.property, 
+      unitNumber: data.unitNumber || "", // Added Unit Number
       receiptImageURI: data.receiptImageURI || "", 
       reconciled: false, 
       sourceType: data.sourceType || 'manual',
@@ -40,7 +41,6 @@ export default function AddTransactionPage() {
       description: `Transaction for ${data.vendor} of $${data.amount} has been saved.`,
     });
     setIsLoading(false);
-    // router.refresh(); // Removed to rely on ViewTransactionsPage useEffect
     router.push("/transactions"); 
   };
 

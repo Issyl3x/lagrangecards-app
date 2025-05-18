@@ -65,6 +65,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const [columnVisibility, setColumnVisibility] = React.useState({
     investor: true,
     property: true,
+    unitNumber: true, // Added Unit Number
     cardUsed: true,
     reconciled: true,
     receiptImageURI: true, 
@@ -116,6 +117,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         tempTransactions = tempTransactions.filter(tx =>
             tx.vendor.toLowerCase().includes(lowerSearchTerm) ||
             (tx.description && tx.description.toLowerCase().includes(lowerSearchTerm)) ||
+            (tx.unitNumber && tx.unitNumber.toLowerCase().includes(lowerSearchTerm)) || // Search by unit number
             tx.category.toLowerCase().includes(lowerSearchTerm)
         );
     }
@@ -225,7 +227,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-    const details = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptImageURI ? `\nReceipt Image Attached` : ''}`;
+    const details = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.unitNumber ? `\nUnit: ${transaction.unitNumber}` : ''}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptImageURI ? `\nReceipt Image Attached` : ''}`;
     try {
       await navigator.clipboard.writeText(details);
       toast({
@@ -247,7 +249,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
         <Input
-            placeholder="Search vendor, description, category..."
+            placeholder="Search vendor, desc, category, unit..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -350,24 +352,25 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>{/* Start Table Header Row */}
+            <TableRow>
               <TableHead onClick={() => handleSort("date")}>Date {renderSortIcon("date")}</TableHead>
               <TableHead onClick={() => handleSort("vendor")}>Vendor {renderSortIcon("vendor")}</TableHead>
               <TableHead onClick={() => handleSort("amount")} className="text-right">Amount {renderSortIcon("amount")}</TableHead>
               <TableHead onClick={() => handleSort("category")}>Category {renderSortIcon("category")}</TableHead>
               {columnVisibility.investor && <TableHead onClick={() => handleSort("investorId")}>Investor {renderSortIcon("investorId")}</TableHead>}
               {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>}
+              {columnVisibility.unitNumber && <TableHead onClick={() => handleSort("unitNumber")}>Unit # {renderSortIcon("unitNumber")}</TableHead>}
               {columnVisibility.cardUsed && <TableHead onClick={() => handleSort("cardId")}>Card Used {renderSortIcon("cardId")}</TableHead>}
               {columnVisibility.reconciled && <TableHead onClick={() => handleSort("reconciled")}>Reconciled {renderSortIcon("reconciled")}</TableHead>}
               {columnVisibility.receiptImageURI && <TableHead>Receipt</TableHead>}
               {columnVisibility.sourceType && <TableHead onClick={() => handleSort("sourceType")}>Source {renderSortIcon("sourceType")}</TableHead>}
               <TableHead>Actions</TableHead>
-            </TableRow>{/* End Table Header Row */}
+            </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((tx) => (
-                <TableRow key={tx.id}>{/* Start Table Body Row */}
+                <TableRow key={tx.id}>
                   <TableCell>{format(parseISO(tx.date), "MMM dd, yyyy")}</TableCell>
                   <TableCell className="font-medium">{tx.vendor}</TableCell>
                   <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
@@ -376,6 +379,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                   </TableCell>
                   {columnVisibility.investor && <TableCell>{getInvestorName(tx.investorId)}</TableCell>}
                   {columnVisibility.property && <TableCell>{tx.property}</TableCell>}
+                  {columnVisibility.unitNumber && <TableCell>{tx.unitNumber || '-'}</TableCell>}
                   {columnVisibility.cardUsed && <TableCell>{getCardName(tx.cardId)}</TableCell>}
                   {columnVisibility.reconciled && (
                     <TableCell>
