@@ -11,7 +11,7 @@ export default function SettingsPage() {
     };
   }, []);
 
-  console.log("SettingsPage: RENDERING component.");
+  // console.log("SettingsPage: RENDERING component."); // Removed this line
 
   return (
     <div className="space-y-6">
