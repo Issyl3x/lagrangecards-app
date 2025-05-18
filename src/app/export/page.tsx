@@ -43,10 +43,10 @@ export default function ExportPage() {
 
   const handleSendToGoogleSheets = () => {
     toast({
-      title: "Send to Google Sheets (Mock)",
-      description: "This feature is for demonstration. A real implementation would require Google Sheets API setup and authentication to send data directly. For now, please use the 'Download CSV' option and import it into Google Sheets.",
+      title: "Send to Google Sheets (Demonstration)",
+      description: "This feature is for demonstration purposes. A direct integration requires Google API setup and user authentication, which is complex for a prototype. For now, please use the 'Download CSV' option and import that file into Google Sheets.",
       variant: "default",
-      duration: 8000, 
+      duration: 10000, 
     });
     console.log("Attempting to send to Google Sheets (mocked). Data:", getMockTransactions());
   };
@@ -154,7 +154,7 @@ export default function ExportPage() {
             </Button>
             <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto">
               <Send className="mr-2 h-4 w-4" />
-              Send to Google Sheets (Mock)
+              Send to Google Sheets (Demo)
             </Button>
           </div>
            {transactions.length === 0 && (
