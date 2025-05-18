@@ -4,10 +4,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
+  // ChartTooltip, // Temporarily commented out for simplification
+  // ChartTooltipContent,
+  // ChartLegend,
+  // ChartLegendContent,
 } from "@/components/ui/chart";
 import type { Transaction } from "@/lib/types";
 import { PieChart, Pie, Cell } from "recharts";
@@ -23,12 +23,12 @@ const categoryColors: Record<string, string> = {
   "Supplies": "hsl(var(--chart-3))",
   "Mortgage": "hsl(var(--chart-4))",
   "Insurance": "hsl(var(--chart-5))",
-  "HOA Fees": "hsl(var(--chart-1))",
+  "HOA Fees": "hsl(var(--chart-1))", // Re-using colors for more categories
   "Property Management": "hsl(var(--chart-2))",
   "Travel": "hsl(var(--chart-3))",
   "Marketing": "hsl(var(--chart-4))",
-  "Appliances": "hsl(var(--chart-5))",
-  "Other": "hsl(var(--chart-5))",
+  "Appliances": "hsl(var(--chart-5))", // Added Appliances
+  "Other": "hsl(var(--chart-5))", // Default/fallback color
 };
 
 
@@ -43,11 +43,11 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
   }
 
   const chartData = Object.entries(spendByCategory)
-    .filter(([, value]) => value > 0)
+    .filter(([, value]) => value > 0) // Ensure we only chart categories with spend
     .map(([category, value], index) => ({
       category,
       value,
-      fill: categoryColors[category] || `hsl(var(--chart-${(index % 5) + 1}))`,
+      fill: categoryColors[category] || `hsl(var(--chart-${(index % 5) + 1}))`, // Fallback color logic
     }));
 
   const currentChartConfig = chartData.reduce((acc, item) => {
@@ -91,8 +91,8 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
         <CardDescription>Breakdown of expenses by category for the current period.</CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
-        <ChartContainer config={currentChartConfig} className="mx-auto aspect-square max-h-[250px]">
-          <PieChart width={250} height={250}>
+        <ChartContainer config={currentChartConfig} className="h-[250px] w-[250px]"> {/* Explicit height and width */}
+          <PieChart> {/* Removed explicit width/height to let ResponsiveContainer manage */}
             {/* <ChartTooltip content={<ChartTooltipContent nameKey="category" />} /> */}
             <Pie
               data={chartData}
@@ -100,9 +100,10 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
               nameKey="category"
               cx="50%"
               cy="50%"
-              outerRadius={80}
+              outerRadius={80} 
               fill="#8884d8" /* Default fill if cell fill fails */
               labelLine={false}
+              // label // Temporarily removed for simplification
             >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
