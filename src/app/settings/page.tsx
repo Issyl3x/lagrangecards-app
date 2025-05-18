@@ -38,7 +38,7 @@ export default function SettingsPage() {
             <TabsList>
               <TabsTrigger value="investors">Manage Investors</TabsTrigger>
               <TabsTrigger value="properties">Manage Properties</TabsTrigger>
-              <TabsTrigger value="cards">Manage Cards</TabsTrigger>
+              {/* <TabsTrigger value="cards">Manage Cards</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="investors" className="space-y-4">
@@ -89,6 +89,7 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
+            {/*
             <TabsContent value="cards" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -122,6 +123,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            */}
           </Tabs>
         </CardContent>
       </Card>
