@@ -3,38 +3,153 @@
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { getMockCards } from "@/lib/mock-data";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Landmark } from "lucide-react";
+import { Landmark, Filter, Download, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreditCardPaymentsListProps {
   transactions: Transaction[];
   itemsToShow?: number;
 }
 
-export function CreditCardPaymentsList({ transactions, itemsToShow = 5 }: CreditCardPaymentsListProps) {
+const convertPaymentsToCSV = (payments: Transaction[], cards: UserCard[]): string => {
+  if (payments.length === 0) {
+    return "";
+  }
+
+  const getCardName = (cardId: string) => {
+    const card = cards.find(c => c.id === cardId);
+    return card ? `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}` : 'Unknown Card';
+  };
+
+  const headers = [
+    "Date", 
+    "Paid To Card", 
+    "Amount", 
+    "Paid From Account", 
+    "Note"
+  ];
+  
+  const rows = payments.map(tx => [
+    tx.date ? format(parseISO(tx.date), "yyyy-MM-dd") : 'N/A',
+    getCardName(tx.cardId),
+    tx.amount.toFixed(2),
+    tx.vendor, // For payments, vendor is the bank account used
+    tx.description || '',
+  ]);
+
+  const escapeCell = (cellData: string | number) => {
+    const stringData = String(cellData);
+    if (stringData.includes(',') || stringData.includes('"') || stringData.includes('\n')) {
+      return `"${stringData.replace(/"/g, '""')}"`;
+    }
+    return stringData;
+  };
+
+  const csvContent = [
+    headers.map(escapeCell).join(','),
+    ...rows.map(row => row.map(escapeCell).join(','))
+  ].join('\n');
+
+  return csvContent;
+}
+
+const downloadPaymentCSV = (csvContent: string, filename: string): void => {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+}
+
+
+export function CreditCardPaymentsList({ transactions: allTransactions, itemsToShow = 5 }: CreditCardPaymentsListProps) {
   const [allCards, setAllCards] = React.useState<UserCard[]>([]);
+  const [dateRangeFilter, setDateRangeFilter] = React.useState<DateRange | undefined>(undefined);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     setAllCards(getMockCards());
   }, []);
 
-  const creditCardPayments = React.useMemo(() => {
-    return transactions
-      .filter(tx => tx.category === "Credit Card Payment")
+  const filteredCreditCardPayments = React.useMemo(() => {
+    let payments = allTransactions.filter(tx => tx.category === "Credit Card Payment");
+
+    if (dateRangeFilter?.from) {
+      payments = payments.filter(tx => {
+        const txDate = parseISO(tx.date);
+        if (!isValid(txDate)) return false;
+        let inRange = txDate >= (dateRangeFilter.from as Date);
+        if (dateRangeFilter.to) {
+          const toDate = new Date(dateRangeFilter.to as Date);
+          toDate.setDate(toDate.getDate() + 1); // Include the 'to' date
+          inRange = inRange && txDate < toDate;
+        }
+        return inRange;
+      });
+    }
+    
+    return payments
       .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
       .slice(0, itemsToShow);
-  }, [transactions, itemsToShow]);
+  }, [allTransactions, dateRangeFilter, itemsToShow]);
 
   const getCardName = (cardId: string) => {
     const card = allCards.find(c => c.id === cardId);
     return card ? `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}` : 'Unknown Card';
   };
 
-  if (transactions.length === 0) {
-    // This case should ideally be handled by parent, but good to have a fallback
+  const handleDownloadCSV = () => {
+    if (filteredCreditCardPayments.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No credit card payments available to export for the selected period.",
+        variant: "default",
+      });
+      return;
+    }
+    const csvData = convertPaymentsToCSV(filteredCreditCardPayments, allCards);
+    downloadPaymentCSV(csvData, `estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.csv`);
+    toast({
+      title: "CSV Downloaded",
+      description: "Credit card payments report has been exported as a CSV file.",
+    });
+  };
+
+  const handleDownloadPDF = () => {
+    toast({
+      title: "Download PDF (Mock)",
+      description: "This feature is not yet implemented. In a real app, a PDF report of these payments would be generated.",
+      variant: "default",
+    });
+  };
+  
+  let descriptionText = "Recent payments made towards your credit cards.";
+  if (dateRangeFilter?.from) {
+    descriptionText = `Payments made towards your credit cards from ${format(dateRangeFilter.from, "LLL dd, y")}`;
+    if (dateRangeFilter.to) {
+      descriptionText += ` to ${format(dateRangeFilter.to, "LLL dd, y")}.`;
+    } else {
+       descriptionText += ".";
+    }
+  }
+
+
+  if (allTransactions.length === 0) {
     return (
         <Card>
             <CardHeader>
@@ -48,48 +163,91 @@ export function CreditCardPaymentsList({ transactions, itemsToShow = 5 }: Credit
     );
   }
   
-  if (creditCardPayments.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Credit Card Payments Made</CardTitle>
-          <CardDescription>No payments towards credit cards found in the recent transactions.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-[150px]">
-          <p className="text-muted-foreground">No credit card payments to display</p>
-        </CardContent>
-      </Card>
-    );
+  let emptyStateMessage = "No credit card payments to display for the selected period.";
+  if (!dateRangeFilter?.from && allTransactions.filter(tx => tx.category === "Credit Card Payment").length === 0) {
+      emptyStateMessage = "No credit card payments found in any transactions.";
+  } else if (dateRangeFilter?.from && filteredCreditCardPayments.length === 0) {
+      emptyStateMessage = "No credit card payments match the selected date range.";
   }
+
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Credit Card Payments Made</CardTitle>
-        <CardDescription>Recent payments made towards your credit cards.</CardDescription>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+                <CardTitle>Credit Card Payments Made</CardTitle>
+                <CardDescription>{descriptionText}</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-auto text-sm font-normal">
+                    <Filter className="mr-2 h-4 w-4" />
+                    {dateRangeFilter?.from ? (
+                        dateRangeFilter.to ? (
+                        <>
+                            {format(dateRangeFilter.from, "LLL dd, y")} - {format(dateRangeFilter.to, "LLL dd, y")}
+                        </>
+                        ) : (
+                        format(dateRangeFilter.from, "LLL dd, y")
+                        )
+                    ) : (
+                        <span>Filter by Date</span>
+                    )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRangeFilter?.from}
+                    selected={dateRangeFilter}
+                    onSelect={setDateRangeFilter}
+                    numberOfMonths={1}
+                    />
+                </PopoverContent>
+                </Popover>
+                <Button onClick={handleDownloadCSV} variant="outline" size="sm" disabled={filteredCreditCardPayments.length === 0}>
+                    <Download className="mr-2 h-4 w-4" />
+                    CSV
+                </Button>
+                <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredCreditCardPayments.length === 0}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    PDF (Mock)
+                </Button>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[200px]"> {/* Adjusted height slightly */}
-          <ul className="space-y-3">
-            {creditCardPayments.map((tx) => (
-              <li key={tx.id} className="p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-center">
-                  <div className="min-w-0">
-                     <div className="flex items-center">
-                        <Landmark className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
-                        <p className="font-semibold text-primary truncate">{tx.vendor}</p>
+        {filteredCreditCardPayments.length === 0 ? (
+             <div className="flex items-center justify-center h-[150px]">
+                <p className="text-muted-foreground">{emptyStateMessage}</p>
+            </div>
+        ) : (
+            <ScrollArea className="h-[200px]">
+            <ul className="space-y-3">
+                {filteredCreditCardPayments.map((tx) => (
+                <li key={tx.id} className="p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-center">
+                    <div className="min-w-0">
+                        <div className="flex items-center">
+                            <Landmark className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+                            {/* For payments, tx.vendor is the bank account used */}
+                            <p className="font-semibold text-primary truncate">{tx.vendor}</p> 
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate ml-7">
+                        {format(parseISO(tx.date), "MMM dd, yyyy")} - To: {getCardName(tx.cardId)}
+                        </p>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate ml-7">
-                      {format(parseISO(tx.date), "MMM dd, yyyy")} - To: {getCardName(tx.cardId)}
-                    </p>
-                  </div>
-                  <p className="font-medium whitespace-nowrap">${tx.amount.toFixed(2)}</p>
-                </div>
-                {tx.description && <p className="text-sm text-muted-foreground mt-1 truncate ml-7">{tx.description}</p>}
-              </li>
-            ))}
-          </ul>
-        </ScrollArea>
+                    <p className="font-medium whitespace-nowrap">${tx.amount.toFixed(2)}</p>
+                    </div>
+                    {tx.description && <p className="text-sm text-muted-foreground mt-1 truncate ml-7">{tx.description}</p>}
+                </li>
+                ))}
+            </ul>
+            </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );
