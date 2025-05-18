@@ -10,7 +10,7 @@ import { AddCardForm } from "./components/AddCardForm";
 import { getMockInvestors, getMockProperties, getMockCards } from "@/lib/mock-data";
 import type { Investor, Card as UserCard } from "@/lib/types"; 
 import { Separator } from "@/components/ui/separator";
-import ErrorBoundary from "@/components/ErrorBoundary"; // Import the ErrorBoundary
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function SettingsPage() {
   const [investors, setInvestors] = React.useState<Investor[]>([]);
@@ -61,7 +61,7 @@ export default function SettingsPage() {
                       <AddInvestorForm onInvestorAdded={refreshData} />
                     </CardContent>
                   </Card>
-                  <Separator />
+                  {/* <Separator />
                   <Card>
                     <CardHeader>
                       <CardTitle>Current Investors</CardTitle>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
                         </ul>
                       ) : <p>No investors added yet.</p>}
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </ErrorBoundary>
               </TabsContent>
 
@@ -87,7 +87,7 @@ export default function SettingsPage() {
                       <AddPropertyForm onPropertyAdded={refreshData} />
                     </CardContent>
                   </Card>
-                  <Separator />
+                  {/* <Separator />
                   <Card>
                     <CardHeader>
                       <CardTitle>Current Properties</CardTitle>
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                         </ul>
                       ) : <p>No properties added yet.</p>}
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </ErrorBoundary>
               </TabsContent>
 
@@ -113,7 +113,7 @@ export default function SettingsPage() {
                       <AddCardForm onCardAdded={refreshData} />
                     </CardContent>
                   </Card>
-                  <Separator />
+                  {/* <Separator />
                   <Card>
                     <CardHeader>
                       <CardTitle>Current Cards</CardTitle>
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                         </ul>
                       ) : <p>No cards added yet.</p>}
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </ErrorBoundary>
               </TabsContent>
             </Tabs>
