@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getMockInvestors, getMockProperties, addCard } from "@/lib/mock-data";
 import type { Investor } from "@/lib/types";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Not used
 
 interface AddCardFormProps {
   onCardAdded: () => void;
@@ -20,7 +20,7 @@ interface AddCardFormProps {
 
 export function AddCardForm({ onCardAdded }: AddCardFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
+  // const router = useRouter(); // Not used
   const [investors, setInvestors] = React.useState<Investor[]>([]);
   const [properties, setProperties] = React.useState<string[]>([]);
 
@@ -28,8 +28,8 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
     resolver: zodResolver(cardSchema),
     defaultValues: {
       cardName: "",
-      investorId: "",
-      property: "",
+      investorId: undefined, // Changed from ""
+      property: undefined,   // Changed from ""
       last4Digits: "",
       spendLimitMonthly: undefined,
     },
@@ -55,7 +55,6 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
       });
       form.reset();
       onCardAdded();
-      // router.refresh(); 
     } catch (error) {
       toast({
         title: "Error",
@@ -92,7 +91,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Investor</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}> {/* Ensure value is a string for Select */}
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an investor" />
@@ -115,7 +114,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Property</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}> {/* Ensure value is a string for Select */}
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a property" />
