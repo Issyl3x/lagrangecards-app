@@ -3,14 +3,6 @@
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from 'react';
@@ -27,7 +19,6 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/investors")) return "Manage Investors";
   if (pathname.startsWith("/properties")) return "Manage Properties";
   if (pathname.startsWith("/cards")) return "Manage Cards";
-  // Removed settings path
   return "EstateFlow";
 };
 
@@ -58,9 +49,8 @@ export function AppHeader() {
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
-        {/* User account dropdown removed, Avatar remains */}
         <Avatar className="h-8 w-8">
-          <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
+          <AvatarImage src="https://placehold.co/32x32.png" alt="User Avatar" data-ai-hint="user avatar" />
           <AvatarFallback>EF</AvatarFallback>
         </Avatar>
       </div>
