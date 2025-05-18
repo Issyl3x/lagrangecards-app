@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-// Removed useState and useEffect for propertySpends
+import { format, parseISO } from "date-fns";
+import { getMockInvestors, getMockCards } from "@/lib/mock-data"; // For potential future use if needed for CSV
 
 interface PropertySpend {
   propertyName: string;
@@ -18,17 +19,42 @@ interface PropertySpendSummaryProps {
   transactions: Transaction[];
 }
 
-const convertPropertySpendToCSV = (data: PropertySpend[]): string => {
-  if (data.length === 0) {
+const convertTransactionsToDetailedPropertyCSV = (transactions: Transaction[]): string => {
+  const transactionsWithProperty = transactions.filter(tx => tx.property);
+
+  if (transactionsWithProperty.length === 0) {
     return "";
   }
-  const headers = ["Property Name", "Total Spend"];
-  const rows = data.map(item => [
-    item.propertyName,
-    item.totalSpend.toFixed(2)
+
+  // Sort by property name, then by date
+  const sortedTransactions = [...transactionsWithProperty].sort((a, b) => {
+    if (a.property.toLowerCase() < b.property.toLowerCase()) return -1;
+    if (a.property.toLowerCase() > b.property.toLowerCase()) return 1;
+    // If properties are the same, sort by date
+    return parseISO(a.date).getTime() - parseISO(b.date).getTime();
+  });
+
+  const headers = [
+    "Property", 
+    "Date", 
+    "Vendor", 
+    "Description", 
+    "Amount", 
+    "Category", 
+    "Unit Number"
+  ];
+  
+  const rows = sortedTransactions.map(tx => [
+    tx.property,
+    format(parseISO(tx.date), "yyyy-MM-dd"),
+    tx.vendor,
+    tx.description || '',
+    tx.amount.toFixed(2),
+    tx.category,
+    tx.unitNumber || ''
   ]);
 
-  const escapeCell = (cellData: string) => {
+  const escapeCell = (cellData: string | number) => {
     const stringData = String(cellData);
     if (stringData.includes(',') || stringData.includes('"') || stringData.includes('\n')) {
       return `"${stringData.replace(/"/g, '""')}"`;
@@ -44,7 +70,7 @@ const convertPropertySpendToCSV = (data: PropertySpend[]): string => {
   return csvContent;
 }
 
-const downloadPropertySpendCSV = (csvContent: string, filename: string): void => {
+const downloadDetailedPropertyCSV = (csvContent: string, filename: string): void => {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   if (link.download !== undefined) {
@@ -62,7 +88,6 @@ const downloadPropertySpendCSV = (csvContent: string, filename: string): void =>
 export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps) {
   const { toast } = useToast();
 
-  // Derive propertySpends directly from transactions prop
   const spendByProperty: Record<string, number> = {};
   transactions.forEach(tx => {
     if (tx.property) { 
@@ -78,29 +103,31 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     .sort((a, b) => b.totalSpend - a.totalSpend);
 
   const handleDownloadCSV = () => {
-    if (propertySpends.length === 0) {
+    const transactionsWithProperty = transactions.filter(tx => tx.property);
+    if (transactionsWithProperty.length === 0) {
       toast({
         title: "No Data",
-        description: "No property spend data available to export.",
+        description: "No transactions with assigned properties available to export.",
         variant: "default",
       });
       return;
     }
-    const csvData = convertPropertySpendToCSV(propertySpends);
-    downloadPropertySpendCSV(csvData, `estateflow_property_spend_summary_${new Date().toISOString().split('T')[0]}.csv`);
+    const csvData = convertTransactionsToDetailedPropertyCSV(transactions); // Pass all transactions
+    downloadDetailedPropertyCSV(csvData, `estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.csv`);
     toast({
       title: "CSV Downloaded",
-      description: "Property spend summary has been exported as a CSV file.",
+      description: "Detailed property spend report has been exported as a CSV file.",
     });
   };
 
   const handleDownloadPDF = () => {
     toast({
       title: "Download PDF (Mock)",
-      description: "This feature is not yet implemented. In a real app, a PDF report would be generated.",
+      description: "This feature is not yet implemented. In a real app, a detailed property transaction PDF report would be generated.",
       variant: "default",
     });
-    console.log("Attempting to download PDF (mocked). Data:", propertySpends);
+    // For actual implementation, you'd pass the transactions to a PDF generation library
+    // console.log("Attempting to download PDF (mocked). Data for PDF:", transactions.filter(tx => tx.property));
   };
   
   if (transactions.length === 0) {
@@ -136,14 +163,14 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
             <CardTitle>Running Cost by Property</CardTitle>
-            <CardDescription>Total spend for each property based on current transactions.</CardDescription>
+            <CardDescription>Total spend for each property. Download detailed transaction reports below.</CardDescription>
         </div>
         <div className="flex gap-2 mt-2 sm:mt-0">
-            <Button onClick={handleDownloadCSV} variant="outline" size="sm" disabled={propertySpends.length === 0}>
+            <Button onClick={handleDownloadCSV} variant="outline" size="sm" disabled={transactions.filter(tx => tx.property).length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Download CSV
             </Button>
-            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={propertySpends.length === 0}>
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.filter(tx => tx.property).length === 0}>
                 <FileText className="mr-2 h-4 w-4" />
                 Download PDF (Mock)
             </Button>
@@ -168,4 +195,3 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     </Card>
   );
 }
-
