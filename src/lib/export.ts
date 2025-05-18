@@ -1,12 +1,16 @@
 
 import type { Transaction, Card as UserCard } from './types'; // Added UserCard
-import { mockInvestors, mockCards } from './mock-data'; // To resolve names
+import { getMockInvestors, getMockCards } from './mock-data'; // To resolve names
 import { format, parseISO } from 'date-fns';
 
-const getInvestorName = (id: string) => mockInvestors.find(i => i.id === id)?.name || id;
+const getInvestorNameById = (id: string) => {
+  const investors = getMockInvestors();
+  return investors.find(i => i.id === id)?.name || id;
+};
 
-const getCardName = (id: string) => {
-  const card = mockCards.find(c => c.id === id);
+const getCardNameById = (id: string) => {
+  const cards = getMockCards();
+  const card = cards.find(c => c.id === id);
   if (!card) return id; // Or 'N/A'
   return `${card.cardName}${card.last4Digits ? ` (****${card.last4Digits})` : ''}`;
 };
@@ -18,18 +22,18 @@ export function convertToCSV(transactions: Transaction[]): string {
 
   const headers = [
     "Date", "Vendor", "Description", "Amount", "Category", 
-    "Investor", "Property", "Card Used", "Receipt Link", "Reconciled (Yes/No)" // Renamed Project to Property
+    "Investor", "Property", "Card Used", "Receipt Link", "Reconciled (Yes/No)"
   ];
   
   const rows = transactions.map(tx => [
     format(parseISO(tx.date), "yyyy-MM-dd"),
     tx.vendor,
-    tx.description,
+    tx.description || '', // Ensure description is not undefined
     tx.amount.toFixed(2),
     tx.category,
-    getInvestorName(tx.investorId),
-    tx.property, // Renamed from project
-    getCardName(tx.cardId),
+    getInvestorNameById(tx.investorId),
+    tx.property,
+    getCardNameById(tx.cardId),
     tx.receiptLink || '',
     tx.reconciled ? 'Yes' : 'No'
   ]);
@@ -62,5 +66,6 @@ export function downloadCSV(csvContent: string, filename: string): void {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up the object URL
   }
 }
