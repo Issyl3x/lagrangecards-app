@@ -12,7 +12,6 @@ import {
 import type { Transaction } from "@/lib/types";
 import { PieChart, Pie, Cell } from "recharts";
 import type { ChartConfig } from "@/components/ui/chart";
-// Removed useState and useEffect
 
 interface SpendByCategoryChartProps {
   transactions: Transaction[];
@@ -24,28 +23,31 @@ const categoryColors: Record<string, string> = {
   "Supplies": "hsl(var(--chart-3))",
   "Mortgage": "hsl(var(--chart-4))",
   "Insurance": "hsl(var(--chart-5))",
-  "HOA Fees": "hsl(var(--chart-1))", 
+  "HOA Fees": "hsl(var(--chart-1))",
   "Property Management": "hsl(var(--chart-2))",
   "Travel": "hsl(var(--chart-3))",
   "Marketing": "hsl(var(--chart-4))",
-  "Appliances": "hsl(var(--chart-5))", // Ensure Appliances is here if it's a category
-  "Other": "hsl(var(--chart-5))", // Consider a different color or ensure it's distinct
+  "Appliances": "hsl(var(--chart-5))",
+  "Other": "hsl(var(--chart-5))",
 };
 
 
 export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps) {
-  // Derive chartData and currentChartConfig directly from transactions prop
   const spendByCategory: Record<string, number> = {};
-  transactions.forEach(tx => {
-    spendByCategory[tx.category] = (spendByCategory[tx.category] || 0) + tx.amount;
-  });
+  if (transactions && transactions.length > 0) {
+    transactions.forEach(tx => {
+      if (tx.category && typeof tx.amount === 'number') { // Basic validation
+        spendByCategory[tx.category] = (spendByCategory[tx.category] || 0) + tx.amount;
+      }
+    });
+  }
 
   const chartData = Object.entries(spendByCategory)
-    .filter(([, value]) => value > 0) // Only include categories with spend > 0
+    .filter(([, value]) => value > 0)
     .map(([category, value], index) => ({
       category,
       value,
-      fill: categoryColors[category] || `hsl(var(--chart-${(index % 5) + 1}))`, // Fallback color
+      fill: categoryColors[category] || `hsl(var(--chart-${(index % 5) + 1}))`,
     }));
 
   const currentChartConfig = chartData.reduce((acc, item) => {
@@ -55,17 +57,27 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
     };
     return acc;
   }, {} as ChartConfig);
-  
 
-  if (chartData.length === 0) { // Check if there's any data to plot
+  // For debugging in browser console
+  if (typeof window !== 'undefined') {
+    console.log("[SpendByCategoryChart] Transactions received:", JSON.stringify(transactions.map(t => ({ amount: t.amount, category: t.category, id: t.id }))));
+    console.log("[SpendByCategoryChart] spendByCategory calculated:", JSON.stringify(spendByCategory));
+    console.log("[SpendByCategoryChart] chartData for pie:", JSON.stringify(chartData));
+  }
+
+  if (chartData.length === 0) {
+    let descriptionText = "No transaction data available to display spend by category.";
+    if (transactions && transactions.length > 0) {
+      descriptionText = "Transactions are present, but no spend was recorded for any category in the current period, or amounts are not positive.";
+    }
     return (
        <Card>
         <CardHeader>
           <CardTitle>Spend by Category</CardTitle>
-          <CardDescription>{transactions.length === 0 ? "No transaction data available." : "No spend recorded for any category in the current period."}</CardDescription>
+          <CardDescription>{descriptionText}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[250px]">
-          <p className="text-muted-foreground">No data to display</p>
+          <p className="text-muted-foreground">No data to display in chart</p>
         </CardContent>
       </Card>
     )
@@ -93,4 +105,3 @@ export function SpendByCategoryChart({ transactions }: SpendByCategoryChartProps
     </Card>
   );
 }
-
