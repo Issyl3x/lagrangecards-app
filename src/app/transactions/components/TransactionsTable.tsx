@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react";
+import { FileText, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy } from "lucide-react"; // Changed ExternalLink to FileText
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Added Tooltip imports
 import type { Transaction, Card as UserCard } from "@/lib/types";
 import { 
   getMockInvestors, 
@@ -66,7 +67,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     property: true,
     cardUsed: true,
     reconciled: true,
-    receiptLink: true,
+    receiptSnippet: true, // Changed from receiptLink
     sourceType: false,
   });
 
@@ -78,7 +79,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     setInvestors(getMockInvestors());
     setProperties(getMockProperties());
     setCards(getMockCards());
-  }, []); // Fetch on mount
+  }, []); 
 
   React.useEffect(() => {
     setTransactionsData(initialTransactions);
@@ -228,7 +229,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       return;
     }
 
-    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}`;
+    const snippet = `Transaction Details:\nDate: ${format(parseISO(transaction.date), "yyyy-MM-dd")}\nVendor: ${transaction.vendor}\nAmount: $${transaction.amount.toFixed(2)}\nCategory: ${transaction.category}\nProperty: ${transaction.property}${transaction.description ? `\nDescription: ${transaction.description}` : ''}${transaction.receiptSnippet ? `\nSnippet: ${transaction.receiptSnippet}` : ''}`;
 
     try {
       await navigator.clipboard.writeText(snippet);
@@ -247,6 +248,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   return (
+    <TooltipProvider>
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
         <Input
@@ -362,7 +364,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
               {columnVisibility.property && <TableHead onClick={() => handleSort("property")}>Property {renderSortIcon("property")}</TableHead>}
               {columnVisibility.cardUsed && <TableHead onClick={() => handleSort("cardId")}>Card Used {renderSortIcon("cardId")}</TableHead>}
               {columnVisibility.reconciled && <TableHead onClick={() => handleSort("reconciled")}>Reconciled {renderSortIcon("reconciled")}</TableHead>}
-              {columnVisibility.receiptLink && <TableHead>Receipt</TableHead>}
+              {columnVisibility.receiptSnippet && <TableHead>Snippet</TableHead>}
               {columnVisibility.sourceType && <TableHead onClick={() => handleSort("sourceType")}>Source {renderSortIcon("sourceType")}</TableHead>}
               <TableHead>Actions</TableHead>
             </TableRow>{/* End Table Header Row */}
@@ -395,19 +397,19 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                       </Badge>
                     </TableCell>
                   )}
-                  {columnVisibility.receiptLink && (
+                  {columnVisibility.receiptSnippet && (
                     <TableCell>
-                      {tx.receiptLink ? (
-                        <Button variant="ghost" size="icon" asChild>
-                          <a 
-                            href={tx.receiptLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            title={`Open receipt: ${tx.receiptLink}`}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
+                      {tx.receiptSnippet ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" align="center" className="max-w-xs break-words">
+                            <p className="text-sm whitespace-pre-wrap">{tx.receiptSnippet}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       ) : (
                         "-"
                       )}
@@ -438,6 +440,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         </Table>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
-

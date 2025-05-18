@@ -9,7 +9,7 @@ export interface Card {
   id: string;
   cardName: string;
   investorId: string;
-  property: string; // Renamed from project
+  property: string;
   isPersonal: boolean;
   spendLimitMonthly?: number;
   last4Digits?: string;
@@ -40,8 +40,8 @@ export interface Transaction {
   category: TransactionCategory | string; // Allow string for flexibility or new categories
   cardId: string;
   investorId: string;
-  property: string; // Renamed from project
-  receiptLink?: string;
+  property: string;
+  receiptSnippet?: string; // Changed from receiptLink
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
   statementMatchId?: string;

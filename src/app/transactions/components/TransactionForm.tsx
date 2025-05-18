@@ -62,13 +62,13 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : undefined,
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
-      amount: initialData?.amount || undefined, // Set to undefined to show placeholder correctly
+      amount: initialData?.amount || undefined, 
       category: initialData?.category || "",
       cardId: initialData?.cardId || "",
       investorId: initialData?.investorId || "",
       investorName: "",
       property: initialData?.property || "",
-      receiptLink: initialData?.receiptLink || "",
+      receiptSnippet: initialData?.receiptSnippet || "", // Changed from receiptLink
       sourceType: initialData?.sourceType || 'manual',
     },
   });
@@ -84,7 +84,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   React.useEffect(() => {
     setInvestors(getMockInvestors());
     setProperties(getMockProperties());
-    setCards(getMockCards()); // Initially load all cards
+    setCards(getMockCards()); 
 
     const transactions = getMockTransactions();
     const vendors = Array.from(new Set(transactions.map(tx => tx.vendor).filter(Boolean).map(v => v.trim())))
@@ -94,7 +94,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
   React.useEffect(() => {
     if (initialData) {
-      const currentInvestors = getMockInvestors(); // Fetch current investors
+      const currentInvestors = getMockInvestors(); 
       const investorName = initialData.investorId
         ? (currentInvestors.find(inv => inv.id === initialData.investorId)?.name || "")
         : "";
@@ -109,7 +109,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         investorId: initialData.investorId || "",
         investorName: investorName,
         property: initialData.property || "",
-        receiptLink: initialData.receiptLink || "",
+        receiptSnippet: initialData.receiptSnippet || "", // Changed from receiptLink
         sourceType: initialData.sourceType || 'manual',
       };
       form.reset(resetValues);
@@ -120,7 +120,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         setCards(getMockCards());
       }
     }
-  }, [initialData, form]); // Removed 'investors' from deps as it's fetched once
+  }, [initialData, form]);
 
   React.useEffect(() => {
     if (!initialData?.date && form.getValues('date') === undefined) {
@@ -149,7 +149,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       form.setValue("investorName", "");
       setCards(allCards);
     }
-  }, [selectedInvestorId, form]); // Removed 'investors' and 'mockCards'
+  }, [selectedInvestorId, form]);
 
 
   function handleSubmit(data: TransactionFormValues) {
@@ -241,11 +241,6 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                         ref={field.ref} 
                         onBlur={(e) => {
                           field.onBlur();
-                          // If user types and blurs without selecting, keep the typed value
-                          if (e.target.value && !uniqueVendors.some(v => v.toLowerCase() === e.target.value.toLowerCase())) {
-                            // Allow adding new vendor by typing
-                          }
-                          // setTimeout(() => setIsVendorPopoverOpen(false), 100); // delay closing
                         }}
                       />
                       <CommandList>
@@ -315,7 +310,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                     step="0.01" 
                     placeholder="0.00" 
                     {...field}
-                    value={field.value === undefined ? '' : field.value} // Handle undefined for placeholder
+                    value={field.value === undefined ? '' : field.value} 
                     onChange={event => {
                       const value = event.target.value;
                       if (value === '' || value === null || value === undefined) {
@@ -473,14 +468,14 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
 
         <FormField
           control={form.control}
-          name="receiptLink"
+          name="receiptSnippet"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Receipt Link (Optional)</FormLabel>
+              <FormLabel>Receipt Snippet (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="https://docs.google.com/..." {...field} />
+                <Textarea placeholder="Enter a short note or key details from the receipt..." {...field} />
               </FormControl>
-              <FormDescription>Link to the receipt on Google Drive or other storage.</FormDescription>
+              <FormDescription>A brief text snippet related to the receipt.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

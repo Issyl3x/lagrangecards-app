@@ -7,17 +7,18 @@ import { TransactionForm, type TransactionFormValues } from "../components/Trans
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ParsedReceiptData, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns"; // parseISO might not be needed here
+import { format } from "date-fns"; 
 import { Button } from "@/components/ui/button";
 import { ClipboardCopy } from "lucide-react";
-import { addTransactionToMockData } from "@/lib/mock-data"; // Import the centralized function
+import { addTransactionToMockData } from "@/lib/mock-data"; 
 import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from "next/navigation";
 
 export default function OcrTransactionPage() {
   const [parsedDataForForm, setParsedDataForForm] = React.useState<Partial<Transaction> | null>(null);
   const [isParsingOrSaving, setIsParsingOrSaving] = React.useState(false); 
   const { toast } = useToast();
-  const router = useRouter(); // Import and use useRouter
+  const router = useRouter(); 
   
   const handleParseSuccess = (data: ParsedReceiptData) => {
     toast({
@@ -30,7 +31,8 @@ export default function OcrTransactionPage() {
         amount: data.amount,
         date: data.date, 
         sourceType: 'OCR',
-        reconciled: false, // OCR transactions are initially not reconciled
+        reconciled: false, 
+        receiptSnippet: "", // Initialize receiptSnippet
     };
     setParsedDataForForm(initialTransactionData);
     setIsParsingOrSaving(false); 
@@ -43,14 +45,14 @@ export default function OcrTransactionPage() {
       id: uuidv4(),
       ...formData,
       date: format(formData.date, "yyyy-MM-dd"), 
-      reconciled: false, // Still default to false, user reconciles later
-      // sourceType is already in formData
+      reconciled: false, 
+      receiptSnippet: formData.receiptSnippet || "", // Ensure receiptSnippet is included
     };
 
     addTransactionToMockData(newTransactionData);
     console.log("OCR-Prefilled Transaction Data Saved:", newTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000)); 
 
     toast({
       title: "Transaction Saved",
@@ -58,8 +60,8 @@ export default function OcrTransactionPage() {
     });
     setParsedDataForForm(null); 
     setIsParsingOrSaving(false);
-    router.refresh(); // Refresh data on other pages
-    router.push("/transactions"); // Navigate to transactions list
+    router.refresh(); 
+    router.push("/transactions"); 
   };
 
   const handleCopyParsedSnippet = async () => {
@@ -133,6 +135,3 @@ export default function OcrTransactionPage() {
     </div>
   );
 }
-
-// Need useRouter from next/navigation for the redirect
-import { useRouter } from "next/navigation";

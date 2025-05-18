@@ -15,9 +15,9 @@ let updatableCards: Card[] = [
   { id: 'card2', cardName: 'Gualter - Brick Haven - Card 1', investorId: 'investor1', property: 'Brick Haven', isPersonal: false, spendLimitMonthly: 3000, last4Digits: '2222' },
   {
     id: 'card6',
-    cardName: 'Greg - Fountain Commons - Visa 2627', // Updated property
+    cardName: 'Greg - Fountain Commons - Visa 2627',
     investorId: 'investor4',
-    property: 'Fountain Commons', // Updated property
+    property: 'Fountain Commons',
     isPersonal: false,
     last4Digits: '2627'
   },
@@ -42,7 +42,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptLink: 'https://docs.google.com/receipt1',
+    receiptSnippet: 'Receipt #12345, SKU 98765 (Lumber 2x4x8)',
     reconciled: true,
     sourceType: 'manual'
   },
@@ -56,7 +56,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
-    receiptLink: '',
+    receiptSnippet: '',
     reconciled: false,
     sourceType: 'OCR'
   },
@@ -70,7 +70,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptLink: '',
+    receiptSnippet: 'Invoice: INV-007, Paint (Blue), Brushes (Assorted)',
     reconciled: false,
     sourceType: 'OCR'
   },
@@ -84,7 +84,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card2', 
     investorId: 'investor1',
     property: 'Brick Haven', 
-    receiptLink: '',
+    receiptSnippet: '',
     reconciled: true,
     sourceType: 'import'
   },
@@ -98,7 +98,7 @@ let updatableMockTransactions: Transaction[] = [
     cardId: 'card1', 
     investorId: 'investor1',
     property: 'Blue Haven', 
-    receiptLink: '',
+    receiptSnippet: '',
     reconciled: true,
     sourceType: 'manual'
   },
@@ -111,8 +111,8 @@ let updatableMockTransactions: Transaction[] = [
     category: 'Supplies',
     cardId: 'card6', 
     investorId: 'investor4',
-    property: 'Fountain Commons', // Updated property
-    receiptLink: '',
+    property: 'Fountain Commons',
+    receiptSnippet: 'Pens, Paper, Order #99887',
     reconciled: false,
     sourceType: 'manual'
   }

@@ -24,8 +24,10 @@ export default function AddTransactionPage() {
       id: uuidv4(), 
       ...data,
       date: format(data.date, "yyyy-MM-dd"), 
-      property: data.property, // Ensure property is included
+      property: data.property, 
+      receiptSnippet: data.receiptSnippet || "", // Add receiptSnippet
       reconciled: false, 
+      sourceType: data.sourceType || 'manual',
     };
 
     addTransactionToMockData(newTransactionData);

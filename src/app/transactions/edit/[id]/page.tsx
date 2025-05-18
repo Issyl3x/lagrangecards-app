@@ -42,7 +42,7 @@ export default function EditTransactionPage() {
 
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("Receipt link submitted from form:", data.receiptLink); 
+    console.log("Receipt snippet submitted from form:", data.receiptSnippet); 
 
     const currentTransaction = getMockTransactions().find(tx => tx.id === transactionId);
 
@@ -64,10 +64,9 @@ export default function EditTransactionPage() {
         amount: data.amount,
         category: data.category,
         investorId: data.investorId,
-        property: data.property, // Renamed from project
+        property: data.property, 
         cardId: data.cardId,
-        receiptLink: data.receiptLink || "",
-        // sourceType and reconciled are preserved from currentTransaction
+        receiptSnippet: data.receiptSnippet || "", // Changed from receiptLink
     };
     
     updateTransactionInMockData(updatedTransactionData);
