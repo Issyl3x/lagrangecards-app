@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getMockInvestors, getMockProperties, addCard } from "@/lib/mock-data";
 import type { Investor } from "@/lib/types";
-// import { useRouter } from "next/navigation"; // Not used
 
 interface AddCardFormProps {
   onCardAdded: () => void;
@@ -20,7 +19,6 @@ interface AddCardFormProps {
 
 export function AddCardForm({ onCardAdded }: AddCardFormProps) {
   const { toast } = useToast();
-  // const router = useRouter(); // Not used
   const [investors, setInvestors] = React.useState<Investor[]>([]);
   const [properties, setProperties] = React.useState<string[]>([]);
 
@@ -28,8 +26,8 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
     resolver: zodResolver(cardSchema),
     defaultValues: {
       cardName: "",
-      investorId: undefined, // Changed from ""
-      property: undefined,   // Changed from ""
+      investorId: undefined, // Default to undefined
+      property: undefined,   // Default to undefined
       last4Digits: "",
       spendLimitMonthly: undefined,
     },
@@ -39,7 +37,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
     setInvestors(getMockInvestors());
     setProperties(getMockProperties());
   }, []);
-  
+
   const [isLoading, setIsLoading] = React.useState(false);
 
   const onSubmit = (data: CardFormValues) => {
@@ -91,7 +89,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Investor</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}> {/* Ensure value is a string for Select */}
+                <Select onValueChange={field.onChange} value={field.value} defaultValue={undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an investor" />
@@ -114,7 +112,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Property</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}> {/* Ensure value is a string for Select */}
+                <Select onValueChange={field.onChange} value={field.value} defaultValue={undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a property" />
@@ -160,7 +158,7 @@ export function AddCardForm({ onCardAdded }: AddCardFormProps) {
             )}
           />
         </div>
-        
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Adding..." : "Add Card"}
         </Button>

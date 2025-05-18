@@ -1,5 +1,5 @@
 
-"use client";
+"use client"; // Explicitly client component
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { AddInvestorForm } from "./components/AddInvestorForm";
 import { AddPropertyForm } from "./components/AddPropertyForm";
 import { AddCardForm } from "./components/AddCardForm";
 import { getMockInvestors, getMockProperties, getMockCards } from "@/lib/mock-data";
-import type { Investor, Property, Card as UserCard } from "@/lib/types"; // Assuming Property is string
+import type { Investor, Card as UserCard } from "@/lib/types"; // Property is string, already handled
 import { Separator } from "@/components/ui/separator";
 
 export default function SettingsPage() {
@@ -16,15 +16,15 @@ export default function SettingsPage() {
   const [properties, setProperties] = React.useState<string[]>([]);
   const [cards, setCards] = React.useState<UserCard[]>([]);
 
-  const refreshData = () => {
+  const refreshData = React.useCallback(() => {
     setInvestors(getMockInvestors());
     setProperties(getMockProperties());
     setCards(getMockCards());
-  };
+  }, []); // Empty dependency array, this function is stable
 
   React.useEffect(() => {
     refreshData();
-  }, []);
+  }, [refreshData]); // refreshData is now a stable dependency
 
   return (
     <div className="space-y-6">
@@ -110,7 +110,7 @@ export default function SettingsPage() {
                         const investor = investors.find(inv => inv.id === card.investorId);
                         return (
                           <li key={card.id}>
-                            {card.cardName} 
+                            {card.cardName}
                             {card.last4Digits && ` (****${card.last4Digits})`}
                             {investor && ` - ${investor.name}`}
                             {card.property && ` - ${card.property}`}
