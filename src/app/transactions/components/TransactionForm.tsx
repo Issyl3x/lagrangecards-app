@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+// import { Calendar } from "@/components/ui/calendar"; // Original import
 import {
   Select,
   SelectContent,
@@ -47,6 +47,13 @@ import { format, parseISO, isValid } from "date-fns";
 import * as React from "react";
 import { transactionSchema } from '@/lib/schemas';
 import Image from "next/image";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the Calendar component
+const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), { 
+  ssr: false,
+  loading: () => <p>Loading Calendar...</p> // Optional loading state
+});
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
 
@@ -60,7 +67,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: initialData?.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : undefined,
+      date: undefined, // Initialize as undefined
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || undefined, 
@@ -69,7 +76,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       investorId: initialData?.investorId || "",
       investorName: "",
       property: initialData?.property || "",
-      unitNumber: initialData?.unitNumber || "", // Added Unit Number
+      unitNumber: initialData?.unitNumber || "",
       receiptImageURI: initialData?.receiptImageURI || "", 
       sourceType: initialData?.sourceType || 'manual',
     },
@@ -114,7 +121,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
         investorId: initialData.investorId || "",
         investorName: investorName,
         property: initialData.property || "",
-        unitNumber: initialData.unitNumber || "", // Added Unit Number
+        unitNumber: initialData.unitNumber || "", 
         receiptImageURI: initialData.receiptImageURI || "",
         sourceType: initialData.sourceType || 'manual',
       };
@@ -130,11 +137,13 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     }
   }, [initialData, form]);
 
+  // Set date to new Date() on client side if no initialData.date
   React.useEffect(() => {
     if (!initialData?.date && form.getValues('date') === undefined) {
       form.setValue('date', new Date());
     }
   }, [initialData, form]);
+
 
   const selectedInvestorId = form.watch("investorId");
 
