@@ -214,13 +214,23 @@ export function SpendByCategoryChart({ transactions: allTransactions }: SpendByC
                 position="outside"
                 offset={15}
                 formatter={(value: string, entry: any) => {
-                  // Access percent directly from the entry object
-                  const percentage = entry.percent; 
-                  // Defensive check for percentage
-                  if (typeof percentage !== 'number' || (percentage * 100 < 5)) {
-                    return null; // Hide label if too small or percent is not available
+                  // value is entry[dataKey] (i.e., entry.category)
+                  // entry is the full data object for that slice.
+
+                  // First, ensure entry exists AND it has a 'percent' property AND that 'percent' property is a number
+                  if (!entry || typeof entry.percent !== 'number') {
+                    return null; // Cannot generate label if entry is invalid or percent is not a number
                   }
-                  return `${value} (${(percentage * 100).toFixed(0)}%)`;
+
+                  // Now, entry and entry.percent are known to be valid
+                  const percentageValue = entry.percent;
+
+                  // Then, apply display logic based on the percentage value
+                  if ((percentageValue * 100) < 5) {
+                    return null; // Hide label if too small
+                  }
+
+                  return `${value} (${(percentageValue * 100).toFixed(0)}%)`;
                 }}
                 className="text-xs fill-muted-foreground"
               />
