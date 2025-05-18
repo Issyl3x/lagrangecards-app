@@ -41,7 +41,7 @@ export interface Transaction {
   cardId: string;
   investorId: string;
   property: string;
-  unitNumber?: string; // Added Unit Number
+  unitNumber?: string;
   receiptImageURI?: string; 
   reconciled: boolean;
   sourceType: 'manual' | 'OCR' | 'import';
@@ -71,4 +71,15 @@ export interface NewCardData {
   property: string;
   last4Digits?: string;
   spendLimitMonthly?: number;
+}
+
+// For JSON Backup/Restore
+export interface AllDataBackup {
+  investors: Investor[];
+  properties: string[];
+  cards: Card[];
+  transactions: Transaction[];
+  deletedTransactions: Transaction[];
+  timestamp: string;
+  version: string;
 }

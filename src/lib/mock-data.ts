@@ -1,13 +1,15 @@
 
-import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewCardData } from './types';
+import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, NewCardData, AllDataBackup } from './types';
 import { formatISO, subDays, subMonths, parseISO, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 
-const INVESTORS_KEY = 'estateFlowInvestors';
-const PROPERTIES_KEY = 'estateFlowProperties';
-const CARDS_KEY = 'estateFlowCards';
-const TRANSACTIONS_KEY = 'estateFlowTransactions';
-const DELETED_TRANSACTIONS_KEY = 'estateFlowDeletedTransactions';
+const APP_VERSION = "1.0.0"; 
+
+const INVESTORS_KEY = 'estateFlowInvestors_v1';
+const PROPERTIES_KEY = 'estateFlowProperties_v1';
+const CARDS_KEY = 'estateFlowCards_v1';
+const TRANSACTIONS_KEY = 'estateFlowTransactions_v1';
+const DELETED_TRANSACTIONS_KEY = 'estateFlowDeletedTransactions_v1';
 
 // Default data (used if localStorage is empty or invalid)
 const defaultInvestors: Investor[] = [
@@ -132,21 +134,19 @@ function loadData<T>(key: string, defaultValue: T): T {
     const storedValue = localStorage.getItem(key);
     if (storedValue) {
       try {
-        // Ensure dates in transactions are correctly parsed if stored as strings
-        if (key === TRANSACTIONS_KEY || key === DELETED_TRANSACTIONS_KEY) {
-          const parsedItems = JSON.parse(storedValue) as Transaction[];
-          return parsedItems.map(item => ({
+        const data = JSON.parse(storedValue);
+        // Basic validation for transactions array structure
+        if ((key === TRANSACTIONS_KEY || key === DELETED_TRANSACTIONS_KEY) && Array.isArray(data)) {
+          return data.map((item: any) => ({
             ...item,
-            // Ensure date is a string in 'yyyy-MM-dd' format, which is how it should be stored.
-            // If it was stored as a Date object string, re-format it.
-            // TransactionForm expects Date objects, but mock-data stores ISO strings.
-            date: isValid(parseISO(item.date)) ? formatISO(parseISO(item.date), { representation: 'date' }) : formatISO(new Date(), {representation: 'date'}),
+            date: item.date && isValid(parseISO(item.date)) ? formatISO(parseISO(item.date), { representation: 'date' }) : formatISO(new Date(), {representation: 'date'}),
           })) as T;
         }
-        return JSON.parse(storedValue) as T;
+        return data as T;
       } catch (e) {
-        console.error(`Error parsing ${key} from localStorage`, e);
-        return defaultValue; // Fallback to default if parsing fails
+        console.error(`Error parsing ${key} from localStorage or invalid data structure, falling back to default. Error:`, e);
+        localStorage.removeItem(key); // Remove corrupted data
+        return defaultValue;
       }
     }
   }
@@ -179,7 +179,6 @@ export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
 export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
 export const getDeletedTransactions = (): Transaction[] => {
-  console.log("getDeletedTransactions called, returning:", updatableDeletedTransactions.length, "items", updatableDeletedTransactions.map(t => t.id));
   return [...updatableDeletedTransactions];
 };
 
@@ -191,7 +190,6 @@ export const addInvestor = (investorData: NewInvestorData): Investor => {
   };
   updatableInvestors = [...updatableInvestors, newInvestor];
   saveData(INVESTORS_KEY, updatableInvestors);
-  console.log("Added investor:", newInvestor, "Total investors:", updatableInvestors.length);
   return newInvestor;
 };
 
@@ -199,9 +197,6 @@ export const addProperty = (propertyName: string): string => {
   if (!updatableProperties.includes(propertyName)) {
     updatableProperties = [...updatableProperties, propertyName];
     saveData(PROPERTIES_KEY, updatableProperties);
-    console.log("Added property:", propertyName, "Total properties:", updatableProperties.length);
-  } else {
-    console.log("Property already exists:", propertyName);
   }
   return propertyName;
 };
@@ -214,14 +209,12 @@ export const addCard = (cardData: NewCardData): Card => {
   };
   updatableCards = [...updatableCards, newCard];
   saveData(CARDS_KEY, updatableCards);
-  console.log("Added card:", newCard, "Total cards:", updatableCards.length);
   return newCard;
 };
 
 export const addTransactionToMockData = (newTx: Transaction): void => {
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
-  console.log("addTransactionToMockData called with:", newTx, "Total transactions:", updatableMockTransactions.length);
 };
 
 // Updaters
@@ -232,9 +225,6 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
     newTransactions[index] = { ...updatedTx };
     updatableMockTransactions = newTransactions;
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
-    console.log("updateTransactionInMockData called for ID:", updatedTx.id);
-  } else {
-     console.warn("updateTransactionInMockData: Transaction not found for ID:", updatedTx.id);
   }
 };
 
@@ -242,30 +232,81 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
 export const deleteTransactionFromMockData = (txId: string): void => {
   const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
   if (transactionToDelete) {
-    console.log(`Moving transaction ${txId} to deleted items.`);
     updatableDeletedTransactions = [transactionToDelete, ...updatableDeletedTransactions];
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-    console.log(`Active transactions: ${updatableMockTransactions.length}, Deleted transactions: ${updatableDeletedTransactions.length}`);
-  } else {
-    console.warn(`deleteTransactionFromMockData: Transaction not found for ID: ${txId} in active list.`);
   }
 };
 
 export const restoreTransactionFromMockData = (txId: string): void => {
   const transactionToRestore = updatableDeletedTransactions.find(tx => tx.id === txId);
   if (transactionToRestore) {
-    console.log(`Restoring transaction ${txId} from deleted items.`);
     updatableMockTransactions = [transactionToRestore, ...updatableMockTransactions];
     updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-    console.log(`Active transactions: ${updatableMockTransactions.length}, Deleted transactions: ${updatableDeletedTransactions.length}`);
-  } else {
-    console.warn(`restoreTransactionFromMockData: Transaction not found for ID: ${txId} in deleted list.`);
   }
 };
+
+// Backup and Restore All Data
+export const getAllDataForBackup = (): AllDataBackup => {
+  return {
+    investors: getMockInvestors(),
+    properties: getMockProperties(),
+    cards: getMockCards(),
+    transactions: getMockTransactions(),
+    deletedTransactions: getDeletedTransactions(),
+    timestamp: new Date().toISOString(),
+    version: APP_VERSION, 
+  };
+};
+
+export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => {
+  try {
+    // Basic validation
+    if (
+      !backupData ||
+      !Array.isArray(backupData.investors) ||
+      !Array.isArray(backupData.properties) ||
+      !Array.isArray(backupData.cards) ||
+      !Array.isArray(backupData.transactions) ||
+      !Array.isArray(backupData.deletedTransactions) ||
+      !backupData.timestamp ||
+      !backupData.version
+    ) {
+      console.error("Invalid backup file structure.");
+      return false;
+    }
+    
+    // Add more specific validation if needed (e.g., check for specific fields within objects)
+
+    updatableInvestors = backupData.investors;
+    updatableProperties = backupData.properties;
+    updatableCards = backupData.cards;
+    updatableMockTransactions = backupData.transactions.map(tx => ({
+        ...tx,
+        date: tx.date && isValid(parseISO(tx.date)) ? formatISO(parseISO(tx.date), { representation: 'date' }) : formatISO(new Date(), {representation: 'date'}),
+    }));
+    updatableDeletedTransactions = backupData.deletedTransactions.map(tx => ({
+        ...tx,
+        date: tx.date && isValid(parseISO(tx.date)) ? formatISO(parseISO(tx.date), { representation: 'date' }) : formatISO(new Date(), {representation: 'date'}),
+    }));
+
+    saveData(INVESTORS_KEY, updatableInvestors);
+    saveData(PROPERTIES_KEY, updatableProperties);
+    saveData(CARDS_KEY, updatableCards);
+    saveData(TRANSACTIONS_KEY, updatableMockTransactions);
+    saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+    
+    console.log("Data restored successfully from backup:", backupData.timestamp);
+    return true;
+  } catch (error) {
+    console.error("Error restoring data from backup:", error);
+    return false;
+  }
+};
+
 
 // Function to clear all mock data from localStorage (for debugging/reset)
 export const clearAllMockDataFromLocalStorage = () => {
@@ -276,7 +317,7 @@ export const clearAllMockDataFromLocalStorage = () => {
     localStorage.removeItem(TRANSACTIONS_KEY);
     localStorage.removeItem(DELETED_TRANSACTIONS_KEY);
     console.log("All mock data cleared from localStorage. Please refresh the application.");
-    // Optionally, reset in-memory arrays to defaults immediately
+    
     updatableInvestors = [...defaultInvestors];
     updatableProperties = [...defaultProperties];
     updatableCards = [...defaultCards];
@@ -284,9 +325,7 @@ export const clearAllMockDataFromLocalStorage = () => {
     updatableDeletedTransactions = [...defaultDeletedTransactions];
   }
 };
-// To use clearAllMockDataFromLocalStorage, you could call it from the browser console:
-// e.g., `window.clearAllMockDataFromLocalStorage()` if you expose it globally for dev,
-// or trigger it via a development-only UI element.
+
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }
