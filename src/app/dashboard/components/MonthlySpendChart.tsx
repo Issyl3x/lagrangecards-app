@@ -9,10 +9,9 @@ import {
   ChartConfig,
 } from "@/components/ui/chart";
 import type { Transaction } from "@/lib/types";
-// import { getMockTransactions } from "@/lib/mock-data"; // No longer needed here directly if passed as prop
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from "recharts";
-import { format, parseISO, subMonths, startOfMonth } from "date-fns"; // Combined imports
-import { useState, useEffect } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { format, parseISO, subMonths, startOfMonth } from "date-fns";
+// Removed useState and useEffect
 
 interface MonthlySpendChartProps {
   transactions: Transaction[];
@@ -26,42 +25,34 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
-  const [chartData, setChartData] = useState<{ month: string; spend: number }[]>([]);
+  // Derive chartData directly from transactions prop
+  const monthlySpend: Record<string, number> = {};
+  const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
 
-  useEffect(() => {
-    const monthlySpend: Record<string, number> = {};
-    const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
-
-    // Use the passed 'transactions' prop
-    transactions.forEach(tx => {
-      const txDate = parseISO(tx.date);
-      if (txDate >= sixMonthsAgo) {
-        const monthKey = format(txDate, "MMM yyyy");
-        monthlySpend[monthKey] = (monthlySpend[monthKey] || 0) + tx.amount;
-      }
-    });
-
-    const lastSixMonthsData: { month: string; spend: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
-      const monthKey = format(date, "MMM yyyy");
-      lastSixMonthsData.push({
-        month: monthKey,
-        spend: monthlySpend[monthKey] || 0,
-      });
+  transactions.forEach(tx => {
+    const txDate = parseISO(tx.date);
+    if (txDate >= sixMonthsAgo) {
+      const monthKey = format(txDate, "MMM yyyy");
+      monthlySpend[monthKey] = (monthlySpend[monthKey] || 0) + tx.amount;
     }
+  });
+
+  const chartData: { month: string; spend: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const date = subMonths(new Date(), i);
+    const monthKey = format(date, "MMM yyyy");
+    chartData.push({
+      month: monthKey,
+      spend: monthlySpend[monthKey] || 0,
+    });
+  }
     
-    setChartData(lastSixMonthsData);
-
-  }, [transactions]);
-
-
-  if (chartData.length === 0 && transactions.length === 0) { // Check if original transactions were also empty
+  if (transactions.length === 0) { 
      return (
        <Card>
         <CardHeader>
           <CardTitle>Monthly Spend Trend</CardTitle>
-          <CardDescription>No transaction data available for the past 6 months.</CardDescription>
+          <CardDescription>No transaction data available.</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[300px]">
           <p className="text-muted-foreground">No data to display</p>
@@ -91,6 +82,7 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              domain={[0, 'dataMax + 1000']} // Ensure Y-axis starts at 0 and has some padding
             />
             <ChartTooltip
               cursor={false}
@@ -109,3 +101,4 @@ export function MonthlySpendChart({ transactions }: MonthlySpendChartProps) {
     </Card>
   );
 }
+

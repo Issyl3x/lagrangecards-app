@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+// Removed useState and useEffect for propertySpends
 
 interface PropertySpend {
   propertyName: string;
@@ -59,26 +60,22 @@ const downloadPropertySpendCSV = (csvContent: string, filename: string): void =>
 }
 
 export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps) {
-  const [propertySpends, setPropertySpends] = React.useState<PropertySpend[]>([]);
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    const spendByProperty: Record<string, number> = {};
-    transactions.forEach(tx => {
-      if (tx.property) { // Ensure property exists
-        spendByProperty[tx.property] = (spendByProperty[tx.property] || 0) + tx.amount;
-      }
-    });
+  // Derive propertySpends directly from transactions prop
+  const spendByProperty: Record<string, number> = {};
+  transactions.forEach(tx => {
+    if (tx.property) { 
+      spendByProperty[tx.property] = (spendByProperty[tx.property] || 0) + tx.amount;
+    }
+  });
 
-    const data = Object.entries(spendByProperty)
-      .map(([propertyName, totalSpend]) => ({
-        propertyName,
-        totalSpend,
-      }))
-      .sort((a, b) => b.totalSpend - a.totalSpend); // Sort by highest spend
-
-    setPropertySpends(data);
-  }, [transactions]);
+  const propertySpends = Object.entries(spendByProperty)
+    .map(([propertyName, totalSpend]) => ({
+      propertyName,
+      totalSpend,
+    }))
+    .sort((a, b) => b.totalSpend - a.totalSpend);
 
   const handleDownloadCSV = () => {
     if (propertySpends.length === 0) {
@@ -105,21 +102,6 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     });
     console.log("Attempting to download PDF (mocked). Data:", propertySpends);
   };
-
-
-  if (propertySpends.length === 0 && transactions.length > 0) {
-     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Running Cost by Property</CardTitle>
-          <CardDescription>Total spend for each property based on current transactions.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No spend recorded for any specific property yet, or transactions are not assigned to properties.</p>
-        </CardContent>
-      </Card>
-    );
-  }
   
   if (transactions.length === 0) {
      return (
@@ -135,6 +117,19 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     );
   }
 
+  if (propertySpends.length === 0 && transactions.length > 0) {
+     return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Running Cost by Property</CardTitle>
+          <CardDescription>Total spend for each property based on current transactions.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No spend recorded for any specific property yet, or transactions are not assigned to properties.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -144,11 +139,11 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
             <CardDescription>Total spend for each property based on current transactions.</CardDescription>
         </div>
         <div className="flex gap-2 mt-2 sm:mt-0">
-            <Button onClick={handleDownloadCSV} variant="outline" size="sm">
+            <Button onClick={handleDownloadCSV} variant="outline" size="sm" disabled={propertySpends.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
                 Download CSV
             </Button>
-            <Button onClick={handleDownloadPDF} variant="outline" size="sm">
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={propertySpends.length === 0}>
                 <FileText className="mr-2 h-4 w-4" />
                 Download PDF (Mock)
             </Button>
@@ -160,7 +155,6 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
             <Card key={spend.propertyName} className="flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{spend.propertyName}</CardTitle>
-                {/* Icon removed from here */}
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -174,3 +168,4 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     </Card>
   );
 }
+

@@ -4,32 +4,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
 import type { Transaction } from "@/lib/types";
-import { getMockTransactions } from "@/lib/mock-data"; // Import the getter
 import { getMonth, getYear, parseISO } from "date-fns";
-import { useState, useEffect } from "react";
+// Removed useState and useEffect
 
 interface TotalSpendCardProps {
-  transactions: Transaction[]; // This prop will be the filtered list for the current context
+  transactions: Transaction[];
 }
 
 export function TotalSpendCard({ transactions: currentTransactions }: TotalSpendCardProps) {
-  const [totalSpend, setTotalSpend] = useState(0);
+  // Derive totalSpend directly from currentTransactions prop
+  const currentMonth = getMonth(new Date());
+  const currentYear = getYear(new Date());
 
-  useEffect(() => {
-    const currentMonth = getMonth(new Date());
-    const currentYear = getYear(new Date());
-
-    // Use the passed 'currentTransactions' which might be filtered by dashboard context
-    // If this card should always show total from *all* transactions, use getMockTransactions() here
-    const spend = currentTransactions
-      .filter(tx => {
-        const txDate = parseISO(tx.date);
-        return getMonth(txDate) === currentMonth && getYear(txDate) === currentYear;
-      })
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    setTotalSpend(spend);
-  }, [currentTransactions]);
-
+  const totalSpend = currentTransactions
+    .filter(tx => {
+      const txDate = parseISO(tx.date);
+      return getMonth(txDate) === currentMonth && getYear(txDate) === currentYear;
+    })
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <Card>
@@ -46,3 +38,4 @@ export function TotalSpendCard({ transactions: currentTransactions }: TotalSpend
     </Card>
   );
 }
+
