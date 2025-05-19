@@ -13,12 +13,11 @@ import { Input } from "@/components/ui/input";
 import type { AllDataBackup } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1', // Can be any ID for simulation
-  role: 'admin',  // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function ExportPage() {
   const { toast } = useToast();
@@ -52,7 +51,7 @@ export default function ExportPage() {
   const handleSendToGoogleSheets = () => {
     toast({
       title: "Send to Google Sheets (Demonstration)",
-      description: "This feature is for demonstration. A direct integration requires Google API setup. Please use 'Download CSV' and import that file into Google Sheets.",
+      description: "This feature is for demonstration. A direct integration requires Google API setup. Please use 'Download CSV' and import that file into Google Sheets. This functionality would be restricted to admins in a real application.",
       variant: "default",
       duration: 10000, 
     });
@@ -137,7 +136,7 @@ export default function ExportPage() {
     }
   };
 
-  if (mockCurrentUser.role !== 'admin') {
+  if (!IS_ADMIN) {
     return (
       <Card>
         <CardHeader>
@@ -171,11 +170,11 @@ export default function ExportPage() {
             The CSV format includes all key details for each transaction.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto">
+            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto" disabled={!IS_ADMIN}>
               <Download className="mr-2 h-4 w-4" />
               Download CSV
             </Button>
-            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto" disabled={!IS_ADMIN}>
               <Send className="mr-2 h-4 w-4" />
               Send to Google Sheets (Demo)
             </Button>
@@ -204,7 +203,7 @@ export default function ExportPage() {
             <p className="text-sm text-muted-foreground mb-3">
               Creates a JSON file containing all your current EstateFlow data. Store this file in a safe place.
             </p>
-            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto">
+            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto" disabled={!IS_ADMIN}>
               <Save className="mr-2 h-4 w-4" />
               Download Full Backup (JSON)
             </Button>
@@ -219,13 +218,13 @@ export default function ExportPage() {
                 type="file"
                 accept=".json"
                 onChange={handleRestoreFileChange}
-                disabled={isRestoring}
+                disabled={isRestoring || !IS_ADMIN}
                 ref={fileInputRef}
                 className="w-full sm:max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
               />
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
-                disabled={isRestoring} 
+                disabled={isRestoring || !IS_ADMIN} 
                 variant="outline"
                 className="w-full sm:w-auto"
               >

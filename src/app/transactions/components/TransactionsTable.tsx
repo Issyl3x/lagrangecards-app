@@ -24,7 +24,7 @@ import {
   getMockCards, 
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  getMockTransactions, 
+  // getMockTransactions, // No longer directly used here, passed via props
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -43,12 +43,11 @@ interface TransactionsTableProps {
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1', // Can be any ID for simulation
-  role: 'admin',  // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
@@ -76,27 +75,25 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
   const [investors, setInvestors] = React.useState<Investor[]>([]);
   const [properties, setProperties] = React.useState<string[]>([]);
-  const [cards, setCards] = React.useState<UserCard[]>([]);
+  const [cards, setCardsState] = React.useState<UserCard[]>([]); // Renamed to avoid conflict
   const [duplicateTransactionIds, setDuplicateTransactionIds] = React.useState<Set<string>>(new Set());
 
 
   React.useEffect(() => {
     setInvestors(getMockInvestors());
     setProperties(getMockProperties());
-    setCards(getMockCards());
+    setCardsState(getMockCards()); // Use renamed state setter
   }, []); 
 
   React.useEffect(() => {
-    // Duplicate detection logic
     if (!initialTransactions || initialTransactions.length === 0) {
       setDuplicateTransactionIds(new Set());
       setFilteredTransactions(initialTransactions || []);
       return;
     }
 
-    const signatures = new Map<string, string[]>(); // Map signature to array of transaction IDs
+    const signatures = new Map<string, string[]>();
     initialTransactions.forEach(tx => {
-      // Only consider transactions not already confirmed as duplicates for new flagging
       if (tx.isDuplicateConfirmed) {
         return;
       }
@@ -109,13 +106,12 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
     const newDuplicateIds = new Set<string>();
     signatures.forEach((idsInGroup) => {
-      if (idsInGroup.length > 1) { // If more than one transaction has this signature (and they aren't confirmed)
+      if (idsInGroup.length > 1) {
         idsInGroup.forEach(id => newDuplicateIds.add(id));
       }
     });
     setDuplicateTransactionIds(newDuplicateIds);
-    setFilteredTransactions(initialTransactions); // Update filtered transactions as well
-
+    // setFilteredTransactions(initialTransactions); // This will be handled by the next effect
   }, [initialTransactions]);
 
   React.useEffect(() => {
@@ -200,7 +196,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleDelete = (id: string) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to delete transactions.",
@@ -217,7 +213,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleEdit = (id: string) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to edit transactions.",
@@ -229,7 +225,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleToggleReconciled = (id: string) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to change reconciliation status.",
@@ -237,7 +233,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-    const transactionToUpdate = getMockTransactions().find(tx => tx.id === id);
+    // Find the transaction from the initialTransactions prop as it's the source of truth from parent
+    const transactionToUpdate = initialTransactions.find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
       updateTransactionInMockData(updatedTransaction); 
@@ -250,7 +247,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
   
   const handleConfirmDuplicate = (transactionId: string) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to confirm transactions.",
@@ -436,7 +433,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                           </TooltipTrigger>
                           <TooltipContent><p>Potential duplicate transaction.</p></TooltipContent>
                         </Tooltip>
-                        {mockCurrentUser.role === 'admin' && (
+                        {IS_ADMIN && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => handleConfirmDuplicate(tx.id)} className="ml-1">
@@ -462,11 +459,11 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                       <Badge 
                         variant={tx.reconciled ? "default" : "secondary"} 
                         className={cn(
-                          mockCurrentUser.role === 'admin' ? "cursor-pointer" : "cursor-not-allowed opacity-70",
-                          mockCurrentUser.role === 'admin' ? (tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent") : "",
+                          IS_ADMIN ? "cursor-pointer" : "cursor-not-allowed opacity-70",
+                          IS_ADMIN ? (tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent") : "",
                         )}
-                        onClick={() => mockCurrentUser.role === 'admin' && handleToggleReconciled(tx.id)}
-                        title={mockCurrentUser.role === 'admin' ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
+                        onClick={() => IS_ADMIN && handleToggleReconciled(tx.id)}
+                        title={IS_ADMIN ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
                       >
                         {tx.reconciled ? "Yes" : "No"}
                       </Badge>
@@ -501,7 +498,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                   <TableCell>
                     <div className="flex space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleCopyDetails(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
-                        {mockCurrentUser.role === 'admin' && (
+                        {IS_ADMIN && (
                           <>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} title="Delete Transaction" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>

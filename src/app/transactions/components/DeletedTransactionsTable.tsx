@@ -26,12 +26,11 @@ interface DeletedTransactionsTableProps {
   initialDeletedTransactions: Transaction[]; 
 }
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1', // Can be any ID for simulation
-  role: 'admin',  // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export function DeletedTransactionsTable({ initialDeletedTransactions }: DeletedTransactionsTableProps) {
   const [deletedTransactions, setDeletedTransactions] = React.useState<Transaction[]>(initialDeletedTransactions);
@@ -43,7 +42,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
   }, [initialDeletedTransactions]);
 
   const handleRestore = (id: string) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to restore transactions.",
@@ -88,7 +87,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
                   </TableCell>
                   <TableCell>{tx.property}</TableCell>
                   <TableCell>
-                    {mockCurrentUser.role === 'admin' ? (
+                    {IS_ADMIN ? (
                         <Button variant="ghost" size="sm" onClick={() => handleRestore(tx.id)} title="Restore Transaction">
                             <Undo2 className="mr-2 h-4 w-4" />
                             Restore

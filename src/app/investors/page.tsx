@@ -16,12 +16,12 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, UserCircle2 } from "lucide-react";
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1', 
-  role: 'admin',  // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+
 
 function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
   const { toast } = useToast();
@@ -96,7 +96,7 @@ export default function InvestorsPage() {
           <CardDescription>Enter the details for a new investor.</CardDescription>
         </CardHeader>
         <CardContent>
-          {mockCurrentUser.role === 'admin' ? (
+          {IS_ADMIN ? (
             <AddInvestorForm onInvestorAdded={refreshInvestors} />
           ) : (
             <Alert variant="destructive">

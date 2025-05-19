@@ -14,12 +14,11 @@ import { ShieldAlert, Edit3, CreditCardIcon } from "lucide-react";
 import Link from "next/link";
 import { CardForm } from "./components/CardForm";
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1',
-  role: 'admin', // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function CardsPage() {
   const [cards, setCards] = React.useState<UserCard[]>([]);
@@ -37,7 +36,6 @@ export default function CardsPage() {
   }, [refreshData]);
 
   const handleAddCard = (data: CardFormValues) => {
-    // Permission check already handled by conditional rendering of the form
     setIsLoading(true);
     try {
       addCard(data);
@@ -63,7 +61,7 @@ export default function CardsPage() {
           <CardDescription>Enter the details for a new card.</CardDescription>
         </CardHeader>
         <CardContent>
-          {mockCurrentUser.role === 'admin' ? (
+          {IS_ADMIN ? (
             <CardForm onSubmit={handleAddCard} isLoading={isLoading} />
           ) : (
             <Alert variant="destructive">
@@ -100,7 +98,7 @@ export default function CardsPage() {
                         {card.spendLimitMonthly && <p className="text-sm text-muted-foreground truncate">Limit: ${card.spendLimitMonthly.toLocaleString()} / month</p>}
                       </div>
                     </div>
-                    {mockCurrentUser.role === 'admin' && (
+                    {IS_ADMIN && (
                       <Button asChild variant="outline" size="sm" className="ml-4 flex-shrink-0">
                         <Link href={`/cards/edit/${card.id}`}>
                           <Edit3 className="mr-2 h-4 w-4" /> Edit

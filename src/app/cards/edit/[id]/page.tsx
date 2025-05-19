@@ -14,12 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 
-// Define mock current user for permission check
-// To test teammate view, change role to 'teammate'
-const mockCurrentUser = {
-  id: 'user1',
-  role: 'admin', // 'admin' or 'teammate'
-};
+// Define admin email and current user's email for permission check
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function EditCardPage() {
   const { toast } = useToast();
@@ -56,7 +55,7 @@ export default function EditCardPage() {
   }, [cardId, router, toast]);
 
   const handleSubmit = async (data: CardFormValues) => {
-    if (mockCurrentUser.role !== 'admin') {
+    if (!IS_ADMIN) {
         toast({ title: "Permission Denied", description: "Editing cards is an administrator-only feature.", variant: "destructive" });
         return;
     }
@@ -86,7 +85,7 @@ export default function EditCardPage() {
     setIsLoading(false);
   };
 
-  if (mockCurrentUser.role !== 'admin') {
+  if (!IS_ADMIN) {
     return (
       <Card>
         <CardHeader>
