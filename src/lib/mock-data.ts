@@ -1,10 +1,10 @@
 
 import type { Investor, Card, Transaction, TransactionCategory, NewInvestorData, AllDataBackup } from './types';
-import type { CardFormValues } from './schemas'; 
+import type { CardFormValues } from './schemas';
 import { formatISO, subDays, subMonths, parseISO, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 
-const APP_VERSION = "1.0.0"; 
+const APP_VERSION = "1.0.0";
 
 const INVESTORS_KEY = 'estateFlowInvestors_v1';
 const PROPERTIES_KEY = 'estateFlowProperties_v1';
@@ -47,7 +47,7 @@ const defaultTransactions: Transaction[] = [
     investorId: 'investor1',
     property: 'Blue Haven',
     unitNumber: 'Unit 10A',
-    receiptImageURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    receiptImageURI: 'https://placehold.co/200x200.png', // Placeholder for image URI
     reconciled: true,
     sourceType: 'manual'
   },
@@ -167,6 +167,7 @@ function loadData<T>(key: string, defaultValue: T): T {
     if (storedValue) {
       try {
         const data = JSON.parse(storedValue);
+        // Ensure dates in transactions are correctly formatted ISO dates on load
         if ((key === TRANSACTIONS_KEY || key === DELETED_TRANSACTIONS_KEY) && Array.isArray(data)) {
           return data.map((item: any) => ({
             ...item,
@@ -176,7 +177,7 @@ function loadData<T>(key: string, defaultValue: T): T {
         return data as T;
       } catch (e) {
         console.error(`Error parsing ${key} from localStorage or invalid data structure, falling back to default. Error:`, e);
-        localStorage.removeItem(key); 
+        localStorage.removeItem(key); // Remove corrupted data
         return defaultValue;
       }
     }
@@ -208,8 +209,12 @@ export const mockCategories: (TransactionCategory | string)[] = [
 export const getMockInvestors = (): Investor[] => [...updatableInvestors];
 export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
-export const getMockTransactions = (): Transaction[] => [...updatableMockTransactions];
+export const getMockTransactions = (): Transaction[] => {
+  console.log("[MockData] getMockTransactions called, returning count:", updatableMockTransactions.length);
+  return [...updatableMockTransactions];
+};
 export const getDeletedTransactions = (): Transaction[] => {
+  console.log("[MockData] getDeletedTransactions called, returning count:", updatableDeletedTransactions.length);
   return [...updatableDeletedTransactions];
 };
 
@@ -237,7 +242,7 @@ export const addProperty = (propertyName: string): string => {
 export const addCard = (cardData: CardFormValues): Card => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false, 
+    isPersonal: false, // Default to business card
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
@@ -271,6 +276,7 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
     newTransactions[index] = { ...updatedTx };
     updatableMockTransactions = newTransactions;
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
+    console.log("[MockData] Updated transaction:", updatedTx.id, "New count:", updatableMockTransactions.length);
   }
 };
 
@@ -295,8 +301,31 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+    console.log("[MockData] Moved transaction to deleted:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
   }
 };
+
+export const permanentlyDeleteTransactionFromMockData = (txId: string): void => {
+  const initialActiveCount = updatableMockTransactions.length;
+  const initialDeletedCount = updatableDeletedTransactions.length;
+
+  updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
+  updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
+
+  let permanentlyDeleted = false;
+  if (updatableMockTransactions.length < initialActiveCount || updatableDeletedTransactions.length < initialDeletedCount) {
+    permanentlyDeleted = true;
+  }
+
+  if (permanentlyDeleted) {
+    saveData(TRANSACTIONS_KEY, updatableMockTransactions);
+    saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+    console.log("[MockData] Permanently deleted transaction:", txId, "New active count:", updatableMockTransactions.length, "New deleted count:", updatableDeletedTransactions.length);
+  } else {
+    console.log("[MockData] Attempted to permanently delete transaction, but ID not found:", txId);
+  }
+};
+
 
 export const restoreTransactionFromMockData = (txId: string): void => {
   const transactionToRestore = updatableDeletedTransactions.find(tx => tx.id === txId);
@@ -305,6 +334,7 @@ export const restoreTransactionFromMockData = (txId: string): void => {
     updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+     console.log("[MockData] Restored transaction:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
   }
 };
 
@@ -331,12 +361,17 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
       !Array.isArray(backupData.transactions) ||
       !Array.isArray(backupData.deletedTransactions) ||
       !backupData.timestamp ||
-      !backupData.version
+      !backupData.version // Ensure version is also checked
     ) {
       console.error("Invalid backup file structure.");
       return false;
     }
     
+    // Basic version check example (can be expanded)
+    // if (backupData.version !== APP_VERSION) {
+    //   console.warn(`Backup version (${backupData.version}) differs from app version (${APP_VERSION}). Restore may have issues.`);
+    // }
+
     updatableInvestors = backupData.investors;
     updatableProperties = backupData.properties;
     updatableCards = backupData.cards;
@@ -378,11 +413,12 @@ export const clearAllMockDataFromLocalStorage = () => {
     updatableInvestors = [...defaultInvestors];
     updatableProperties = [...defaultProperties];
     updatableCards = [...defaultCards];
-    updatableMockTransactions = [...defaultTransactions];
-    updatableDeletedTransactions = [...defaultDeletedTransactions];
+    updatableMockTransactions = [...defaultTransactions.map(tx => ({...tx}))]; // Ensure fresh copy
+    updatableDeletedTransactions = [...defaultDeletedTransactions.map(tx => ({...tx}))]; // Ensure fresh copy
   }
 };
 
+// Expose clear function to window for easy debugging
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }

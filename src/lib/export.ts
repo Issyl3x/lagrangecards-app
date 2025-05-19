@@ -22,7 +22,7 @@ export function convertToCSV(transactions: Transaction[]): string {
 
   const headers = [
     "Date", "Vendor", "Description", "Amount", "Category",
-    "Investor", "Property", "Unit Number", "Card Used", "Receipt", "Reconciled (Yes/No)"
+    "Investor", "Property", "Unit Number", "Card Used", "Receipt Image URI", "Recorded in Buildium (Yes/No)"
   ];
 
   const rows = transactions.map(tx => [
@@ -35,7 +35,7 @@ export function convertToCSV(transactions: Transaction[]): string {
     tx.property,
     tx.unitNumber || '',
     getCardNameById(tx.cardId),
-    tx.receiptImageURI ? "Image Attached" : "", // Indicate if an image is attached
+    tx.receiptImageURI ? "Image Attached" : "",
     tx.reconciled ? 'Yes' : 'No'
   ]);
 
@@ -66,6 +66,6 @@ export function downloadCSV(csvContent: string, filename: string): void {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up the object URL
+    URL.revokeObjectURL(url);
   }
 }
