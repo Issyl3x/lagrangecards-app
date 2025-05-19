@@ -5,11 +5,11 @@ import * as React from "react";
 import { TransactionForm, type TransactionFormValues } from "../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { addTransactionToMockData } from "@/lib/mock-data"; 
-import type { Transaction } from "@/lib/types";   
-import { v4 as uuidv4 } from 'uuid'; 
+import { addTransactionToMockData } from "@/lib/mock-data";
+import type { Transaction } from "@/lib/types";
+import { v4 as uuidv4 } from 'uuid';
 
 
 export default function AddTransactionPage() {
@@ -19,23 +19,53 @@ export default function AddTransactionPage() {
 
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
+    console.log("Webhook triggered", data);
+
+    try {
+      await fetch("https://hook.us2.make.com/y7mimw79elkvk3dm3x86xu7v373ah4f2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          property: data.property,
+          amount: data.amount,
+          category: data.category,
+          note: data.description || "",
+          submittedBy: "jessrafalfernandez@gmail.com",
+          submittedAt: new Date().toISOString(),
+        }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            console.log("Webhook sent successfully:", res.status);
+          } else {
+            console.error("Webhook failed with status:", res.status);
+            // Optionally, you could get more details:
+            // res.text().then(text => console.error("Webhook error body:", text));
+          }
+        })
+        .catch((err) => console.error("Webhook fetch error:", err));
+    } catch (fetchError) {
+        console.error("Error during webhook fetch operation:", fetchError);
+    }
 
     const newTransactionData: Transaction = {
-      id: uuidv4(), 
+      id: uuidv4(),
       ...data,
-      date: format(data.date, "yyyy-MM-dd"), 
-      property: data.property, 
-      unitNumber: data.unitNumber || "", // Added Unit Number
-      receiptImageURI: data.receiptImageURI || "", 
-      reconciled: false, 
+      date: format(data.date, "yyyy-MM-dd"),
+      property: data.property,
+      unitNumber: data.unitNumber || "",
+      receiptImageURI: data.receiptImageURI || "",
+      reconciled: false,
       sourceType: data.sourceType || 'manual',
     };
 
     addTransactionToMockData(newTransactionData);
     console.log("New Transaction Added via addTransactionToMockData:", newTransactionData);
 
-    // Simulate async operation
-    await new Promise(resolve => setTimeout(resolve, 100)); 
+    // Simulate async operation if needed for other logic, or remove if just for webhook
+    // await new Promise(resolve => setTimeout(resolve, 100));
 
     toast({
       title: "Transaction Saved",
@@ -48,7 +78,7 @@ export default function AddTransactionPage() {
       ),
     });
     setIsLoading(false);
-    router.push("/transactions"); 
+    router.push("/transactions");
   };
 
   return (
