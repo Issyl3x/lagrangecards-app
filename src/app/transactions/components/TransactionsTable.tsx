@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button"; // Added buttonVariants
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -47,7 +47,8 @@ import {
   getMockCards,
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  permanentlyDeleteTransactionFromMockData
+  permanentlyDeleteTransactionFromMockData, // Ensure this is imported
+  getMockTransactions
 } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -67,11 +68,11 @@ type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-const currentUsersEmail = 'jessrafalfernandez@gmail.com'; // Set to admin by default
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
-  const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -102,6 +103,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [transactionToPermanentlyDelete, setTransactionToPermanentlyDelete] = React.useState<string | null>(null);
 
+  const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
 
   React.useEffect(() => {
     setInvestorsState(getMockInvestors());
@@ -135,8 +137,8 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       }
     });
     setDuplicateTransactionIds(newDuplicateIds);
-    setFilteredTransactions(initialTransactions); // Ensure filteredTransactions is updated when initialTransactions changes
   }, [initialTransactions]);
+
 
   React.useEffect(() => {
     let tempTransactions = [...initialTransactions];
@@ -256,7 +258,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         title: "Transaction Permanently Deleted",
         description: `Transaction has been permanently deleted.`,
       });
-      onTransactionUpdate();
+      onTransactionUpdate(); // Refresh the table from the parent
       setTransactionToPermanentlyDelete(null);
     }
     setIsAlertOpen(false);
@@ -497,9 +499,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                       )}
                     </TableCell>
                     <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{tx.category}</Badge>
-                    </TableCell>
+                    <TableCell><Badge variant="outline">{tx.category}</Badge></TableCell>
                     {columnVisibility.investor && <TableCell>{getInvestorName(tx.investorId)}</TableCell>}
                     {columnVisibility.property && <TableCell>{tx.property}</TableCell>}
                     {columnVisibility.unitNumber && <TableCell>{tx.unitNumber || '-'}</TableCell>}
@@ -544,7 +544,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                         )}
                       </TableCell>
                     )}
-                    {columnVisibility.sourceType && <TableCell>{tx.sourceType.toUpperCase()}</TableCell>}
+                    {columnVisibility.sourceType && <TableCell>{tx.sourceType?.toUpperCase()}</TableCell>}
                     <TableCell>
                       <div className="flex space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleCopyDetails(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
