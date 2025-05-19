@@ -46,7 +46,7 @@ const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 // Define admin email and current user's email for permission check
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 // To test teammate view, change this to a non-admin email like 'teammate@example.com'
-const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const currentUsersEmail = 'teammate@example.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
@@ -73,16 +73,16 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     sourceType: false,
   });
 
-  const [investors, setInvestors] = React.useState<Investor[]>([]);
-  const [properties, setProperties] = React.useState<string[]>([]);
-  const [cards, setCardsState] = React.useState<UserCard[]>([]); // Renamed to avoid conflict
+  const [investors, setInvestorsState] = React.useState<Investor[]>([]);
+  const [properties, setPropertiesState] = React.useState<string[]>([]);
+  const [cards, setCardsState] = React.useState<UserCard[]>([]); 
   const [duplicateTransactionIds, setDuplicateTransactionIds] = React.useState<Set<string>>(new Set());
 
 
   React.useEffect(() => {
-    setInvestors(getMockInvestors());
-    setProperties(getMockProperties());
-    setCardsState(getMockCards()); // Use renamed state setter
+    setInvestorsState(getMockInvestors());
+    setPropertiesState(getMockProperties());
+    setCardsState(getMockCards()); 
   }, []); 
 
   React.useEffect(() => {
@@ -111,7 +111,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       }
     });
     setDuplicateTransactionIds(newDuplicateIds);
-    // setFilteredTransactions(initialTransactions); // This will be handled by the next effect
   }, [initialTransactions]);
 
   React.useEffect(() => {
@@ -233,7 +232,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-    // Find the transaction from the initialTransactions prop as it's the source of truth from parent
     const transactionToUpdate = initialTransactions.find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
@@ -522,3 +520,5 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     </TooltipProvider>
   );
 }
+
+    

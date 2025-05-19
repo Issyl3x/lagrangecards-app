@@ -17,7 +17,7 @@ import { CardForm } from "./components/CardForm";
 // Define admin email and current user's email for permission check
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 // To test teammate view, change this to a non-admin email like 'teammate@example.com'
-const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
+const currentUsersEmail = 'teammate@example.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function CardsPage() {
@@ -117,3 +117,5 @@ export default function CardsPage() {
     </div>
   );
 }
+
+    
