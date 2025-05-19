@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon, FileText, CheckSquare } from "lucide-react"; // Added AlertTriangle, CheckSquare
+import { AlertTriangle, ArrowUpDown, Filter, Trash2, Edit3, ChevronsUpDown, ClipboardCopy, ImageIcon, FileText, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Transaction, Card as UserCard, Investor } from "@/lib/types";
 import { 
@@ -43,9 +43,11 @@ interface TransactionsTableProps {
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
-  id: 'investor1',
-  isAdmin: true, 
+  id: 'user1', // Can be any ID for simulation
+  role: 'admin',  // 'admin' or 'teammate'
 };
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
@@ -198,7 +200,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleDelete = (id: string) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to delete transactions.",
@@ -215,7 +217,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleEdit = (id: string) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to edit transactions.",
@@ -227,7 +229,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
 
   const handleToggleReconciled = (id: string) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to change reconciliation status.",
@@ -248,7 +250,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   };
   
   const handleConfirmDuplicate = (transactionId: string) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to confirm transactions.",
@@ -434,7 +436,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                           </TooltipTrigger>
                           <TooltipContent><p>Potential duplicate transaction.</p></TooltipContent>
                         </Tooltip>
-                        {mockCurrentUser.isAdmin && (
+                        {mockCurrentUser.role === 'admin' && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => handleConfirmDuplicate(tx.id)} className="ml-1">
@@ -460,12 +462,11 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                       <Badge 
                         variant={tx.reconciled ? "default" : "secondary"} 
                         className={cn(
-                          "cursor-pointer",
-                          mockCurrentUser.isAdmin ? (tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent") : "",
-                          !mockCurrentUser.isAdmin && "cursor-not-allowed opacity-70"
+                          mockCurrentUser.role === 'admin' ? "cursor-pointer" : "cursor-not-allowed opacity-70",
+                          mockCurrentUser.role === 'admin' ? (tx.reconciled ? "bg-green-500 hover:bg-green-600 text-white" : "hover:bg-accent") : "",
                         )}
-                        onClick={() => mockCurrentUser.isAdmin && handleToggleReconciled(tx.id)}
-                        title={mockCurrentUser.isAdmin ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
+                        onClick={() => mockCurrentUser.role === 'admin' && handleToggleReconciled(tx.id)}
+                        title={mockCurrentUser.role === 'admin' ? (tx.reconciled ? "Mark as Not Reconciled" : "Mark as Reconciled") : "Reconciliation status"}
                       >
                         {tx.reconciled ? "Yes" : "No"}
                       </Badge>
@@ -500,7 +501,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                   <TableCell>
                     <div className="flex space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleCopyDetails(tx.id)} title="Copy Details"><ClipboardCopy className="h-4 w-4" /></Button>
-                        {mockCurrentUser.isAdmin && (
+                        {mockCurrentUser.role === 'admin' && (
                           <>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(tx.id)} title="Edit Transaction"><Edit3 className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => handleDelete(tx.id)} title="Delete Transaction" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
@@ -524,4 +525,3 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     </TooltipProvider>
   );
 }
-

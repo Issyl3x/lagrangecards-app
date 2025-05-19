@@ -10,13 +10,15 @@ import type { Investor, Card as UserCard } from "@/lib/types";
 import type { CardFormValues } from "@/lib/schemas";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert, Edit3, CreditCardIcon } from "lucide-react"; // Changed to CreditCardIcon for consistency
+import { ShieldAlert, Edit3, CreditCardIcon } from "lucide-react";
 import Link from "next/link";
 import { CardForm } from "./components/CardForm";
 
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
   id: 'user1',
-  isAdmin: true,
+  role: 'admin', // 'admin' or 'teammate'
 };
 
 export default function CardsPage() {
@@ -35,10 +37,7 @@ export default function CardsPage() {
   }, [refreshData]);
 
   const handleAddCard = (data: CardFormValues) => {
-    if (!mockCurrentUser.isAdmin) {
-      toast({ title: "Permission Denied", description: "Adding cards is an administrator-only feature.", variant: "destructive" });
-      return;
-    }
+    // Permission check already handled by conditional rendering of the form
     setIsLoading(true);
     try {
       addCard(data);
@@ -64,7 +63,7 @@ export default function CardsPage() {
           <CardDescription>Enter the details for a new card.</CardDescription>
         </CardHeader>
         <CardContent>
-          {mockCurrentUser.isAdmin ? (
+          {mockCurrentUser.role === 'admin' ? (
             <CardForm onSubmit={handleAddCard} isLoading={isLoading} />
           ) : (
             <Alert variant="destructive">
@@ -101,7 +100,7 @@ export default function CardsPage() {
                         {card.spendLimitMonthly && <p className="text-sm text-muted-foreground truncate">Limit: ${card.spendLimitMonthly.toLocaleString()} / month</p>}
                       </div>
                     </div>
-                    {mockCurrentUser.isAdmin && (
+                    {mockCurrentUser.role === 'admin' && (
                       <Button asChild variant="outline" size="sm" className="ml-4 flex-shrink-0">
                         <Link href={`/cards/edit/${card.id}`}>
                           <Edit3 className="mr-2 h-4 w-4" /> Edit

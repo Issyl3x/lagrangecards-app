@@ -16,9 +16,11 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, UserCircle2 } from "lucide-react";
 
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
   id: 'user1', 
-  isAdmin: true,  
+  role: 'admin',  // 'admin' or 'teammate'
 };
 
 function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
@@ -43,18 +45,6 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
       setIsLoading(false);
     }
   };
-
-  if (!mockCurrentUser.isAdmin) {
-    return (
-      <Alert variant="destructive">
-        <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Admin Access Required</AlertTitle>
-        <AlertDescription>
-          Adding new investors is an administrator-only feature.
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   return (
     <Form {...form}>
@@ -106,7 +96,17 @@ export default function InvestorsPage() {
           <CardDescription>Enter the details for a new investor.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AddInvestorForm onInvestorAdded={refreshInvestors} />
+          {mockCurrentUser.role === 'admin' ? (
+            <AddInvestorForm onInvestorAdded={refreshInvestors} />
+          ) : (
+            <Alert variant="destructive">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertTitle>Admin Access Required</AlertTitle>
+              <AlertDescription>
+                Adding new investors is an administrator-only feature.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

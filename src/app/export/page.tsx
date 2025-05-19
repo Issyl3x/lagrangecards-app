@@ -13,10 +13,11 @@ import { Input } from "@/components/ui/input";
 import type { AllDataBackup } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock current user for permission check
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
-  id: 'investor1', // Can be any ID for simulation
-  isAdmin: true,  // Set to true for admin, false for non-admin
+  id: 'user1', // Can be any ID for simulation
+  role: 'admin',  // 'admin' or 'teammate'
 };
 
 export default function ExportPage() {
@@ -51,7 +52,7 @@ export default function ExportPage() {
   const handleSendToGoogleSheets = () => {
     toast({
       title: "Send to Google Sheets (Demonstration)",
-      description: "This feature is for demonstration purposes. A direct integration requires Google API setup and user authentication, which is complex for a prototype. For now, please use the 'Download CSV' option and import that file into Google Sheets.",
+      description: "This feature is for demonstration. A direct integration requires Google API setup. Please use 'Download CSV' and import that file into Google Sheets.",
       variant: "default",
       duration: 10000, 
     });
@@ -136,7 +137,7 @@ export default function ExportPage() {
     }
   };
 
-  if (!mockCurrentUser.isAdmin) {
+  if (mockCurrentUser.role !== 'admin') {
     return (
       <Card>
         <CardHeader>
@@ -145,9 +146,9 @@ export default function ExportPage() {
         <CardContent>
           <Alert variant="destructive">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Access Denied</AlertTitle>
+            <AlertTitle>Admin Access Required</AlertTitle>
             <AlertDescription>
-              These features are available for administrators only.
+              Exporting and backing up data is an administrator-only feature.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -170,11 +171,11 @@ export default function ExportPage() {
             The CSV format includes all key details for each transaction.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
+            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Download CSV
             </Button>
-            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
+            <Button onClick={handleSendToGoogleSheets} variant="outline" className="w-full sm:w-auto">
               <Send className="mr-2 h-4 w-4" />
               Send to Google Sheets (Demo)
             </Button>
@@ -203,7 +204,7 @@ export default function ExportPage() {
             <p className="text-sm text-muted-foreground mb-3">
               Creates a JSON file containing all your current EstateFlow data. Store this file in a safe place.
             </p>
-            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto" disabled={!mockCurrentUser.isAdmin}>
+            <Button onClick={handleDownloadBackup} className="w-full sm:w-auto">
               <Save className="mr-2 h-4 w-4" />
               Download Full Backup (JSON)
             </Button>
@@ -218,13 +219,13 @@ export default function ExportPage() {
                 type="file"
                 accept=".json"
                 onChange={handleRestoreFileChange}
-                disabled={isRestoring || !mockCurrentUser.isAdmin}
+                disabled={isRestoring}
                 ref={fileInputRef}
                 className="w-full sm:max-w-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
               />
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
-                disabled={isRestoring || !mockCurrentUser.isAdmin} 
+                disabled={isRestoring} 
                 variant="outline"
                 className="w-full sm:w-auto"
               >
@@ -241,4 +242,3 @@ export default function ExportPage() {
     </div>
   );
 }
-

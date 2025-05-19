@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CardForm } from "../../components/CardForm"; // Corrected path
+import { CardForm } from "../../components/CardForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getMockCards, updateCard, getMockInvestors, getMockProperties } from "@/lib/mock-data";
@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 
-// Mock current user for permission check
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
   id: 'user1',
-  isAdmin: true,
+  role: 'admin', // 'admin' or 'teammate'
 };
 
 export default function EditCardPage() {
@@ -55,7 +56,7 @@ export default function EditCardPage() {
   }, [cardId, router, toast]);
 
   const handleSubmit = async (data: CardFormValues) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
         toast({ title: "Permission Denied", description: "Editing cards is an administrator-only feature.", variant: "destructive" });
         return;
     }
@@ -85,7 +86,7 @@ export default function EditCardPage() {
     setIsLoading(false);
   };
 
-  if (!mockCurrentUser.isAdmin) {
+  if (mockCurrentUser.role !== 'admin') {
     return (
       <Card>
         <CardHeader>

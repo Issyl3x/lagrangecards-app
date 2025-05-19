@@ -26,10 +26,11 @@ interface DeletedTransactionsTableProps {
   initialDeletedTransactions: Transaction[]; 
 }
 
-// Mock current user for permission check
+// Define mock current user for permission check
+// To test teammate view, change role to 'teammate'
 const mockCurrentUser = {
-  id: 'investor1', // Can be any ID for simulation
-  isAdmin: true,  // Set to true for admin, false for non-admin
+  id: 'user1', // Can be any ID for simulation
+  role: 'admin',  // 'admin' or 'teammate'
 };
 
 export function DeletedTransactionsTable({ initialDeletedTransactions }: DeletedTransactionsTableProps) {
@@ -42,7 +43,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
   }, [initialDeletedTransactions]);
 
   const handleRestore = (id: string) => {
-    if (!mockCurrentUser.isAdmin) {
+    if (mockCurrentUser.role !== 'admin') {
       toast({
         title: "Permission Denied",
         description: "You do not have permission to restore transactions.",
@@ -87,7 +88,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
                   </TableCell>
                   <TableCell>{tx.property}</TableCell>
                   <TableCell>
-                    {mockCurrentUser.isAdmin ? (
+                    {mockCurrentUser.role === 'admin' ? (
                         <Button variant="ghost" size="sm" onClick={() => handleRestore(tx.id)} title="Restore Transaction">
                             <Undo2 className="mr-2 h-4 w-4" />
                             Restore
@@ -111,4 +112,3 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
     </div>
   );
 }
-
