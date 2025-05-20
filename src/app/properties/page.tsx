@@ -15,9 +15,14 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, Home, Loader2 } from "lucide-react";
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This page simulates role-based access. Adding new properties is restricted
+// to the ADMIN_EMAIL. In a production app, use real authentication.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test non-admin view, change currentUsersEmail
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
   const { toast } = useToast();
@@ -73,6 +78,7 @@ export default function PropertiesPage() {
       setProperties(data);
     } catch (error) {
       console.error("Failed to fetch properties:", error);
+      // Optionally show a toast for fetch errors
     } finally {
       setIsLoading(false);
     }

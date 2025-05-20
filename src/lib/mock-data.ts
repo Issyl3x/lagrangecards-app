@@ -4,10 +4,30 @@ import type { CardFormValues } from './schemas';
 import { formatISO, subDays, subMonths, parseISO, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 
+// --- PROTOTYPE DATA STORAGE NOTE ---
+// This application currently uses the browser's localStorage for data persistence.
+// This means:
+// 1. Data is stored locally in the user's browser and is NOT shared between different users,
+//    browsers, or devices.
+// 2. If browser data is cleared, localStorage data will be lost.
+// 3. This is suitable for prototyping and single-user development.
+// For a production application with shared and robust data storage,
+// this module would need to be refactored to interact with a backend database
+// (e.g., Firebase Firestore, Supabase).
+// The "Download Full Backup (JSON)" feature on the Export page is recommended for
+// manually backing up data from localStorage.
+// The functions below are now asynchronous (return Promises) to mimic real backend calls,
+// preparing the codebase structure for a future database integration.
+// --- END PROTOTYPE DATA STORAGE NOTE ---
+
 const APP_VERSION = "1.0.0";
 
-const WORK_EMAIL_FOR_NOTIFICATIONS = 'lagrangepointllc@gmail.com';
-const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// --- SIMULATED ROLE-BASED ACCESS NOTE ---
+// The 'ADMIN_EMAIL' constant is used for simulating admin privileges.
+// In a production app, real authentication and role management would be required.
+// --- END SIMULATED ROLE-BASED ACCESS NOTE ---
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com'; // Admin user
+const WORK_EMAIL_FOR_NOTIFICATIONS = 'lagrangepointllc@gmail.com'; // Target for simulated notifications
 
 const INVESTORS_KEY = 'estateFlowInvestors_v1';
 const PROPERTIES_KEY = 'estateFlowProperties_v1';
@@ -247,7 +267,7 @@ export const addProperty = async (propertyName: string): Promise<string> => {
 export const addCard = async (cardData: CardFormValues): Promise<Card> => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false,
+    isPersonal: false, // Assuming cards added via this form are not personal
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
@@ -268,10 +288,14 @@ export const addTransactionToMockData = async (newTx: Transaction, submitterEmai
     description: newTx.description
   });
 
-  if (submitterEmail !== ADMIN_EMAIL) {
+  // --- SIMULATED WEBHOOK NOTIFICATION ---
+  // This simulates sending a notification if a non-admin user adds a transaction.
+  // In a real app, this would be a backend call to an email service or messaging queue.
+  if (submitterEmail.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     console.log(`SIMULATING WEBHOOK: Email notification to ${WORK_EMAIL_FOR_NOTIFICATIONS} (work email) because a transaction was added by teammate ${submitterEmail}.`);
   }
   console.log("---------------------------------------------");
+  // --- END SIMULATED WEBHOOK NOTIFICATION ---
   return Promise.resolve();
 };
 
@@ -281,7 +305,7 @@ export const updateTransactionInMockData = async (updatedTx: Transaction): Promi
   const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
   if (index !== -1) {
     const newTransactions = [...updatableMockTransactions];
-    newTransactions[index] = { ...updatedTx };
+    newTransactions[index] = { ...updatedTx }; // Ensure a new object reference
     updatableMockTransactions = newTransactions;
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
   }
@@ -309,6 +333,9 @@ export const deleteTransactionFromMockData = async (txId: string): Promise<void>
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
+    console.log("[MockData] Moved transaction to deleted items:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
+  } else {
+     console.log("[MockData] Attempted to move transaction to deleted, but ID not found in active list:", txId);
   }
   return Promise.resolve();
 };
@@ -367,6 +394,7 @@ export const getAllDataForBackup = async (): Promise<AllDataBackup> => {
 
 export const restoreAllDataFromBackup = async (backupData: AllDataBackup): Promise<boolean> => {
   try {
+    // Basic validation of backup structure
     if (
       !backupData ||
       !Array.isArray(backupData.investors) ||
@@ -375,15 +403,19 @@ export const restoreAllDataFromBackup = async (backupData: AllDataBackup): Promi
       !Array.isArray(backupData.transactions) ||
       !Array.isArray(backupData.deletedTransactions) ||
       !backupData.timestamp ||
-      !backupData.version
+      !backupData.version // Simple version check, could be more sophisticated
     ) {
-      console.error("Invalid backup file structure.");
+      console.error("Invalid backup file structure or missing version/timestamp.");
       return Promise.resolve(false);
     }
+
+    // Consider adding a version check here if your data structure evolves significantly
+    // e.g., if (backupData.version !== APP_VERSION) { ... handle migration or warn ... }
 
     updatableInvestors = backupData.investors;
     updatableProperties = backupData.properties;
     updatableCards = backupData.cards;
+    // Ensure dates are correctly formatted if they were stringified in a non-ISO way
     updatableMockTransactions = backupData.transactions.map(tx => ({
         ...tx,
         date: tx.date && isValid(parseISO(tx.date)) ? formatISO(parseISO(tx.date), { representation: 'date' }) : formatISO(new Date(), {representation: 'date'}),
@@ -399,7 +431,7 @@ export const restoreAllDataFromBackup = async (backupData: AllDataBackup): Promi
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
 
-    console.log("Data restored successfully from backup:", backupData.timestamp);
+    console.log("Data restored successfully from backup:", backupData.timestamp, "Version:", backupData.version);
     return Promise.resolve(true);
   } catch (error) {
     console.error("Error restoring data from backup:", error);

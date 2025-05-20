@@ -13,9 +13,15 @@ import { Input } from "@/components/ui/input";
 import type { AllDataBackup, Transaction } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This page simulates role-based access using hardcoded email addresses.
+// In a production application, this would be replaced by a proper authentication system.
+// Export/Backup/Restore features are restricted to the ADMIN_EMAIL.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test non-admin view, change currentUsersEmail to something else
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 export default function ExportPage() {
   const { toast } = useToast();
@@ -37,7 +43,7 @@ export default function ExportPage() {
         setIsLoadingTransactions(false);
       }
     };
-    if (IS_ADMIN) { // Only fetch if admin, otherwise it's not needed
+    if (IS_ADMIN) { // Only fetch if admin, otherwise it's not needed for display
       fetchCurrentTransactions();
     } else {
       setIsLoadingTransactions(false);
@@ -46,6 +52,10 @@ export default function ExportPage() {
 
 
   const handleDownloadCSV = async () => {
+    if (!IS_ADMIN) {
+      toast({ title: "Permission Denied", description: "Exporting is an administrator-only feature.", variant: "destructive" });
+      return;
+    }
     const currentTransactions = await getMockTransactions(); 
     if (currentTransactions.length === 0) {
       toast({
@@ -63,16 +73,23 @@ export default function ExportPage() {
   };
 
   const handleSendToGoogleSheets = () => {
+    if (!IS_ADMIN) {
+      toast({ title: "Permission Denied", description: "This feature is administrator-only.", variant: "destructive" });
+      return;
+    }
     toast({
       title: "Send to Google Sheets (Demonstration)",
       description: "This feature is for demonstration. A direct integration requires Google API setup. Please use 'Download CSV' and import that file into Google Sheets. This functionality would be restricted to admins in a real application.",
       variant: "default",
       duration: 10000, 
     });
-    // console.log("Attempting to send to Google Sheets (mocked). Data:", transactions);
   };
 
   const handleDownloadBackup = async () => {
+    if (!IS_ADMIN) {
+      toast({ title: "Permission Denied", description: "Backup is an administrator-only feature.", variant: "destructive" });
+      return;
+    }
     try {
         const backupData = await getAllDataForBackup();
         const jsonString = JSON.stringify(backupData, null, 2);
@@ -95,6 +112,11 @@ export default function ExportPage() {
   };
 
   const handleRestoreFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!IS_ADMIN) {
+      toast({ title: "Permission Denied", description: "Restore is an administrator-only feature.", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -107,6 +129,7 @@ export default function ExportPage() {
         if (typeof text === 'string') {
           try {
             const backupData = JSON.parse(text) as AllDataBackup;
+            // Basic validation
             if (backupData && backupData.investors && backupData.properties && backupData.cards && backupData.transactions && backupData.deletedTransactions && backupData.timestamp) {
                 const success = await restoreAllDataFromBackup(backupData);
                 if (success) {
@@ -155,7 +178,7 @@ export default function ExportPage() {
     }
   };
 
-  if (!IS_ADMIN) {
+  if (!IS_ADMIN && !isLoadingTransactions) { // Show restriction if not admin and not initial loading
     return (
       <Card>
         <CardHeader>
@@ -174,7 +197,7 @@ export default function ExportPage() {
     );
   }
 
-  if (isLoadingTransactions) {
+  if (isLoadingTransactions && IS_ADMIN) { // Only show loader if admin is loading data
     return (
       <div className="flex items-center justify-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -208,7 +231,7 @@ export default function ExportPage() {
               Send to Google Sheets (Demo)
             </Button>
           </div>
-           {transactions.length === 0 && (
+           {transactions.length === 0 && IS_ADMIN && (
             <p className="text-sm text-muted-foreground">
               No transactions available to export. Add some transactions first.
             </p>

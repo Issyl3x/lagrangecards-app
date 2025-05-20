@@ -16,12 +16,10 @@ import { Undo2, AlertCircle, Trash2 } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { 
   restoreTransactionFromMockData,
-  // getDeletedTransactions, // No longer needed here as data comes via props
   permanentlyDeleteTransactionFromMockData 
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-// import { useRouter } from "next/navigation"; // Not directly used for navigation here
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,24 +35,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface DeletedTransactionsTableProps {
   initialDeletedTransactions: Transaction[]; 
-  onTransactionUpdate: () => Promise<void>; // Callback to tell parent to refresh
+  onTransactionUpdate: () => Promise<void>; 
 }
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This component simulates role-based access using hardcoded email addresses.
+// In a production application, this would be replaced by a proper authentication system.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 export function DeletedTransactionsTable({ initialDeletedTransactions, onTransactionUpdate }: DeletedTransactionsTableProps) {
-  // const [deletedTransactions, setDeletedTransactions] = React.useState<Transaction[]>(initialDeletedTransactions); // State managed by parent
   const { toast } = useToast();
-  // const router = useRouter(); // Not used for navigation here
-
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [transactionToPermanentlyDelete, setTransactionToPermanentlyDelete] = React.useState<string | null>(null);
-
-  // React.useEffect(() => {
-  //   setDeletedTransactions(initialDeletedTransactions); // Data comes from prop, local state not needed
-  // }, [initialDeletedTransactions]);
 
   const handleRestore = async (id: string) => {
     if (!IS_ADMIN) {
@@ -67,8 +63,6 @@ export function DeletedTransactionsTable({ initialDeletedTransactions, onTransac
     }
 
     await restoreTransactionFromMockData(id);
-    // setDeletedTransactions(await getDeletedTransactions()); // Parent will refresh
-    
     toast({
       title: "Transaction Restored",
       description: `Transaction has been restored to the active list.`,
@@ -92,7 +86,6 @@ export function DeletedTransactionsTable({ initialDeletedTransactions, onTransac
   const handlePermanentDeleteConfirm = async () => {
     if (transactionToPermanentlyDelete) {
       await permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
-      // setDeletedTransactions(await getDeletedTransactions()); // Parent will refresh
       toast({
         title: "Transaction Permanently Deleted",
         description: `Transaction has been permanently deleted.`,

@@ -47,10 +47,10 @@ import {
   getMockCards,
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  getMockTransactions,
+  // getMockTransactions, // No longer fetched directly here, comes via props
   permanentlyDeleteTransactionFromMockData
 } from "@/lib/mock-data";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import type { DateRange } from "react-day-picker";
@@ -61,15 +61,25 @@ import Image from "next/image";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
-  onTransactionUpdate: () => Promise<void>; // onTransactionUpdate is now async
+  onTransactionUpdate: () => Promise<void>;
 }
 
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This component simulates role-based access using hardcoded email addresses.
+// - ADMIN_EMAIL: Represents the administrator.
+// - currentUsersEmail: Simulates the email of the currently "logged-in" user.
+// - IS_ADMIN: Determines if the current user has admin privileges.
+// In a production application, this would be replaced by a proper authentication
+// system (e.g., Firebase Authentication) and role management.
+// To test different roles, manually change 'currentUsersEmail'.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; // Change to 'teammate@example.com' to test non-admin
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
 
 export function TransactionsTable({ transactions: initialTransactions, onTransactionUpdate }: TransactionsTableProps) {
   const router = useRouter();
@@ -89,7 +99,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     property: true,
     unitNumber: true,
     cardUsed: true,
-    recordedInBuildium: true,
+    recordedInBuildium: true, // Renamed from 'reconciled'
     receiptImageURI: true,
     sourceType: false,
   });
@@ -135,7 +145,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
 
     const signatures = new Map<string, string[]>();
     initialTransactions.forEach(tx => {
-      if (tx.isDuplicateConfirmed) {
+      if (tx.isDuplicateConfirmed) { // Don't flag confirmed duplicates
         return;
       }
       const signature = `${tx.date}-${tx.vendor.toLowerCase()}-${tx.amount.toFixed(2)}`;
@@ -170,14 +180,16 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     if (dateRangeFilter?.from) {
       tempTransactions = tempTransactions.filter(tx => {
         const txDate = parseISO(tx.date);
+        if (!isValid(txDate)) return false;
         return txDate >= (dateRangeFilter.from as Date);
       });
     }
     if (dateRangeFilter?.to) {
       tempTransactions = tempTransactions.filter(tx => {
         const txDate = parseISO(tx.date);
+        if (!isValid(txDate)) return false;
         const toDate = new Date(dateRangeFilter.to as Date);
-        toDate.setDate(toDate.getDate() + 1);
+        toDate.setDate(toDate.getDate() + 1); // Include the 'to' date for range
         return txDate < toDate;
       });
     }
@@ -322,12 +334,11 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const handlePermanentDeleteConfirm = async () => {
     if (transactionToPermanentlyDelete) {
       await permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
-      setFilteredTransactions(prev => prev.filter(tx => tx.id !== transactionToPermanentlyDelete));
       toast({
         title: "Transaction Permanently Deleted",
         description: `Transaction has been permanently deleted.`,
       });
-      await onTransactionUpdate(); // Ensure parent re-fetches
+      await onTransactionUpdate(); 
       setTransactionToPermanentlyDelete(null);
     }
     setIsAlertOpen(false);
@@ -578,6 +589,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                               </TooltipTrigger>
                               <TooltipContent><p>Move to Deleted Items</p></TooltipContent>
                             </Tooltip>
+                            {/* Permanent delete moved to DeletedItemsTable 
                              <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={() => openPermanentDeleteDialog(tx.id)} title="Permanently Delete">
@@ -585,7 +597,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent><p>Permanently Delete Transaction</p></TooltipContent>
-                            </Tooltip>
+                            </Tooltip> */}
                           </>
                         )}
                       </div>

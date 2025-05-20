@@ -14,9 +14,14 @@ import { ShieldAlert, Edit3, CreditCardIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { CardForm } from "./components/CardForm";
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This page simulates role-based access. Adding/editing cards is restricted
+// to the ADMIN_EMAIL. In a production app, use real authentication.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test non-admin view, change currentUsersEmail
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 export default function CardsPage() {
   const [cards, setCards] = React.useState<UserCard[]>([]);
@@ -52,6 +57,7 @@ export default function CardsPage() {
       await addCard(data);
       toast({ title: "Card Added", description: `${data.cardName} has been added.` });
       await refreshData(); 
+      // No need to reset form here as CardForm is a separate component which might reset itself
     } catch (error) {
       toast({ title: "Error", description: "Failed to add card.", variant: "destructive" });
       console.error("Failed to add card:", error);

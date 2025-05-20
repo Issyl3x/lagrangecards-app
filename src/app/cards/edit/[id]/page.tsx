@@ -14,9 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 
+// --- PROTOTYPE ROLE-BASED ACCESS NOTE ---
+// This page simulates role-based access. Editing cards is restricted
+// to the ADMIN_EMAIL. In a production app, use real authentication.
+// --- END PROTOTYPE ROLE-BASED ACCESS NOTE ---
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test non-admin view, change currentUsersEmail
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
-const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
+const IS_ADMIN = currentUsersEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 export default function EditCardPage() {
   const { toast } = useToast();
@@ -69,6 +74,7 @@ export default function EditCardPage() {
     }
     setIsSubmitting(true);
     
+    // Construct the Card object to update, ensuring ID is present
     const cardToUpdate: UserCard = {
         id: cardId, 
         ...data,
