@@ -27,19 +27,20 @@ export function AppHeader() {
   const { isMobile } = useSidebar();
   const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' };
   const pathname = usePathname();
-  const [currentPageTitle, setCurrentPageTitle] = React.useState<string | null>(null); // Initialize to null
+  const [currentPageTitle, setCurrentPageTitle] = React.useState<string | null>(null);
+  const [hasMounted, setHasMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setHasMounted(true);
     setCurrentPageTitle(getPageTitle(pathname));
   }, [pathname]);
 
-
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      {isMobile && <SidebarTrigger />}
+      {hasMounted && isMobile ? <SidebarTrigger /> : <div className="w-7 h-7 md:hidden" /> /* Placeholder for mobile to prevent layout shift */}
       <div className="flex-1">
-        {/* Only render h1 if title is set, to avoid initial mismatch */}
-        {currentPageTitle !== null && (
+        {/* Only render h1 if title is set and component has mounted, to avoid initial mismatch */}
+        {hasMounted && currentPageTitle !== null && (
           <h1 className="text-xl font-semibold">{currentPageTitle}</h1>
         )}
       </div>
@@ -53,7 +54,6 @@ export function AppHeader() {
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
-        {/* Avatar and DropdownMenu removed */}
       </div>
     </header>
   );
