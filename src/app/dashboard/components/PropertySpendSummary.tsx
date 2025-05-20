@@ -9,18 +9,19 @@ import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 
-import * as pdfMakeNs from 'pdfmake/build/pdfmake'; // Renamed to pdfMakeNs
-import * as pdfFontsNs from 'pdfmake/build/vfs_fonts'; // Renamed to pdfFontsNs
+import pdfMake from 'pdfmake/build/pdfmake';
+import 'pdfmake/build/vfs_fonts'; // Import for side-effect: populates pdfMake.vfs
 
 if (typeof window !== 'undefined') {
-  const targetPdfMake = pdfMakeNs; // This is the object used for .createPdf
-  if (pdfFontsNs.pdfMake && pdfFontsNs.pdfMake.vfs) {
-    (targetPdfMake as any).vfs = pdfFontsNs.pdfMake.vfs;
-  } else if ((window as any).pdfMake && (window as any).pdfMake.vfs) {
-    (targetPdfMake as any).vfs = (window as any).pdfMake.vfs;
-    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in PropertySpendSummary. Original pdfFontsNs.pdfMake was:", pdfFontsNs.pdfMake);
-  } else {
-    console.error("Unable to set pdfmake vfs in PropertySpendSummary: Font data not found in pdfFontsNs.pdfMake or window.pdfMake. pdfFontsNs.pdfMake:", pdfFontsNs.pdfMake, "window.pdfMake:", (window as any).pdfMake);
+  // After importing 'pdfmake/build/vfs_fonts', pdfMake.vfs should be populated by side effect.
+  // This explicit assignment is a fallback if the side effect modifies window.pdfMake
+  // but not the imported pdfMake module instance directly.
+  if (!pdfMake.vfs && (window as any).pdfMake && (window as any).pdfMake.vfs) {
+    pdfMake.vfs = (window as any).pdfMake.vfs;
+    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in PropertySpendSummary. This is a fallback.");
+  } else if (!pdfMake.vfs) {
+     // This log indicates that vfs_fonts.js didn't manage to populate pdfMake.vfs through any means.
+    console.error("Critical: pdfMake.vfs is still not defined after importing vfs_fonts.js. window.pdfMake:", (window as any).pdfMake);
   }
 }
 
@@ -146,6 +147,15 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       });
       return;
     }
+    if (!pdfMake.vfs) {
+      toast({
+        title: "PDF Error",
+        description: "Font data for PDF generation is not available. Please try refreshing the page or check console for errors.",
+        variant: "destructive",
+      });
+      console.error("pdfMake.vfs is not defined. PDF generation aborted in PropertySpendSummary.");
+      return;
+    }
 
     const groupedTransactions: Record<string, Transaction[]> = {};
     transactionsWithProperty.forEach(tx => {
@@ -217,7 +227,7 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       }
     };
 
-    pdfMakeNs.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
+    pdfMake.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "PDF Generated",
       description: "Detailed property spend report PDF has been downloaded.",
@@ -299,3 +309,4 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
     </Card>
   );
 }
+
