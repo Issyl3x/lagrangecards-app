@@ -20,14 +20,14 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/properties")) return "Manage Properties";
   if (pathname.startsWith("/cards/edit")) return "Edit Card";
   if (pathname.startsWith("/cards")) return "Manage Cards";
-  return "EstateFlow";
+  return "Lagrange Card"; // Default title
 };
 
 export function AppHeader() {
   const { isMobile } = useSidebar(); 
   const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' };
   const pathname = usePathname(); 
-  const [currentPageTitle, setCurrentPageTitle] = React.useState("EstateFlow");
+  const [currentPageTitle, setCurrentPageTitle] = React.useState("Lagrange Card");
 
   React.useEffect(() => {
     setCurrentPageTitle(getPageTitle(pathname));

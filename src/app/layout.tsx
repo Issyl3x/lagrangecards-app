@@ -33,7 +33,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'EstateFlow - Bookkeeping',
+  title: 'Lagrange Card - Bookkeeping',
   description: 'Track credit card transactions for real estate projects.',
 };
 
@@ -74,7 +74,7 @@ export default function RootLayout({
                   <Link href="/dashboard" className="flex h-14 items-center gap-2 px-4">
                     <EstateFlowLogo className="h-6 w-6 text-primary" />
                     <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
-                      EstateFlow
+                      Lagrange Card
                     </span>
                   </Link>
                 </SidebarHeader>
