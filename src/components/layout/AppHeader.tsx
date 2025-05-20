@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from 'react';
-import { usePathname } from 'next/navigation'; 
+import { usePathname } from 'next/navigation';
 
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/dashboard")) return "Dashboard";
@@ -24,21 +24,24 @@ const getPageTitle = (pathname: string) => {
 };
 
 export function AppHeader() {
-  const { isMobile } = useSidebar(); 
+  const { isMobile } = useSidebar();
   const { setTheme, theme } = useTheme() || { setTheme: () => {}, theme: 'light' };
-  const pathname = usePathname(); 
-  const [currentPageTitle, setCurrentPageTitle] = React.useState("Lagrange Card");
+  const pathname = usePathname();
+  const [currentPageTitle, setCurrentPageTitle] = React.useState<string | null>(null); // Initialize to null
 
   React.useEffect(() => {
     setCurrentPageTitle(getPageTitle(pathname));
-  }, [pathname]); 
+  }, [pathname]);
 
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       {isMobile && <SidebarTrigger />}
       <div className="flex-1">
-        <h1 className="text-xl font-semibold">{currentPageTitle}</h1>
+        {/* Only render h1 if title is set, to avoid initial mismatch */}
+        {currentPageTitle !== null && (
+          <h1 className="text-xl font-semibold">{currentPageTitle}</h1>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <Button
