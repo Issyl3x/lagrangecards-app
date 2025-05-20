@@ -4,16 +4,14 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 // import { getAuth } from "firebase/auth"; // We can add this later if you need authentication
 
-// TODO: Replace the following with your app's Firebase project configuration
 // This object should come from your Firebase project settings
 const firebaseConfig = {
-  apiKey: "AIzaSyDRd2RVLSDBL71iV5qonAnkCq4SMk-kSy4",
+  apiKey: "AIzaSyBxEtvWs5GZ1k_Nf_oreHwUdZ1cXTRtYHk",
   authDomain: "estateflow-wpzo2.firebaseapp.com",
-  projectId: "estateflow-wpzo2", 
-  storageBucket: "estateflow-wpzo2.appspot.com",
-  messagingSenderId: "598192894174",
-  appId: "1:598192894174:web:d8c17b66215408f43c02c6",
-  measurementId: "G-H3V411NFEG" 
+  projectId: "estateflow-wpzo2",
+  storageBucket: "estateflow-wpzo2.firebasestorage.app",
+  messagingSenderId: "369828497940",
+  appId: "1:369828497940:web:748d7478c950fb52cc7501"
 };
 
 // Initialize Firebase
