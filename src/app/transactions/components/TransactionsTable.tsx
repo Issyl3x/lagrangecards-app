@@ -47,7 +47,7 @@ import {
   getMockCards,
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  permanentlyDeleteTransactionFromMockData,
+  // permanentlyDeleteTransactionFromMockData, // Removed from here
   getMockTransactions
 } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -68,6 +68,7 @@ type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+// To test teammate view, change this to a non-admin email like 'teammate@example.com'
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
@@ -98,9 +99,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const [properties, setPropertiesState] = React.useState<string[]>([]);
   const [cards, setCardsState] = React.useState<UserCard[]>([]);
   const [duplicateTransactionIds, setDuplicateTransactionIds] = React.useState<Set<string>>(new Set());
-
-  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
-  const [transactionToPermanentlyDelete, setTransactionToPermanentlyDelete] = React.useState<string | null>(null);
 
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
 
@@ -236,33 +234,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     });
     onTransactionUpdate();
   };
-
-  const openPermanentDeleteDialog = (id: string) => {
-    if (!IS_ADMIN) {
-      toast({
-        title: "Permission Denied",
-        description: "You do not have permission to permanently delete transactions.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setTransactionToPermanentlyDelete(id);
-    setIsAlertOpen(true);
-  };
-
-  const handlePermanentDeleteConfirm = () => {
-    if (transactionToPermanentlyDelete) {
-      permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
-      toast({
-        title: "Transaction Permanently Deleted",
-        description: `Transaction has been permanently deleted.`,
-      });
-      onTransactionUpdate(); 
-      setTransactionToPermanentlyDelete(null);
-    }
-    setIsAlertOpen(false);
-  };
-
 
   const handleEdit = (id: string) => {
     if (!IS_ADMIN) {
@@ -558,14 +529,6 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                               </TooltipTrigger>
                               <TooltipContent><p>Move to Deleted Items</p></TooltipContent>
                             </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => openPermanentDeleteDialog(tx.id)} title="Permanently Delete Transaction" className="text-destructive hover:text-destructive/80">
-                                  <AlertCircle className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent><p>Permanently Delete Transaction</p></TooltipContent>
-                            </Tooltip>
                           </>
                         )}
                       </div>
@@ -583,25 +546,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
           </Table>
         </div>
       </div>
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will permanently delete the transaction. It cannot be undone and will not appear in "Deleted Items".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTransactionToPermanentlyDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handlePermanentDeleteConfirm}
-              className={buttonVariants({ variant: "destructive" })}
-            >
-              Permanently Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </TooltipProvider>
   );
 }
+
