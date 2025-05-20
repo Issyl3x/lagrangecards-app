@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Users, Building2, CreditCard, Trash2 } from 'lucide-react'; // Added Users, Building2, CreditCard
+import { LayoutDashboard, PlusCircle, List, ScanLine, FileOutput, Users, Building2, CreditCard, Trash2, FileCheck2 } from 'lucide-react'; // Added FileCheck2
 import { AppHeader } from '@/components/layout/AppHeader';
 import { EstateFlowLogo } from '@/components/icons/EstateFlowLogo';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,8 @@ const navItems = [
   { type: 'separator' as const },
   { href: '/transactions/add', label: 'Add Transaction', icon: PlusCircle },
   { href: '/transactions', label: 'View Transactions', icon: List },
-  { href: '/transactions/ocr', label: 'Upload Receipt', icon: ScanLine },
+  { href: '/transactions/ocr', label: 'Upload / Import', icon: ScanLine }, // Renamed for clarity
+  { href: '/transactions/reconcile', label: 'Reconcile Transactions', icon: FileCheck2 }, // New Reconcile link
   { href: '/transactions/deleted', label: 'Deleted Items', icon: Trash2 },
   { type: 'separator' as const },
   { href: '/export', label: 'Export Data', icon: FileOutput },

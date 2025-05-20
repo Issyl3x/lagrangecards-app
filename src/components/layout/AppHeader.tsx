@@ -10,15 +10,16 @@ import { usePathname } from 'next/navigation';
 const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/dashboard")) return "Dashboard";
   if (pathname.startsWith("/transactions/add")) return "Add Transaction";
-  if (pathname.startsWith("/transactions/ocr")) return "Upload Receipt (OCR)";
+  if (pathname.startsWith("/transactions/ocr")) return "Upload / Import Transactions";
+  if (pathname.startsWith("/transactions/reconcile")) return "Reconcile Transactions";
   if (pathname.startsWith("/transactions/edit")) return "Edit Transaction";
   if (pathname.startsWith("/transactions/deleted")) return "Deleted Items";
   if (pathname.startsWith("/transactions")) return "View Transactions";
   if (pathname.startsWith("/export")) return "Export Data";
   if (pathname.startsWith("/investors")) return "Manage Investors";
   if (pathname.startsWith("/properties")) return "Manage Properties";
+  if (pathname.startsWith("/cards/edit")) return "Edit Card";
   if (pathname.startsWith("/cards")) return "Manage Cards";
-  if (pathname.startsWith("/settings")) return "Settings"; 
   return "EstateFlow";
 };
 
