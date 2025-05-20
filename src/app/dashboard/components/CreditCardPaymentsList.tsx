@@ -14,6 +14,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Landmark, Filter, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+if (typeof window !== 'undefined') {
+  (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
+}
+
+
 interface CreditCardPaymentsListProps {
   transactions: Transaction[];
   itemsToShow?: number;
@@ -104,9 +112,13 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
     }
     
     return payments
-      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
-      .slice(0, itemsToShow);
-  }, [allTransactions, dateRangeFilter, itemsToShow]);
+      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+      // .slice(0, itemsToShow); // We will show all filtered items in the table and PDF/CSV
+  }, [allTransactions, dateRangeFilter]);
+
+  const paginatedPayments = React.useMemo(() => {
+    return filteredCreditCardPayments.slice(0, itemsToShow);
+  }, [filteredCreditCardPayments, itemsToShow]);
 
   const getCardName = (cardId: string) => {
     const card = allCards.find(c => c.id === cardId);
@@ -131,10 +143,74 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
   };
 
   const handleDownloadPDF = () => {
+    if (filteredCreditCardPayments.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No credit card payments to generate PDF for the selected period.",
+      });
+      return;
+    }
+
+    const tableBody = [
+      [
+        { text: 'Date', style: 'tableHeader' },
+        { text: 'Paid To Card', style: 'tableHeader' },
+        { text: 'Amount', style: 'tableHeader', alignment: 'right' },
+        { text: 'Paid From Account', style: 'tableHeader' },
+        { text: 'Note', style: 'tableHeader' },
+      ],
+      ...filteredCreditCardPayments.map(tx => [
+        tx.date ? format(parseISO(tx.date), "yyyy-MM-dd") : 'N/A',
+        getCardName(tx.cardId),
+        { text: tx.amount.toFixed(2), alignment: 'right' },
+        tx.vendor,
+        tx.description || '',
+      ])
+    ];
+
+    let reportTitle = "Credit Card Payments Report";
+    if (dateRangeFilter?.from) {
+        reportTitle += `\nFrom: ${format(dateRangeFilter.from, "LLL dd, yyyy")}`;
+        if (dateRangeFilter.to) {
+            reportTitle += ` To: ${format(dateRangeFilter.to, "LLL dd, yyyy")}`;
+        }
+    }
+
+
+    const docDefinition: any = {
+      content: [
+        { text: reportTitle, style: 'header' },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '*', 'auto', '*', 'auto'],
+            body: tableBody,
+          },
+          layout: 'lightHorizontalLines', // optional
+        },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 10,
+          color: 'black',
+          fillColor: '#eeeeee',
+        },
+      },
+      defaultStyle: {
+        fontSize: 9,
+      }
+    };
+
+    pdfMake.createPdf(docDefinition).download(`estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
-      title: "Download PDF (Mock)",
-      description: "This feature is not yet implemented. In a real app, a PDF report of these payments would be generated.",
-      variant: "default",
+      title: "PDF Generated",
+      description: "Credit card payments report PDF has been downloaded.",
     });
   };
   
@@ -214,20 +290,20 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
                 </Button>
                 <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={filteredCreditCardPayments.length === 0}>
                     <FileText className="mr-2 h-4 w-4" />
-                    PDF (Mock)
+                    PDF
                 </Button>
             </div>
         </div>
       </CardHeader>
       <CardContent>
-        {filteredCreditCardPayments.length === 0 ? (
+        {paginatedPayments.length === 0 ? (
              <div className="flex items-center justify-center h-[150px]">
                 <p className="text-muted-foreground">{emptyStateMessage}</p>
             </div>
         ) : (
             <ScrollArea className="h-[200px]">
             <ul className="space-y-3">
-                {filteredCreditCardPayments.map((tx) => (
+                {paginatedPayments.map((tx) => (
                 <li key={tx.id} className="p-3 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-center">
                     <div className="min-w-0">

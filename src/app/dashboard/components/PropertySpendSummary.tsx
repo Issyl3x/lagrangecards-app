@@ -8,7 +8,14 @@ import { Download, FileText } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
-import { getMockInvestors, getMockCards } from "@/lib/mock-data"; // For potential future use if needed for CSV
+
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+if (typeof window !== 'undefined') {
+  (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
+}
+
 
 interface PropertySpend {
   propertyName: string;
@@ -121,13 +128,89 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
   };
 
   const handleDownloadPDF = () => {
-    toast({
-      title: "Download PDF (Mock)",
-      description: "This feature is not yet implemented. In a real app, a detailed property transaction PDF report would be generated.",
-      variant: "default",
+    const transactionsWithProperty = transactions.filter(tx => tx.property);
+    if (transactionsWithProperty.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No transactions with assigned properties available to generate PDF.",
+        variant: "default",
+      });
+      return;
+    }
+
+    const groupedTransactions: Record<string, Transaction[]> = {};
+    transactionsWithProperty.forEach(tx => {
+      if (!groupedTransactions[tx.property]) {
+        groupedTransactions[tx.property] = [];
+      }
+      groupedTransactions[tx.property].push(tx);
     });
-    // For actual implementation, you'd pass the transactions to a PDF generation library
-    // console.log("Attempting to download PDF (mocked). Data for PDF:", transactions.filter(tx => tx.property));
+
+    const content: any[] = [
+      { text: 'Detailed Property Spend Report', style: 'header' },
+    ];
+
+    Object.entries(groupedTransactions).forEach(([propertyName, txs]) => {
+      content.push({ text: propertyName, style: 'subheader', margin: [0, 15, 0, 5] });
+      const tableBody = [
+        [
+          { text: 'Date', style: 'tableHeader' },
+          { text: 'Vendor', style: 'tableHeader' },
+          { text: 'Description', style: 'tableHeader' },
+          { text: 'Amount', style: 'tableHeader', alignment: 'right' },
+          { text: 'Category', style: 'tableHeader' },
+          { text: 'Unit #', style: 'tableHeader' },
+        ],
+        ...txs.sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+             .map(tx => [
+          format(parseISO(tx.date), "yyyy-MM-dd"),
+          tx.vendor,
+          tx.description || '',
+          { text: tx.amount.toFixed(2), alignment: 'right' },
+          tx.category,
+          tx.unitNumber || '',
+        ])
+      ];
+      content.push({
+        table: {
+          headerRows: 1,
+          widths: ['auto', '*', '*', 'auto', 'auto', 'auto'],
+          body: tableBody,
+        },
+        layout: 'lightHorizontalLines',
+      });
+    });
+
+    const docDefinition: any = {
+      content: content,
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5],
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 10,
+          color: 'black',
+          fillColor: '#eeeeee',
+        },
+      },
+      defaultStyle: {
+        fontSize: 9,
+      }
+    };
+
+    pdfMake.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast({
+      title: "PDF Generated",
+      description: "Detailed property spend report PDF has been downloaded.",
+    });
   };
   
   if (transactions.length === 0) {
@@ -172,7 +255,7 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
             </Button>
             <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.filter(tx => tx.property).length === 0}>
                 <FileText className="mr-2 h-4 w-4" />
-                Download PDF (Mock)
+                Download PDF
             </Button>
         </div>
       </CardHeader>
