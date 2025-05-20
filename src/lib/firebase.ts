@@ -1,3 +1,4 @@
+
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -6,13 +7,13 @@ import { getFirestore } from "firebase/firestore";
 // TODO: Replace the following with your app's Firebase project configuration
 // This object should come from your Firebase project settings
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID_HERE", // e.g., "estateflow-wpzo2" if that's your project ID
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
-  appId: "YOUR_APP_ID_HERE",
-  // measurementId: "YOUR_MEASUREMENT_ID_HERE" // Optional: if you have Google Analytics
+  apiKey: "AIzaSyDRd2RVLSDBL71iV5qonAnkCq4SMk-kSy4",
+  authDomain: "estateflow-wpzo2.firebaseapp.com",
+  projectId: "estateflow-wpzo2", 
+  storageBucket: "estateflow-wpzo2.appspot.com",
+  messagingSenderId: "598192894174",
+  appId: "1:598192894174:web:d8c17b66215408f43c02c6",
+  measurementId: "G-H3V411NFEG" 
 };
 
 // Initialize Firebase
