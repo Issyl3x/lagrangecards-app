@@ -20,7 +20,7 @@ const getPageTitle = (pathname: string) => {
   if (pathname.startsWith("/properties")) return "Manage Properties";
   if (pathname.startsWith("/cards/edit")) return "Edit Card";
   if (pathname.startsWith("/cards")) return "Manage Cards";
-  return "Lagrange Card"; // Default title
+  return "EstateFlow"; // Default title
 };
 
 export function AppHeader() {
