@@ -14,21 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Landmark, Filter, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import pdfMake from 'pdfmake/build/pdfmake';
-import 'pdfmake/build/vfs_fonts'; // Import for side-effect: populates pdfMake.vfs
-
-if (typeof window !== 'undefined') {
-  // After importing 'pdfmake/build/vfs_fonts', pdfMake.vfs should be populated by side effect.
-  // This explicit assignment is a fallback if the side effect modifies window.pdfMake
-  // but not the imported pdfMake module instance directly.
-  if (!pdfMake.vfs && (window as any).pdfMake && (window as any).pdfMake.vfs) {
-    pdfMake.vfs = (window as any).pdfMake.vfs;
-    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in CreditCardPaymentsList. This is a fallback.");
-  } else if (!pdfMake.vfs) {
-    // This log indicates that vfs_fonts.js didn't manage to populate pdfMake.vfs through any means.
-    console.error("Critical: pdfMake.vfs is still not defined after importing vfs_fonts.js. window.pdfMake:", (window as any).pdfMake);
-  }
-}
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 interface CreditCardPaymentsListProps {
@@ -122,7 +109,6 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
     
     return payments
       .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
-      // .slice(0, itemsToShow); // We will show all filtered items in the table and PDF/CSV
   }, [allTransactions, dateRangeFilter]);
 
   const paginatedPayments = React.useMemo(() => {
@@ -159,33 +145,8 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
       });
       return;
     }
-     if (!pdfMake.vfs) {
-      toast({
-        title: "PDF Error",
-        description: "Font data for PDF generation is not available. Please try refreshing the page or check console for errors.",
-        variant: "destructive",
-      });
-      console.error("pdfMake.vfs is not defined. PDF generation aborted in CreditCardPaymentsList.");
-      return;
-    }
 
-    const tableBody = [
-      [
-        { text: 'Date', style: 'tableHeader' },
-        { text: 'Paid To Card', style: 'tableHeader' },
-        { text: 'Amount', style: 'tableHeader', alignment: 'right' },
-        { text: 'Paid From Account', style: 'tableHeader' },
-        { text: 'Note', style: 'tableHeader' },
-      ],
-      ...filteredCreditCardPayments.map(tx => [
-        tx.date ? format(parseISO(tx.date), "yyyy-MM-dd") : 'N/A',
-        getCardName(tx.cardId),
-        { text: tx.amount.toFixed(2), alignment: 'right' },
-        tx.vendor,
-        tx.description || '',
-      ])
-    ];
-
+    const doc = new jsPDF();
     let reportTitle = "Credit Card Payments Report";
     if (dateRangeFilter?.from) {
         reportTitle += `\nFrom: ${format(dateRangeFilter.from, "LLL dd, yyyy")}`;
@@ -193,39 +154,31 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
             reportTitle += ` To: ${format(dateRangeFilter.to, "LLL dd, yyyy")}`;
         }
     }
+    doc.text(reportTitle, 14, 15);
 
+    const tableColumn = ["Date", "Paid To Card", "Amount", "Paid From Account", "Note"];
+    const tableRows: (string | number)[][] = [];
 
-    const docDefinition: any = {
-      content: [
-        { text: reportTitle, style: 'header' },
-        {
-          table: {
-            headerRows: 1,
-            widths: ['auto', '*', 'auto', '*', 'auto'],
-            body: tableBody,
-          },
-          layout: 'lightHorizontalLines', // optional
-        },
-      ],
-      styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        tableHeader: {
-          bold: true,
-          fontSize: 10,
-          color: 'black',
-          fillColor: '#eeeeee',
-        },
-      },
-      defaultStyle: {
-        fontSize: 9,
-      }
-    };
+    filteredCreditCardPayments.forEach(tx => {
+      const txData = [
+        tx.date ? format(parseISO(tx.date), "yyyy-MM-dd") : 'N/A',
+        getCardName(tx.cardId),
+        tx.amount.toFixed(2),
+        tx.vendor,
+        tx.description || '',
+      ];
+      tableRows.push(txData);
+    });
 
-    pdfMake.createPdf(docDefinition).download(`estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.pdf`);
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25, // Start table after the title
+      headStyles: { fillColor: [22, 160, 133] }, // Example: Teal header
+      styles: { fontSize: 9 },
+    });
+    
+    doc.save(`estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "PDF Generated",
       description: "Credit card payments report PDF has been downloaded.",

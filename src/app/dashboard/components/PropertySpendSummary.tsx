@@ -9,21 +9,8 @@ import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 
-import pdfMake from 'pdfmake/build/pdfmake';
-import 'pdfmake/build/vfs_fonts'; // Import for side-effect: populates pdfMake.vfs
-
-if (typeof window !== 'undefined') {
-  // After importing 'pdfmake/build/vfs_fonts', pdfMake.vfs should be populated by side effect.
-  // This explicit assignment is a fallback if the side effect modifies window.pdfMake
-  // but not the imported pdfMake module instance directly.
-  if (!pdfMake.vfs && (window as any).pdfMake && (window as any).pdfMake.vfs) {
-    pdfMake.vfs = (window as any).pdfMake.vfs;
-    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in PropertySpendSummary. This is a fallback.");
-  } else if (!pdfMake.vfs) {
-     // This log indicates that vfs_fonts.js didn't manage to populate pdfMake.vfs through any means.
-    console.error("Critical: pdfMake.vfs is still not defined after importing vfs_fonts.js. window.pdfMake:", (window as any).pdfMake);
-  }
-}
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 interface PropertySpend {
@@ -147,15 +134,10 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       });
       return;
     }
-    if (!pdfMake.vfs) {
-      toast({
-        title: "PDF Error",
-        description: "Font data for PDF generation is not available. Please try refreshing the page or check console for errors.",
-        variant: "destructive",
-      });
-      console.error("pdfMake.vfs is not defined. PDF generation aborted in PropertySpendSummary.");
-      return;
-    }
+
+    const doc = new jsPDF();
+    doc.text('Detailed Property Spend Report', 14, 15);
+    let yPos = 25;
 
     const groupedTransactions: Record<string, Transaction[]> = {};
     transactionsWithProperty.forEach(tx => {
@@ -167,67 +149,43 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       }
     });
 
-    const content: any[] = [
-      { text: 'Detailed Property Spend Report', style: 'header' },
-    ];
-
     Object.entries(groupedTransactions).forEach(([propertyName, txs]) => {
-      content.push({ text: propertyName, style: 'subheader', margin: [0, 15, 0, 5] });
-      const tableBody = [
-        [
-          { text: 'Date', style: 'tableHeader' },
-          { text: 'Vendor', style: 'tableHeader' },
-          { text: 'Description', style: 'tableHeader' },
-          { text: 'Amount', style: 'tableHeader', alignment: 'right' },
-          { text: 'Category', style: 'tableHeader' },
-          { text: 'Unit #', style: 'tableHeader' },
-        ],
-        ...txs.sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
-             .map(tx => [
-          format(parseISO(tx.date), "yyyy-MM-dd"),
-          tx.vendor,
-          tx.description || '',
-          { text: tx.amount.toFixed(2), alignment: 'right' },
-          tx.category,
-          tx.unitNumber || '',
-        ])
-      ];
-      content.push({
-        table: {
-          headerRows: 1,
-          widths: ['auto', '*', '*', 'auto', 'auto', 'auto'],
-          body: tableBody,
-        },
-        layout: 'lightHorizontalLines',
-      });
-    });
-
-    const docDefinition: any = {
-      content: content,
-      styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        subheader: {
-          fontSize: 14,
-          bold: true,
-          margin: [0, 10, 0, 5],
-        },
-        tableHeader: {
-          bold: true,
-          fontSize: 10,
-          color: 'black',
-          fillColor: '#eeeeee',
-        },
-      },
-      defaultStyle: {
-        fontSize: 9,
+      if (yPos > 20) { // Add some space before the first property or if there's enough space for a new section
+         yPos += 5; // Add a bit more space before a new property section header
       }
-    };
+      doc.setFontSize(12);
+      doc.text(propertyName, 14, yPos);
+      yPos += 7;
 
-    pdfMake.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
+      const tableColumn = ["Date", "Vendor", "Description", "Amount", "Category", "Unit #"];
+      const tableRows: (string | number)[][] = [];
+
+      txs.sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+         .forEach(tx => {
+            tableRows.push([
+              format(parseISO(tx.date), "yyyy-MM-dd"),
+              tx.vendor,
+              tx.description || '',
+              tx.amount.toFixed(2),
+              tx.category,
+              tx.unitNumber || '',
+            ]);
+      });
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: yPos,
+        headStyles: { fillColor: [22, 160, 133] }, // Example: Teal header
+        styles: { fontSize: 8 },
+        didDrawPage: (data) => {
+          yPos = data.cursor?.y || 25; // Update yPos after table is drawn
+        }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 10; // Ensure yPos is below the drawn table
+    });
+    
+    doc.save(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "PDF Generated",
       description: "Detailed property spend report PDF has been downloaded.",
