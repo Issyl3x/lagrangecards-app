@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const APP_VERSION = "1.0.0";
 
-const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com'; // Used as the target "work email"
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com'; // Used as the target "work email" for notifications
 
 const INVESTORS_KEY = 'estateFlowInvestors_v1';
 const PROPERTIES_KEY = 'estateFlowProperties_v1';
@@ -256,9 +256,8 @@ export const addTransactionToMockData = (newTx: Transaction, submitterEmail: str
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
   
-  console.log(`SIMULATING WEBHOOK: Email notification to ${ADMIN_EMAIL}`);
   console.log(`Transaction added by: ${submitterEmail}`);
-  console.log("Transaction Details:", {
+  console.log("Transaction Details for general logging:", {
     id: newTx.id,
     date: newTx.date,
     vendor: newTx.vendor,
@@ -268,6 +267,16 @@ export const addTransactionToMockData = (newTx: Transaction, submitterEmail: str
     investor: getMockInvestors().find(inv => inv.id === newTx.investorId)?.name || 'Unknown Investor',
     description: newTx.description
   });
+  
+  if (submitterEmail !== ADMIN_EMAIL) {
+    console.log(`SIMULATING WEBHOOK: Email notification to ${ADMIN_EMAIL} (work email) because a transaction was added by teammate ${submitterEmail}.`);
+    console.log("Details of transaction triggering teammate notification:", {
+        id: newTx.id,
+        vendor: newTx.vendor,
+        amount: newTx.amount,
+        property: newTx.property,
+    });
+  }
   console.log("---------------------------------------------");
 };
 
