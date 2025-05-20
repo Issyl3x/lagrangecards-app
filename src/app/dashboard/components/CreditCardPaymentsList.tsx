@@ -14,11 +14,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Landmark, Filter, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import * as pdfMakeNs from 'pdfmake/build/pdfmake'; // Renamed to pdfMakeNs
+import * as pdfFontsNs from 'pdfmake/build/vfs_fonts'; // Renamed to pdfFontsNs
 
 if (typeof window !== 'undefined') {
-  (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
+  const targetPdfMake = pdfMakeNs; // This is the object used for .createPdf
+  if (pdfFontsNs.pdfMake && pdfFontsNs.pdfMake.vfs) {
+    (targetPdfMake as any).vfs = pdfFontsNs.pdfMake.vfs;
+  } else if ((window as any).pdfMake && (window as any).pdfMake.vfs) {
+    (targetPdfMake as any).vfs = (window as any).pdfMake.vfs;
+    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in CreditCardPaymentsList. Original pdfFontsNs.pdfMake was:", pdfFontsNs.pdfMake);
+  } else {
+    console.error("Unable to set pdfmake vfs in CreditCardPaymentsList: Font data not found in pdfFontsNs.pdfMake or window.pdfMake. pdfFontsNs.pdfMake:", pdfFontsNs.pdfMake, "window.pdfMake:", (window as any).pdfMake);
+  }
 }
 
 
@@ -207,7 +215,7 @@ export function CreditCardPaymentsList({ transactions: allTransactions, itemsToS
       }
     };
 
-    pdfMake.createPdf(docDefinition).download(`estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.pdf`);
+    pdfMakeNs.createPdf(docDefinition).download(`estateflow_credit_card_payments_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "PDF Generated",
       description: "Credit card payments report PDF has been downloaded.",

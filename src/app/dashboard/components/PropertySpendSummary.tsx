@@ -9,11 +9,19 @@ import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import * as pdfMakeNs from 'pdfmake/build/pdfmake'; // Renamed to pdfMakeNs
+import * as pdfFontsNs from 'pdfmake/build/vfs_fonts'; // Renamed to pdfFontsNs
 
 if (typeof window !== 'undefined') {
-  (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
+  const targetPdfMake = pdfMakeNs; // This is the object used for .createPdf
+  if (pdfFontsNs.pdfMake && pdfFontsNs.pdfMake.vfs) {
+    (targetPdfMake as any).vfs = pdfFontsNs.pdfMake.vfs;
+  } else if ((window as any).pdfMake && (window as any).pdfMake.vfs) {
+    (targetPdfMake as any).vfs = (window as any).pdfMake.vfs;
+    console.warn("pdfmake vfs assigned from window.pdfMake.vfs in PropertySpendSummary. Original pdfFontsNs.pdfMake was:", pdfFontsNs.pdfMake);
+  } else {
+    console.error("Unable to set pdfmake vfs in PropertySpendSummary: Font data not found in pdfFontsNs.pdfMake or window.pdfMake. pdfFontsNs.pdfMake:", pdfFontsNs.pdfMake, "window.pdfMake:", (window as any).pdfMake);
+  }
 }
 
 
@@ -35,6 +43,7 @@ const convertTransactionsToDetailedPropertyCSV = (transactions: Transaction[]): 
 
   // Sort by property name, then by date
   const sortedTransactions = [...transactionsWithProperty].sort((a, b) => {
+    if (!a.property || !b.property) return 0; // Should not happen due to filter
     if (a.property.toLowerCase() < b.property.toLowerCase()) return -1;
     if (a.property.toLowerCase() > b.property.toLowerCase()) return 1;
     // If properties are the same, sort by date
@@ -140,10 +149,12 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
 
     const groupedTransactions: Record<string, Transaction[]> = {};
     transactionsWithProperty.forEach(tx => {
-      if (!groupedTransactions[tx.property]) {
-        groupedTransactions[tx.property] = [];
+      if (tx.property) { // Ensure tx.property is defined
+        if (!groupedTransactions[tx.property]) {
+          groupedTransactions[tx.property] = [];
+        }
+        groupedTransactions[tx.property].push(tx);
       }
-      groupedTransactions[tx.property].push(tx);
     });
 
     const content: any[] = [
@@ -206,7 +217,7 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
       }
     };
 
-    pdfMake.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
+    pdfMakeNs.createPdf(docDefinition).download(`estateflow_detailed_property_spend_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "PDF Generated",
       description: "Detailed property spend report PDF has been downloaded.",
@@ -236,6 +247,16 @@ export function PropertySpendSummary({ transactions }: PropertySpendSummaryProps
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">No spend recorded for any specific property yet, or transactions are not assigned to properties.</p>
+           <div className="flex gap-2 mt-4"> {/* Ensure buttons are still shown for export if needed */}
+            <Button onClick={handleDownloadCSV} variant="outline" size="sm" disabled={transactions.filter(tx => tx.property).length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Download CSV
+            </Button>
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" disabled={transactions.filter(tx => tx.property).length === 0}>
+                <FileText className="mr-2 h-4 w-4" />
+                Download PDF
+            </Button>
+        </div>
         </CardContent>
       </Card>
     );
