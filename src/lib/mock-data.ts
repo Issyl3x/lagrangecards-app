@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const APP_VERSION = "1.0.0";
 
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com'; // Used as the target "work email"
+
 const INVESTORS_KEY = 'estateFlowInvestors_v1';
 const PROPERTIES_KEY = 'estateFlowProperties_v1';
 const CARDS_KEY = 'estateFlowCards_v1';
@@ -47,7 +49,7 @@ const defaultTransactions: Transaction[] = [
     investorId: 'investor1',
     property: 'Blue Haven',
     unitNumber: 'Unit 10A',
-    receiptImageURI: 'https://placehold.co/200x200.png', // Placeholder for image URI
+    receiptImageURI: 'https://placehold.co/200x200.png', 
     reconciled: true,
     sourceType: 'manual'
   },
@@ -133,9 +135,9 @@ const defaultTransactions: Transaction[] = [
     description: 'Payment to Blue Haven Card 1',
     amount: 1000.00,
     category: 'Credit Card Payment',
-    cardId: 'card1', // Card being paid
+    cardId: 'card1', 
     investorId: 'investor1',
-    property: 'Blue Haven', // Property associated with the card being paid
+    property: 'Blue Haven', 
     receiptImageURI: '',
     reconciled: true,
     sourceType: 'manual',
@@ -148,9 +150,9 @@ const defaultTransactions: Transaction[] = [
     description: 'Payment for Greg Visa 2627',
     amount: 750.00,
     category: 'Credit Card Payment',
-    cardId: 'card6', // Card being paid
+    cardId: 'card6', 
     investorId: 'investor4',
-    property: 'Fountain Commons', // Property associated with the card being paid
+    property: 'Fountain Commons', 
     receiptImageURI: '',
     reconciled: true,
     sourceType: 'manual',
@@ -167,7 +169,6 @@ function loadData<T>(key: string, defaultValue: T): T {
     if (storedValue) {
       try {
         const data = JSON.parse(storedValue);
-        // Ensure dates in transactions are correctly formatted ISO dates on load
         if ((key === TRANSACTIONS_KEY || key === DELETED_TRANSACTIONS_KEY) && Array.isArray(data)) {
           return data.map((item: any) => ({
             ...item,
@@ -177,7 +178,7 @@ function loadData<T>(key: string, defaultValue: T): T {
         return data as T;
       } catch (e) {
         console.error(`Error parsing ${key} from localStorage or invalid data structure, falling back to default. Error:`, e);
-        localStorage.removeItem(key); // Remove corrupted data
+        localStorage.removeItem(key);
         return defaultValue;
       }
     }
@@ -210,11 +211,11 @@ export const getMockInvestors = (): Investor[] => [...updatableInvestors];
 export const getMockProperties = (): string[] => [...updatableProperties];
 export const getMockCards = (): Card[] => [...updatableCards];
 export const getMockTransactions = (): Transaction[] => {
-  console.log("[MockData] getMockTransactions called, returning count:", updatableMockTransactions.length);
+  // console.log("[MockData] getMockTransactions called, returning count:", updatableMockTransactions.length);
   return [...updatableMockTransactions];
 };
 export const getDeletedTransactions = (): Transaction[] => {
-  console.log("[MockData] getDeletedTransactions called, returning count:", updatableDeletedTransactions.length);
+  // console.log("[MockData] getDeletedTransactions called, returning count:", updatableDeletedTransactions.length);
   return [...updatableDeletedTransactions];
 };
 
@@ -242,7 +243,7 @@ export const addProperty = (propertyName: string): string => {
 export const addCard = (cardData: CardFormValues): Card => {
   const newCard: Card = {
     id: uuidv4(),
-    isPersonal: false, // Default to business card
+    isPersonal: false, 
     ...cardData,
   };
   updatableCards = [...updatableCards, newCard];
@@ -251,12 +252,13 @@ export const addCard = (cardData: CardFormValues): Card => {
   return newCard;
 };
 
-export const addTransactionToMockData = (newTx: Transaction): void => {
+export const addTransactionToMockData = (newTx: Transaction, submitterEmail: string): void => {
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
   
-  console.log("SIMULATING WEBHOOK NOTIFICATION TO WORK EMAIL:");
-  console.log("New transaction added:", {
+  console.log(`SIMULATING WEBHOOK: Email notification to ${ADMIN_EMAIL}`);
+  console.log(`Transaction added by: ${submitterEmail}`);
+  console.log("Transaction Details:", {
     id: newTx.id,
     date: newTx.date,
     vendor: newTx.vendor,
@@ -264,6 +266,7 @@ export const addTransactionToMockData = (newTx: Transaction): void => {
     category: newTx.category,
     property: newTx.property,
     investor: getMockInvestors().find(inv => inv.id === newTx.investorId)?.name || 'Unknown Investor',
+    description: newTx.description
   });
   console.log("---------------------------------------------");
 };
@@ -276,7 +279,7 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
     newTransactions[index] = { ...updatedTx };
     updatableMockTransactions = newTransactions;
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
-    console.log("[MockData] Updated transaction:", updatedTx.id, "New count:", updatableMockTransactions.length);
+    // console.log("[MockData] Updated transaction:", updatedTx.id, "New count:", updatableMockTransactions.length);
   }
 };
 
@@ -301,7 +304,7 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     updatableMockTransactions = updatableMockTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-    console.log("[MockData] Moved transaction to deleted:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
+    // console.log("[MockData] Moved transaction to deleted:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
   }
 };
 
@@ -334,7 +337,7 @@ export const restoreTransactionFromMockData = (txId: string): void => {
     updatableDeletedTransactions = updatableDeletedTransactions.filter(tx => tx.id !== txId);
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
-     console.log("[MockData] Restored transaction:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
+    //  console.log("[MockData] Restored transaction:", txId, "Active count:", updatableMockTransactions.length, "Deleted count:", updatableDeletedTransactions.length);
   }
 };
 
@@ -361,17 +364,12 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
       !Array.isArray(backupData.transactions) ||
       !Array.isArray(backupData.deletedTransactions) ||
       !backupData.timestamp ||
-      !backupData.version // Ensure version is also checked
+      !backupData.version 
     ) {
       console.error("Invalid backup file structure.");
       return false;
     }
     
-    // Basic version check example (can be expanded)
-    // if (backupData.version !== APP_VERSION) {
-    //   console.warn(`Backup version (${backupData.version}) differs from app version (${APP_VERSION}). Restore may have issues.`);
-    // }
-
     updatableInvestors = backupData.investors;
     updatableProperties = backupData.properties;
     updatableCards = backupData.cards;
@@ -398,8 +396,6 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
   }
 };
 
-
-// Function to clear all mock data from localStorage (for debugging/reset)
 export const clearAllMockDataFromLocalStorage = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(INVESTORS_KEY);
@@ -409,16 +405,16 @@ export const clearAllMockDataFromLocalStorage = () => {
     localStorage.removeItem(DELETED_TRANSACTIONS_KEY);
     console.log("All mock data cleared from localStorage. Please refresh the application.");
     
-    // Reset in-memory arrays to defaults
     updatableInvestors = [...defaultInvestors];
     updatableProperties = [...defaultProperties];
     updatableCards = [...defaultCards];
-    updatableMockTransactions = [...defaultTransactions.map(tx => ({...tx}))]; // Ensure fresh copy
-    updatableDeletedTransactions = [...defaultDeletedTransactions.map(tx => ({...tx}))]; // Ensure fresh copy
+    updatableMockTransactions = [...defaultTransactions.map(tx => ({...tx}))]; 
+    updatableDeletedTransactions = [...defaultDeletedTransactions.map(tx => ({...tx}))]; 
   }
 };
 
-// Expose clear function to window for easy debugging
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }
+
+    

@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from "uuid";
 import { parse, format, isValid } from "date-fns";
 
 interface CsvRow {
-  propertyCsv?: string; // Property from CSV, might differ from card's property
+  propertyCsv?: string; 
   date: string;
   vendor: string;
   description: string;
@@ -23,6 +23,10 @@ interface CsvRow {
   unitNumber?: string;
   last4Digits: string;
 }
+
+// To simulate different users for webhook notification
+const ADMIN_EMAIL_CSV_IMPORT = 'jessrafalfernandez@gmail.com';
+const currentUsersEmailCsvImport = 'teammate@example.com'; // Simulates who is doing the import
 
 export function CsvImportSection() {
   const [file, setFile] = React.useState<File | null>(null);
@@ -46,8 +50,8 @@ export function CsvImportSection() {
     }
   };
 
-  const parseCsvRow = (rowString: string, headers: string[]): Partial<CsvRow> | null => {
-    const values = rowString.split(",").map(val => val.trim().replace(/^"|"$/g, '')); // Basic CSV split, handles quotes at start/end
+  const parseCsvRow = (rowString: string, headers: string[]): Partial<CsvRow & {dateStr: string, amountStr: string}> | null => {
+    const values = rowString.split(",").map(val => val.trim().replace(/^"|"$/g, '')); 
     
     if (values.length < headers.length) {
         console.warn("Skipping row due to insufficient columns:", rowString);
@@ -56,7 +60,6 @@ export function CsvImportSection() {
 
     const rowObject: any = {};
     headers.forEach((header, index) => {
-        // Normalize header for easier mapping
         const normalizedHeader = header.toLowerCase().replace(/\s+/g, '');
         if (normalizedHeader.includes('property')) rowObject.propertyCsv = values[index];
         else if (normalizedHeader.includes('date')) rowObject.dateStr = values[index];
@@ -95,7 +98,7 @@ export function CsvImportSection() {
       let skippedCount = 0;
       const newTransactions: Transaction[] = [];
 
-      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ""); // Split by newline and remove empty lines
+      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ""); 
       if (lines.length < 2) {
         setError("CSV file must contain a header row and at least one data row.");
         setIsLoading(false);
@@ -116,19 +119,17 @@ export function CsvImportSection() {
           continue;
         }
         
-        let parsedDate: Date;
-        // Try common date formats
+        let parsedDate: Date | null = null;
         const dateFormats = ['M/d/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'd/M/yyyy', 'dd/MM/yyyy'];
-        let validDateFound = false;
         for (const fmt of dateFormats) {
-            parsedDate = parse(rowData.dateStr, fmt, new Date());
-            if (isValid(parsedDate)) {
-                validDateFound = true;
+            const tempDate = parse(rowData.dateStr, fmt, new Date());
+            if (isValid(tempDate)) {
+                parsedDate = tempDate;
                 break;
             }
         }
 
-        if (!validDateFound) {
+        if (!parsedDate) {
             console.warn(`Skipping row due to unparsable date: "${rowData.dateStr}" in row:`, line);
             skippedCount++;
             continue;
@@ -151,25 +152,21 @@ export function CsvImportSection() {
 
         const newTransaction: Transaction = {
           id: uuidv4(),
-          date: format(parsedDate!, "yyyy-MM-dd"),
+          date: format(parsedDate, "yyyy-MM-dd"),
           vendor: rowData.vendor,
           description: rowData.description || "",
           amount: amount,
           category: rowData.category || "Other",
           cardId: matchingCard.id,
           investorId: matchingCard.investorId,
-          property: matchingCard.property, // Prioritize property from the matched card
+          property: matchingCard.property, 
           unitNumber: rowData.unitNumber || "",
           receiptImageURI: "",
           reconciled: false,
           sourceType: "import",
         };
-        newTransactions.push(newTransaction);
+        addTransactionToMockData(newTransaction, currentUsersEmailCsvImport); // Pass submitter email
         importedCount++;
-      }
-
-      if (newTransactions.length > 0) {
-        newTransactions.forEach(tx => addTransactionToMockData(tx));
       }
 
       toast({
@@ -177,7 +174,6 @@ export function CsvImportSection() {
         description: `${importedCount} transaction(s) imported. ${skippedCount} transaction(s) skipped.`,
       });
 
-      // Reset form state
       setFile(null);
       setFileName(null);
       if (event.target instanceof HTMLFormElement) {
@@ -241,3 +237,5 @@ export function CsvImportSection() {
     </form>
   );
 }
+
+    

@@ -11,6 +11,9 @@ import { addTransactionToMockData } from "@/lib/mock-data";
 import type { Transaction } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 
+// To simulate different users for webhook notification
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+const currentUsersEmail = ADMIN_EMAIL; // Change to 'teammate@example.com' to test non-admin submission
 
 export default function AddTransactionPage() {
   const { toast } = useToast();
@@ -19,8 +22,9 @@ export default function AddTransactionPage() {
 
   const handleSubmit = async (data: TransactionFormValues) => {
     setIsLoading(true);
-    console.log("Webhook triggered", data);
+    console.log("Webhook triggered by form submission, data:", data);
 
+    // Existing Make.com webhook call (remains as is)
     try {
       await fetch("https://hook.us2.make.com/y7mimw79elkvk3dm3x86xu7v373ah4f2", {
         method: "POST",
@@ -32,22 +36,20 @@ export default function AddTransactionPage() {
           amount: data.amount,
           category: data.category,
           note: data.description || "",
-          submittedBy: "jessrafalfernandez@gmail.com",
+          submittedBy: currentUsersEmail, // Use the simulated current user's email
           submittedAt: new Date().toISOString(),
         }),
       })
         .then((res) => {
           if (res.ok) {
-            console.log("Webhook sent successfully:", res.status);
+            console.log("External Make.com Webhook sent successfully:", res.status);
           } else {
-            console.error("Webhook failed with status:", res.status);
-            // Optionally, you could get more details:
-            // res.text().then(text => console.error("Webhook error body:", text));
+            console.error("External Make.com Webhook failed with status:", res.status);
           }
         })
-        .catch((err) => console.error("Webhook fetch error:", err));
+        .catch((err) => console.error("External Make.com Webhook fetch error:", err));
     } catch (fetchError) {
-        console.error("Error during webhook fetch operation:", fetchError);
+        console.error("Error during external Make.com webhook fetch operation:", fetchError);
     }
 
     const newTransactionData: Transaction = {
@@ -61,11 +63,9 @@ export default function AddTransactionPage() {
       sourceType: data.sourceType || 'manual',
     };
 
-    addTransactionToMockData(newTransactionData);
-    console.log("New Transaction Added via addTransactionToMockData:", newTransactionData);
-
-    // Simulate async operation if needed for other logic, or remove if just for webhook
-    // await new Promise(resolve => setTimeout(resolve, 100));
+    // Call addTransactionToMockData with submitterEmail for enhanced console log simulation
+    addTransactionToMockData(newTransactionData, currentUsersEmail);
+    console.log("New Transaction Added to mock data via addTransactionToMockData:", newTransactionData);
 
     toast({
       title: "Transaction Saved",
@@ -73,7 +73,7 @@ export default function AddTransactionPage() {
         <>
           Transaction for {data.vendor} of ${data.amount.toFixed(2)} has been saved.
           <br />
-          <em className="text-xs text-muted-foreground">(Simulated: Webhook notification would be sent to work email.)</em>
+          <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
         </>
       ),
     });
@@ -93,3 +93,5 @@ export default function AddTransactionPage() {
     </Card>
   );
 }
+
+    

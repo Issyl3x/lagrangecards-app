@@ -33,6 +33,10 @@ import { format, isValid, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 
+// To simulate different users for webhook notification
+const ADMIN_EMAIL_PAYMENT_FORM = 'jessrafalfernandez@gmail.com';
+const currentUsersEmailPaymentForm = ADMIN_EMAIL_PAYMENT_FORM; // Change to 'teammate@example.com' to test
+
 export function AddPaymentForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -70,20 +74,20 @@ export function AddPaymentForm() {
     const newPaymentTransaction: Transaction = {
       id: uuidv4(),
       date: format(data.date, "yyyy-MM-dd"),
-      vendor: data.bankAccountUsed, // Bank account used is the 'vendor' for the payment
+      vendor: data.bankAccountUsed, 
       description: data.note || `Payment to ${selectedCard.cardName}${selectedCard.last4Digits ? ` (****${selectedCard.last4Digits})` : ''}`,
       amount: data.amount,
       category: "Credit Card Payment",
-      cardId: selectedCard.id, // This is the card that received the payment
+      cardId: selectedCard.id, 
       investorId: selectedCard.investorId,
-      property: selectedCard.property, // Property associated with the card being paid
-      unitNumber: "", // Not typically applicable for card payments
-      receiptImageURI: "", // Not typically applicable for card payments
+      property: selectedCard.property, 
+      unitNumber: "", 
+      receiptImageURI: "", 
       reconciled: false,
       sourceType: 'manual',
     };
 
-    addTransactionToMockData(newPaymentTransaction);
+    addTransactionToMockData(newPaymentTransaction, currentUsersEmailPaymentForm); // Pass submitter email
 
     toast({
       title: "Payment Saved",
@@ -235,3 +239,5 @@ export function AddPaymentForm() {
     </Form>
   );
 }
+
+    

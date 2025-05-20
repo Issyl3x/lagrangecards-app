@@ -4,7 +4,7 @@
 import * as React from "react";
 import { ReceiptUploadForm } from "./components/ReceiptUploadForm";
 import { CsvImportSection } from "./components/CsvImportSection";
-import { AddPaymentForm } from "./components/AddPaymentForm"; // Import new component
+import { AddPaymentForm } from "./components/AddPaymentForm";
 import { TransactionForm, type TransactionFormValues } from "../components/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ParsedReceiptData, Transaction } from "@/lib/types";
@@ -16,6 +16,10 @@ import { addTransactionToMockData } from "@/lib/mock-data";
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+
+// To simulate different users for webhook notification
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
+const currentUsersEmailForOCR = ADMIN_EMAIL; // Change to 'teammate@example.com' to test
 
 export default function OcrTransactionPage() {
   const [parsedDataForForm, setParsedDataForForm] = React.useState<Partial<Transaction> | null>(null);
@@ -66,15 +70,14 @@ export default function OcrTransactionPage() {
       ...formData,
       date: format(formData.date, "yyyy-MM-dd"), 
       reconciled: false, 
-      sourceType: formData.sourceType || 'manual', // Ensure sourceType is carried over
+      sourceType: formData.sourceType || 'manual', 
       unitNumber: formData.unitNumber || "", 
       receiptImageURI: formData.receiptImageURI || "", 
     };
 
-    addTransactionToMockData(newTransactionData);
+    addTransactionToMockData(newTransactionData, currentUsersEmailForOCR); // Pass submitter email
     console.log("OCR-Prefilled/Manual Transaction Data Saved:", newTransactionData);
 
-    // Simulate async operation
     await new Promise(resolve => setTimeout(resolve, 100)); 
 
     toast({
@@ -83,7 +86,7 @@ export default function OcrTransactionPage() {
         <>
           Transaction for {newTransactionData.vendor} of ${newTransactionData.amount.toFixed(2)} has been saved.
           <br />
-          <em className="text-xs text-muted-foreground">(Simulated: Webhook notification would be sent to work email.)</em>
+          <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
         </>
       ),
     });
@@ -196,3 +199,4 @@ export default function OcrTransactionPage() {
   );
 }
 
+    
