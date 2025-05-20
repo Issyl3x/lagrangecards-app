@@ -13,10 +13,8 @@ import { Input } from "@/components/ui/input";
 import type { AllDataBackup } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Define admin email and current user's email for permission check
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-// To test teammate view, change this to a non-admin email like 'teammate@example.com'
-const currentUsersEmail = 'teammate@example.com'; 
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function ExportPage() {
@@ -26,7 +24,6 @@ export default function ExportPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    // Refresh transactions if mock data might change due to restore
     setTransactions(getMockTransactions());
   }, []);
 
@@ -241,5 +238,3 @@ export default function ExportPage() {
     </div>
   );
 }
-
-    

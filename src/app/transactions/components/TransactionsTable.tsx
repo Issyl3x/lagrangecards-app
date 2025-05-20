@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button"; // Added buttonVariants
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -47,7 +47,7 @@ import {
   getMockCards,
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  permanentlyDeleteTransactionFromMockData, // Ensure this is imported
+  permanentlyDeleteTransactionFromMockData,
   getMockTransactions
 } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
@@ -68,7 +68,6 @@ type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-// To test teammate view, change this to a non-admin email like 'teammate@example.com'
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
@@ -90,7 +89,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     property: true,
     unitNumber: true,
     cardUsed: true,
-    recordedInBuildium: true, // Renamed from reconciled
+    recordedInBuildium: true,
     receiptImageURI: true,
     sourceType: false,
   });
@@ -258,7 +257,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
         title: "Transaction Permanently Deleted",
         description: `Transaction has been permanently deleted.`,
       });
-      onTransactionUpdate(); // Refresh the table from the parent
+      onTransactionUpdate(); 
       setTransactionToPermanentlyDelete(null);
     }
     setIsAlertOpen(false);

@@ -14,10 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert } from "lucide-react";
 
-// Define admin email and current user's email for permission check
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-// To test teammate view, change this to a non-admin email like 'teammate@example.com'
-const currentUsersEmail = 'teammate@example.com'; 
+const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function EditCardPage() {
@@ -62,9 +60,9 @@ export default function EditCardPage() {
     setIsLoading(true);
     
     const cardToUpdate: UserCard = {
-        id: cardId, // Important: include the original ID
+        id: cardId, 
         ...data,
-        isPersonal: false, // Assuming cards managed here are business cards
+        isPersonal: false, 
     };
 
     const success = updateCard(cardToUpdate);
@@ -85,7 +83,7 @@ export default function EditCardPage() {
     setIsLoading(false);
   };
 
-  if (!IS_ADMIN && !isFetching) { // ensure we don't show this if still fetching
+  if (!IS_ADMIN && !isFetching) { 
     return (
       <Card>
         <CardHeader>
@@ -116,7 +114,7 @@ export default function EditCardPage() {
     );
   }
 
-  if (!cardForForm) { // This should ideally not be hit if isFetching is false and not admin redirect didn't occur
+  if (!cardForForm) { 
     return (
       <Card>
         <CardHeader>
@@ -149,5 +147,3 @@ export default function EditCardPage() {
     </Card>
   );
 }
-
-    
