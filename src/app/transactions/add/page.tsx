@@ -11,20 +11,18 @@ import { addTransactionToMockData } from "@/lib/mock-data";
 import type { Transaction } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 
-// To simulate different users for webhook notification
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-const currentUsersEmail = ADMIN_EMAIL; // Change to 'teammate@example.com' to test non-admin submission
+const currentUsersEmail = 'teammate@example.com'; 
 
 export default function AddTransactionPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = async (data: TransactionFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log("Webhook triggered by form submission, data:", data);
 
-    // Existing Make.com webhook call (remains as is)
     try {
       await fetch("https://hook.us2.make.com/y7mimw79elkvk3dm3x86xu7v373ah4f2", {
         method: "POST",
@@ -36,7 +34,7 @@ export default function AddTransactionPage() {
           amount: data.amount,
           category: data.category,
           note: data.description || "",
-          submittedBy: currentUsersEmail, // Use the simulated current user's email
+          submittedBy: currentUsersEmail, 
           submittedAt: new Date().toISOString(),
         }),
       })
@@ -62,23 +60,29 @@ export default function AddTransactionPage() {
       reconciled: false,
       sourceType: data.sourceType || 'manual',
     };
+    
+    try {
+        await addTransactionToMockData(newTransactionData, currentUsersEmail);
+        console.log("New Transaction Added to mock data via addTransactionToMockData:", newTransactionData);
 
-    // Call addTransactionToMockData with submitterEmail for enhanced console log simulation
-    addTransactionToMockData(newTransactionData, currentUsersEmail);
-    console.log("New Transaction Added to mock data via addTransactionToMockData:", newTransactionData);
-
-    toast({
-      title: "Transaction Saved",
-      description: (
-        <>
-          Transaction for {data.vendor} of ${data.amount.toFixed(2)} has been saved.
-          <br />
-          <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
-        </>
-      ),
-    });
-    setIsLoading(false);
-    router.push("/transactions");
+        toast({
+        title: "Transaction Saved",
+        description: (
+            <>
+            Transaction for {data.vendor} of ${data.amount.toFixed(2)} has been saved.
+            <br />
+            <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
+            </>
+        ),
+        });
+        // router.refresh(); // This might not be necessary if ViewTransactionsPage refreshes on navigation
+        router.push("/transactions");
+    } catch (error) {
+        console.error("Error saving transaction:", error);
+        toast({ title: "Error", description: "Failed to save transaction.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -88,10 +92,8 @@ export default function AddTransactionPage() {
         <CardDescription>Fill in the details for the new transaction.</CardDescription>
       </CardHeader>
       <CardContent>
-        <TransactionForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <TransactionForm onSubmit={handleSubmit} isLoading={isSubmitting} />
       </CardContent>
     </Card>
   );
 }
-
-    

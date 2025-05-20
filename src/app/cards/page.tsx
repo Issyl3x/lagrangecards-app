@@ -10,7 +10,7 @@ import type { Investor, Card as UserCard } from "@/lib/types";
 import type { CardFormValues } from "@/lib/schemas";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert, Edit3, CreditCardIcon } from "lucide-react";
+import { ShieldAlert, Edit3, CreditCardIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { CardForm } from "./components/CardForm";
 
@@ -21,35 +21,57 @@ const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 export default function CardsPage() {
   const [cards, setCards] = React.useState<UserCard[]>([]);
   const [investors, setInvestors] = React.useState<Investor[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isFormSubmitting, setIsFormSubmitting] = React.useState(false);
+  const [isLoadingData, setIsLoadingData] = React.useState(true);
   const { toast } = useToast();
 
-  const refreshData = React.useCallback(() => {
-    setCards(getMockCards());
-    setInvestors(getMockInvestors());
-  }, []);
+  const refreshData = React.useCallback(async () => {
+    setIsLoadingData(true);
+    try {
+      const [cardsData, investorsData] = await Promise.all([
+        getMockCards(),
+        getMockInvestors()
+      ]);
+      setCards(cardsData);
+      setInvestors(investorsData);
+    } catch (error) {
+      console.error("Failed to fetch cards or investors:", error);
+      toast({ title: "Error", description: "Could not load card data.", variant: "destructive" });
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [toast]);
 
   React.useEffect(() => {
     refreshData();
   }, [refreshData]);
 
-  const handleAddCard = (data: CardFormValues) => {
-    setIsLoading(true);
+  const handleAddCard = async (data: CardFormValues) => {
+    setIsFormSubmitting(true);
     try {
-      addCard(data);
+      await addCard(data);
       toast({ title: "Card Added", description: `${data.cardName} has been added.` });
-      refreshData(); 
+      await refreshData(); 
     } catch (error) {
       toast({ title: "Error", description: "Failed to add card.", variant: "destructive" });
       console.error("Failed to add card:", error);
     } finally {
-      setIsLoading(false);
+      setIsFormSubmitting(false);
     }
   };
 
   const getInvestorName = (investorId: string) => {
     return investors.find(inv => inv.id === investorId)?.name || 'N/A';
   };
+
+  if (isLoadingData && cards.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading cards...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,7 +82,7 @@ export default function CardsPage() {
         </CardHeader>
         <CardContent>
           {IS_ADMIN ? (
-            <CardForm onSubmit={handleAddCard} isLoading={isLoading} />
+            <CardForm onSubmit={handleAddCard} isLoading={isFormSubmitting} />
           ) : (
             <Alert variant="destructive">
               <ShieldAlert className="h-4 w-4" />
@@ -81,7 +103,10 @@ export default function CardsPage() {
           <CardDescription>List of all registered cards.</CardDescription>
         </CardHeader>
         <CardContent>
-          {cards.length > 0 ? (
+          {isLoadingData && cards.length > 0 && <p>Refreshing cards...</p>}
+          {!isLoadingData && cards.length === 0 ? (
+             <p className="text-sm text-muted-foreground">No cards found.</p>
+          ) : (
             <ul className="space-y-4">
               {cards.map(card => (
                 <li key={card.id} className="p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
@@ -107,8 +132,6 @@ export default function CardsPage() {
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No cards found.</p>
           )}
         </CardContent>
       </Card>

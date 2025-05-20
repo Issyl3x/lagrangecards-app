@@ -25,31 +25,41 @@ export default function EditCardPage() {
   const cardId = params.id as string;
 
   const [cardForForm, setCardForForm] = React.useState<CardFormValues | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(true);
 
   React.useEffect(() => {
-    if (cardId) {
-      const allCards = getMockCards();
-      const foundCard = allCards.find(c => c.id === cardId);
-      if (foundCard) {
-        setCardForForm({
-          cardName: foundCard.cardName,
-          investorId: foundCard.investorId,
-          property: foundCard.property,
-          last4Digits: foundCard.last4Digits || "",
-          spendLimitMonthly: foundCard.spendLimitMonthly,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Card not found.",
-          variant: "destructive",
-        });
-        router.push("/cards");
+    const fetchCardDetails = async () => {
+      if (cardId) {
+        setIsFetching(true);
+        try {
+          const allCards = await getMockCards();
+          const foundCard = allCards.find(c => c.id === cardId);
+          if (foundCard) {
+            setCardForForm({
+              cardName: foundCard.cardName,
+              investorId: foundCard.investorId,
+              property: foundCard.property,
+              last4Digits: foundCard.last4Digits || "",
+              spendLimitMonthly: foundCard.spendLimitMonthly,
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: "Card not found.",
+              variant: "destructive",
+            });
+            router.push("/cards");
+          }
+        } catch (error) {
+          console.error("Error fetching card details:", error);
+          toast({ title: "Error", description: "Could not load card details.", variant: "destructive" });
+        } finally {
+          setIsFetching(false);
+        }
       }
-      setIsFetching(false);
-    }
+    };
+    fetchCardDetails();
   }, [cardId, router, toast]);
 
   const handleSubmit = async (data: CardFormValues) => {
@@ -57,30 +67,35 @@ export default function EditCardPage() {
         toast({ title: "Permission Denied", description: "Editing cards is an administrator-only feature.", variant: "destructive" });
         return;
     }
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     const cardToUpdate: UserCard = {
         id: cardId, 
         ...data,
-        isPersonal: false, 
+        isPersonal: false, // Assuming cards are not personal for this form
     };
 
-    const success = updateCard(cardToUpdate);
-
-    if (success) {
-      toast({
-        title: "Card Updated",
-        description: `Card "${data.cardName}" has been updated.`,
-      });
-      router.push("/cards");
-    } else {
-      toast({
-        title: "Error",
-        description: "Failed to update card. It might have been deleted.",
-        variant: "destructive",
-      });
+    try {
+      const success = await updateCard(cardToUpdate);
+      if (success) {
+        toast({
+          title: "Card Updated",
+          description: `Card "${data.cardName}" has been updated.`,
+        });
+        router.push("/cards");
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update card. It might have been deleted.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating card:", error);
+      toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsLoading(false);
   };
 
   if (!IS_ADMIN && !isFetching) { 
@@ -115,6 +130,8 @@ export default function EditCardPage() {
   }
 
   if (!cardForForm) { 
+    // This case might be hit if fetching completes but no card was found (already handled by redirect)
+    // or if the user is not admin and isFetching is false.
     return (
       <Card>
         <CardHeader>
@@ -140,7 +157,7 @@ export default function EditCardPage() {
         <CardForm 
           initialData={cardForForm} 
           onSubmit={handleSubmit} 
-          isLoading={isLoading}
+          isLoading={isSubmitting}
           isEditMode={true}
         />
       </CardContent>

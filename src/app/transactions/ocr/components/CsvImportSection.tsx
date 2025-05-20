@@ -24,9 +24,8 @@ interface CsvRow {
   last4Digits: string;
 }
 
-// To simulate different users for webhook notification
 const ADMIN_EMAIL_CSV_IMPORT = 'jessrafalfernandez@gmail.com';
-const currentUsersEmailCsvImport = 'teammate@example.com'; // Simulates who is doing the import
+const currentUsersEmailCsvImport = 'jessrafalfernandez@gmail.com'; 
 
 export function CsvImportSection() {
   const [file, setFile] = React.useState<File | null>(null);
@@ -93,93 +92,100 @@ export function CsvImportSection() {
         return;
       }
 
-      const allCards = getMockCards();
-      let importedCount = 0;
-      let skippedCount = 0;
-      const newTransactions: Transaction[] = [];
+      try {
+        const allCards = await getMockCards();
+        let importedCount = 0;
+        let skippedCount = 0;
+        // const newTransactions: Transaction[] = []; // Not needed as we add one by one
 
-      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ""); 
-      if (lines.length < 2) {
-        setError("CSV file must contain a header row and at least one data row.");
-        setIsLoading(false);
-        return;
-      }
-
-      const headerLine = lines[0];
-      const dataLines = lines.slice(1);
-      const headers = headerLine.split(",").map(h => h.trim().replace(/^"|"$/g, ''));
-
-
-      for (const line of dataLines) {
-        const rowData = parseCsvRow(line, headers);
-
-        if (!rowData || !rowData.dateStr || !rowData.vendor || !rowData.amountStr || !rowData.last4Digits) {
-          console.warn("Skipping invalid CSV row (missing required fields):", line, rowData);
-          skippedCount++;
-          continue;
-        }
-        
-        let parsedDate: Date | null = null;
-        const dateFormats = ['M/d/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'd/M/yyyy', 'dd/MM/yyyy'];
-        for (const fmt of dateFormats) {
-            const tempDate = parse(rowData.dateStr, fmt, new Date());
-            if (isValid(tempDate)) {
-                parsedDate = tempDate;
-                break;
-            }
+        const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ""); 
+        if (lines.length < 2) {
+          setError("CSV file must contain a header row and at least one data row.");
+          setIsLoading(false);
+          return;
         }
 
-        if (!parsedDate) {
-            console.warn(`Skipping row due to unparsable date: "${rowData.dateStr}" in row:`, line);
+        const headerLine = lines[0];
+        const dataLines = lines.slice(1);
+        const headers = headerLine.split(",").map(h => h.trim().replace(/^"|"$/g, ''));
+
+
+        for (const line of dataLines) {
+          const rowData = parseCsvRow(line, headers);
+
+          if (!rowData || !rowData.dateStr || !rowData.vendor || !rowData.amountStr || !rowData.last4Digits) {
+            console.warn("Skipping invalid CSV row (missing required fields):", line, rowData);
             skippedCount++;
             continue;
+          }
+          
+          let parsedDate: Date | null = null;
+          const dateFormats = ['M/d/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'd/M/yyyy', 'dd/MM/yyyy'];
+          for (const fmt of dateFormats) {
+              const tempDate = parse(rowData.dateStr, fmt, new Date());
+              if (isValid(tempDate)) {
+                  parsedDate = tempDate;
+                  break;
+              }
+          }
+
+          if (!parsedDate) {
+              console.warn(`Skipping row due to unparsable date: "${rowData.dateStr}" in row:`, line);
+              skippedCount++;
+              continue;
+          }
+
+          const amount = parseFloat(rowData.amountStr);
+          if (isNaN(amount)) {
+            console.warn(`Skipping row due to invalid amount: "${rowData.amountStr}" in row:`, line);
+            skippedCount++;
+            continue;
+          }
+
+          const matchingCard = allCards.find(card => card.last4Digits === rowData.last4Digits);
+
+          if (!matchingCard) {
+            console.warn(`Skipping row, no card found for last 4 digits: "${rowData.last4Digits}" in row:`, line);
+            skippedCount++;
+            continue;
+          }
+
+          const newTransaction: Transaction = {
+            id: uuidv4(),
+            date: format(parsedDate, "yyyy-MM-dd"),
+            vendor: rowData.vendor,
+            description: rowData.description || "",
+            amount: amount,
+            category: rowData.category || "Other",
+            cardId: matchingCard.id,
+            investorId: matchingCard.investorId,
+            property: matchingCard.property, 
+            unitNumber: rowData.unitNumber || "",
+            receiptImageURI: "",
+            reconciled: false,
+            sourceType: "import",
+          };
+          await addTransactionToMockData(newTransaction, currentUsersEmailCsvImport); 
+          importedCount++;
         }
 
-        const amount = parseFloat(rowData.amountStr);
-        if (isNaN(amount)) {
-          console.warn(`Skipping row due to invalid amount: "${rowData.amountStr}" in row:`, line);
-          skippedCount++;
-          continue;
+        toast({
+          title: "CSV Import Complete",
+          description: `${importedCount} transaction(s) imported. ${skippedCount} transaction(s) skipped.`,
+        });
+
+        setFile(null);
+        setFileName(null);
+        if (event.target instanceof HTMLFormElement) {
+          event.target.reset();
         }
-
-        const matchingCard = allCards.find(card => card.last4Digits === rowData.last4Digits);
-
-        if (!matchingCard) {
-          console.warn(`Skipping row, no card found for last 4 digits: "${rowData.last4Digits}" in row:`, line);
-          skippedCount++;
-          continue;
-        }
-
-        const newTransaction: Transaction = {
-          id: uuidv4(),
-          date: format(parsedDate, "yyyy-MM-dd"),
-          vendor: rowData.vendor,
-          description: rowData.description || "",
-          amount: amount,
-          category: rowData.category || "Other",
-          cardId: matchingCard.id,
-          investorId: matchingCard.investorId,
-          property: matchingCard.property, 
-          unitNumber: rowData.unitNumber || "",
-          receiptImageURI: "",
-          reconciled: false,
-          sourceType: "import",
-        };
-        addTransactionToMockData(newTransaction, currentUsersEmailCsvImport); // Pass submitter email
-        importedCount++;
+      } catch (processingError) {
+        console.error("Error processing CSV data:", processingError);
+        setError("An error occurred while processing the CSV file.");
+        toast({ title: "Import Error", description: "Could not process CSV.", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
       }
-
-      toast({
-        title: "CSV Import Complete",
-        description: `${importedCount} transaction(s) imported. ${skippedCount} transaction(s) skipped.`,
-      });
-
-      setFile(null);
-      setFileName(null);
-      if (event.target instanceof HTMLFormElement) {
-        event.target.reset();
-      }
-      setIsLoading(false);
     };
 
     reader.onerror = () => {
@@ -237,5 +243,3 @@ export function CsvImportSection() {
     </form>
   );
 }
-
-    

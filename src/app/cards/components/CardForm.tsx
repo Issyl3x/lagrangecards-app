@@ -27,7 +27,7 @@ import type { Investor } from "@/lib/types";
 
 interface CardFormProps {
   initialData?: CardFormValues;
-  onSubmit: (data: CardFormValues) => void;
+  onSubmit: (data: CardFormValues) => Promise<void>; // onSubmit is now async
   isLoading?: boolean;
   isEditMode?: boolean;
 }
@@ -35,6 +35,7 @@ interface CardFormProps {
 export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false }: CardFormProps) {
   const [investors, setInvestors] = React.useState<Investor[]>([]);
   const [properties, setProperties] = React.useState<string[]>([]);
+  const [isFetchingDropdownData, setIsFetchingDropdownData] = React.useState(true);
 
   const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
@@ -48,8 +49,22 @@ export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false 
   });
 
   React.useEffect(() => {
-    setInvestors(getMockInvestors());
-    setProperties(getMockProperties());
+    const fetchDropdownData = async () => {
+      setIsFetchingDropdownData(true);
+      try {
+        const [investorsData, propertiesData] = await Promise.all([
+          getMockInvestors(),
+          getMockProperties()
+        ]);
+        setInvestors(investorsData);
+        setProperties(propertiesData);
+      } catch (error) {
+        console.error("Error fetching dropdown data for CardForm:", error);
+      } finally {
+        setIsFetchingDropdownData(false);
+      }
+    };
+    fetchDropdownData();
   }, []);
 
   React.useEffect(() => {
@@ -59,9 +74,13 @@ export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false 
   }, [initialData, form]);
 
 
-  const handleSubmit = (data: CardFormValues) => {
-    onSubmit(data);
+  const handleSubmit = async (data: CardFormValues) => {
+    await onSubmit(data); // Await the onSubmit prop
   };
+
+  if (isFetchingDropdownData && !initialData) { // Only show loading if not in edit mode with initial data
+    return <p>Loading form...</p>;
+  }
 
   return (
     <Form {...form}>
@@ -86,7 +105,7 @@ export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false 
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Investor</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingDropdownData}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an investor" />
@@ -110,7 +129,7 @@ export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false 
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Property</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingDropdownData}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a property" />
@@ -166,7 +185,7 @@ export function CardForm({ initialData, onSubmit, isLoading, isEditMode = false 
             )}
           />
         </div>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || isFetchingDropdownData}>
           {isLoading ? (isEditMode ? "Updating..." : "Adding...") : (isEditMode ? "Update Card" : "Add Card")}
         </Button>
       </form>

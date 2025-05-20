@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const APP_VERSION = "1.0.0";
 
-const WORK_EMAIL_FOR_NOTIFICATIONS = 'lagrangepointllc@gmail.com'; // New constant for clarity
-const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com'; // Your admin email
+const WORK_EMAIL_FOR_NOTIFICATIONS = 'lagrangepointllc@gmail.com';
+const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 
 const INVESTORS_KEY = 'estateFlowInvestors_v1';
 const PROPERTIES_KEY = 'estateFlowProperties_v1';
@@ -179,7 +179,7 @@ function loadData<T>(key: string, defaultValue: T): T {
         return data as T;
       } catch (e) {
         console.error(`Error parsing ${key} from localStorage or invalid data structure, falling back to default. Error:`, e);
-        localStorage.removeItem(key);
+        localStorage.removeItem(key); // Clear corrupted data
         return defaultValue;
       }
     }
@@ -188,7 +188,7 @@ function loadData<T>(key: string, defaultValue: T): T {
 }
 
 // Helper function to save data to localStorage
-function saveData<T>(key: string, data: T) {
+function saveData<T>(key: string, data: T): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(key, JSON.stringify(data));
   }
@@ -200,26 +200,31 @@ let updatableCards: Card[] = loadData<Card[]>(CARDS_KEY, defaultCards);
 let updatableMockTransactions: Transaction[] = loadData<Transaction[]>(TRANSACTIONS_KEY, defaultTransactions);
 let updatableDeletedTransactions: Transaction[] = loadData<Transaction[]>(DELETED_TRANSACTIONS_KEY, defaultDeletedTransactions);
 
-
 export const mockCategories: (TransactionCategory | string)[] = [
   "Repairs", "Utilities", "Supplies", "Mortgage", "Insurance", "HOA Fees",
   "Property Management", "Travel", "Marketing", "Legal & Professional Fees",
   "Furnishings", "Landscaping", "Appliances", "Credit Card Payment", "Other"
 ];
 
-// Getters
-export const getMockInvestors = (): Investor[] => [...updatableInvestors];
-export const getMockProperties = (): string[] => [...updatableProperties];
-export const getMockCards = (): Card[] => [...updatableCards];
-export const getMockTransactions = (): Transaction[] => {
-  return [...updatableMockTransactions];
+// Getters - now return Promises
+export const getMockInvestors = async (): Promise<Investor[]> => {
+  return Promise.resolve([...updatableInvestors]);
 };
-export const getDeletedTransactions = (): Transaction[] => {
-  return [...updatableDeletedTransactions];
+export const getMockProperties = async (): Promise<string[]> => {
+  return Promise.resolve([...updatableProperties]);
+};
+export const getMockCards = async (): Promise<Card[]> => {
+  return Promise.resolve([...updatableCards]);
+};
+export const getMockTransactions = async (): Promise<Transaction[]> => {
+  return Promise.resolve([...updatableMockTransactions]);
+};
+export const getDeletedTransactions = async (): Promise<Transaction[]> => {
+  return Promise.resolve([...updatableDeletedTransactions]);
 };
 
-// Adders
-export const addInvestor = (investorData: NewInvestorData): Investor => {
+// Adders - now return Promises
+export const addInvestor = async (investorData: NewInvestorData): Promise<Investor> => {
   const newInvestor: Investor = {
     id: uuidv4(),
     ...investorData,
@@ -227,19 +232,19 @@ export const addInvestor = (investorData: NewInvestorData): Investor => {
   updatableInvestors = [...updatableInvestors, newInvestor];
   saveData(INVESTORS_KEY, updatableInvestors);
   console.log("Added investor:", newInvestor, "Total investors:", updatableInvestors.length);
-  return newInvestor;
+  return Promise.resolve(newInvestor);
 };
 
-export const addProperty = (propertyName: string): string => {
+export const addProperty = async (propertyName: string): Promise<string> => {
   if (!updatableProperties.includes(propertyName)) {
     updatableProperties = [...updatableProperties, propertyName];
     saveData(PROPERTIES_KEY, updatableProperties);
   }
   console.log("Added property:", propertyName, "Total properties:", updatableProperties.length);
-  return propertyName;
+  return Promise.resolve(propertyName);
 };
 
-export const addCard = (cardData: CardFormValues): Card => {
+export const addCard = async (cardData: CardFormValues): Promise<Card> => {
   const newCard: Card = {
     id: uuidv4(),
     isPersonal: false,
@@ -248,42 +253,31 @@ export const addCard = (cardData: CardFormValues): Card => {
   updatableCards = [...updatableCards, newCard];
   saveData(CARDS_KEY, updatableCards);
   console.log("Added card:", newCard, "Total cards:", updatableCards.length);
-  return newCard;
+  return Promise.resolve(newCard);
 };
 
-export const addTransactionToMockData = (newTx: Transaction, submitterEmail: string): void => {
+export const addTransactionToMockData = async (newTx: Transaction, submitterEmail: string): Promise<void> => {
   updatableMockTransactions = [newTx, ...updatableMockTransactions];
   saveData(TRANSACTIONS_KEY, updatableMockTransactions);
 
+  const investorName = updatableInvestors.find(inv => inv.id === newTx.investorId)?.name || 'Unknown Investor';
   console.log(`Transaction added by: ${submitterEmail}`);
-  const investorName = getMockInvestors().find(inv => inv.id === newTx.investorId)?.name || 'Unknown Investor';
   console.log("Transaction Details for general logging:", {
-    id: newTx.id,
-    date: newTx.date,
-    vendor: newTx.vendor,
-    amount: newTx.amount,
-    category: newTx.category,
-    property: newTx.property,
-    investor: investorName,
+    id: newTx.id, date: newTx.date, vendor: newTx.vendor, amount: newTx.amount,
+    category: newTx.category, property: newTx.property, investor: investorName,
     description: newTx.description
   });
 
-  // Check if the submitter is not the admin
   if (submitterEmail !== ADMIN_EMAIL) {
     console.log(`SIMULATING WEBHOOK: Email notification to ${WORK_EMAIL_FOR_NOTIFICATIONS} (work email) because a transaction was added by teammate ${submitterEmail}.`);
-    console.log("Details of transaction triggering teammate notification:", {
-        id: newTx.id,
-        vendor: newTx.vendor,
-        amount: newTx.amount,
-        property: newTx.property,
-    });
   }
   console.log("---------------------------------------------");
+  return Promise.resolve();
 };
 
 
-// Updaters
-export const updateTransactionInMockData = (updatedTx: Transaction): void => {
+// Updaters - now return Promises
+export const updateTransactionInMockData = async (updatedTx: Transaction): Promise<void> => {
   const index = updatableMockTransactions.findIndex(tx => tx.id === updatedTx.id);
   if (index !== -1) {
     const newTransactions = [...updatableMockTransactions];
@@ -291,23 +285,24 @@ export const updateTransactionInMockData = (updatedTx: Transaction): void => {
     updatableMockTransactions = newTransactions;
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
   }
+  return Promise.resolve();
 };
 
-export const updateCard = (updatedCardData: Card): Card | undefined => {
+export const updateCard = async (updatedCardData: Card): Promise<Card | undefined> => {
   const cardIndex = updatableCards.findIndex(card => card.id === updatedCardData.id);
   if (cardIndex !== -1) {
     updatableCards[cardIndex] = { ...updatableCards[cardIndex], ...updatedCardData };
     saveData(CARDS_KEY, updatableCards);
     console.log("Updated card:", updatableCards[cardIndex]);
-    return updatableCards[cardIndex];
+    return Promise.resolve(updatableCards[cardIndex]);
   }
   console.warn("Card not found for update:", updatedCardData.id);
-  return undefined;
+  return Promise.resolve(undefined);
 };
 
 
-// Deleters / Restorers
-export const deleteTransactionFromMockData = (txId: string): void => {
+// Deleters / Restorers - now return Promises
+export const deleteTransactionFromMockData = async (txId: string): Promise<void> => {
   const transactionToDelete = updatableMockTransactions.find(tx => tx.id === txId);
   if (transactionToDelete) {
     updatableDeletedTransactions = [transactionToDelete, ...updatableDeletedTransactions];
@@ -315,9 +310,10 @@ export const deleteTransactionFromMockData = (txId: string): void => {
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
   }
+  return Promise.resolve();
 };
 
-export const permanentlyDeleteTransactionFromMockData = (txId: string): void => {
+export const permanentlyDeleteTransactionFromMockData = async (txId: string): Promise<void> => {
   const initialActiveCount = updatableMockTransactions.length;
   const initialDeletedCount = updatableDeletedTransactions.length;
 
@@ -336,10 +332,11 @@ export const permanentlyDeleteTransactionFromMockData = (txId: string): void => 
   } else {
     console.log("[MockData] Attempted to permanently delete transaction, but ID not found:", txId);
   }
+  return Promise.resolve();
 };
 
 
-export const restoreTransactionFromMockData = (txId: string): void => {
+export const restoreTransactionFromMockData = async (txId: string): Promise<void> => {
   const transactionToRestore = updatableDeletedTransactions.find(tx => tx.id === txId);
   if (transactionToRestore) {
     updatableMockTransactions = [transactionToRestore, ...updatableMockTransactions];
@@ -347,22 +344,28 @@ export const restoreTransactionFromMockData = (txId: string): void => {
     saveData(TRANSACTIONS_KEY, updatableMockTransactions);
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
   }
+  return Promise.resolve();
 };
 
-// Backup and Restore All Data
-export const getAllDataForBackup = (): AllDataBackup => {
-  return {
-    investors: getMockInvestors(),
-    properties: getMockProperties(),
-    cards: getMockCards(),
-    transactions: getMockTransactions(),
-    deletedTransactions: getDeletedTransactions(),
+// Backup and Restore All Data - now return Promises
+export const getAllDataForBackup = async (): Promise<AllDataBackup> => {
+  const investors = await getMockInvestors();
+  const properties = await getMockProperties();
+  const cards = await getMockCards();
+  const transactions = await getMockTransactions();
+  const deletedTransactions = await getDeletedTransactions();
+  return Promise.resolve({
+    investors,
+    properties,
+    cards,
+    transactions,
+    deletedTransactions,
     timestamp: new Date().toISOString(),
     version: APP_VERSION,
-  };
+  });
 };
 
-export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => {
+export const restoreAllDataFromBackup = async (backupData: AllDataBackup): Promise<boolean> => {
   try {
     if (
       !backupData ||
@@ -375,7 +378,7 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
       !backupData.version
     ) {
       console.error("Invalid backup file structure.");
-      return false;
+      return Promise.resolve(false);
     }
 
     updatableInvestors = backupData.investors;
@@ -397,10 +400,10 @@ export const restoreAllDataFromBackup = (backupData: AllDataBackup): boolean => 
     saveData(DELETED_TRANSACTIONS_KEY, updatableDeletedTransactions);
 
     console.log("Data restored successfully from backup:", backupData.timestamp);
-    return true;
+    return Promise.resolve(true);
   } catch (error) {
     console.error("Error restoring data from backup:", error);
-    return false;
+    return Promise.resolve(false);
   }
 };
 
@@ -413,14 +416,16 @@ export const clearAllMockDataFromLocalStorage = () => {
     localStorage.removeItem(DELETED_TRANSACTIONS_KEY);
     console.log("All mock data cleared from localStorage. Please refresh the application.");
 
+    // Reset in-memory arrays to defaults
     updatableInvestors = [...defaultInvestors];
     updatableProperties = [...defaultProperties];
     updatableCards = [...defaultCards];
-    updatableMockTransactions = [...defaultTransactions.map(tx => ({...tx}))];
-    updatableDeletedTransactions = [...defaultDeletedTransactions.map(tx => ({...tx}))];
+    updatableMockTransactions = [...defaultTransactions.map(tx => ({...tx}))]; // Create shallow copies
+    updatableDeletedTransactions = [...defaultDeletedTransactions.map(tx => ({...tx}))]; // Create shallow copies
   }
 };
 
+// Expose the clear function to the window for easy debugging
 if (typeof window !== 'undefined') {
   (window as any).clearAllMockDataFromLocalStorage = clearAllMockDataFromLocalStorage;
 }

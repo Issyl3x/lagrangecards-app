@@ -4,13 +4,13 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Download, Send, Upload, Save, ShieldAlert } from "lucide-react";
+import { Download, Send, Upload, Save, ShieldAlert, Loader2 } from "lucide-react";
 import { getMockTransactions, getAllDataForBackup, restoreAllDataFromBackup } from "@/lib/mock-data";
 import { convertToCSV, downloadCSV } from "@/lib/export";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import type { AllDataBackup } from "@/lib/types";
+import type { AllDataBackup, Transaction } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
@@ -19,17 +19,34 @@ const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
 export default function ExportPage() {
   const { toast } = useToast();
-  const [transactions, setTransactions] = React.useState(getMockTransactions());
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = React.useState(true);
   const [isRestoring, setIsRestoring] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    setTransactions(getMockTransactions());
-  }, []);
+    const fetchCurrentTransactions = async () => {
+      setIsLoadingTransactions(true);
+      try {
+        const data = await getMockTransactions();
+        setTransactions(data);
+      } catch (error) {
+        console.error("Error fetching transactions for export:", error);
+        toast({ title: "Error", description: "Could not load transactions.", variant: "destructive" });
+      } finally {
+        setIsLoadingTransactions(false);
+      }
+    };
+    if (IS_ADMIN) { // Only fetch if admin, otherwise it's not needed
+      fetchCurrentTransactions();
+    } else {
+      setIsLoadingTransactions(false);
+    }
+  }, [toast]);
 
 
-  const handleDownloadCSV = () => {
-    const currentTransactions = getMockTransactions(); 
+  const handleDownloadCSV = async () => {
+    const currentTransactions = await getMockTransactions(); 
     if (currentTransactions.length === 0) {
       toast({
         title: "No Data",
@@ -52,24 +69,29 @@ export default function ExportPage() {
       variant: "default",
       duration: 10000, 
     });
-    console.log("Attempting to send to Google Sheets (mocked). Data:", getMockTransactions());
+    // console.log("Attempting to send to Google Sheets (mocked). Data:", transactions);
   };
 
-  const handleDownloadBackup = () => {
-    const backupData = getAllDataForBackup();
-    const jsonString = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `estateflow_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-    toast({
-      title: "Backup Downloaded",
-      description: "All application data has been backed up to a JSON file.",
-    });
+  const handleDownloadBackup = async () => {
+    try {
+        const backupData = await getAllDataForBackup();
+        const jsonString = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `estateflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        toast({
+        title: "Backup Downloaded",
+        description: "All application data has been backed up to a JSON file.",
+        });
+    } catch (error) {
+        console.error("Error downloading backup:", error);
+        toast({title: "Backup Error", description: "Failed to generate backup.", variant: "destructive"});
+    }
   };
 
   const handleRestoreFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,13 +102,13 @@ export default function ExportPage() {
     setIsRestoring(true);
     try {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const text = e.target?.result;
         if (typeof text === 'string') {
           try {
             const backupData = JSON.parse(text) as AllDataBackup;
             if (backupData && backupData.investors && backupData.properties && backupData.cards && backupData.transactions && backupData.deletedTransactions && backupData.timestamp) {
-                const success = restoreAllDataFromBackup(backupData);
+                const success = await restoreAllDataFromBackup(backupData);
                 if (success) {
                 toast({
                     title: "Restore Successful",
@@ -152,6 +174,16 @@ export default function ExportPage() {
     );
   }
 
+  if (isLoadingTransactions) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading export options...</p>
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-8">
       <Card>
@@ -167,7 +199,7 @@ export default function ExportPage() {
             The CSV format includes all key details for each transaction.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto" disabled={!IS_ADMIN}>
+            <Button onClick={handleDownloadCSV} className="w-full sm:w-auto" disabled={!IS_ADMIN || transactions.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Download CSV
             </Button>

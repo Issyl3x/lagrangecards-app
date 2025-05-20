@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { getMockTransactions, updateTransactionInMockData } from "@/lib/mock-data"; 
 import type { Transaction } from "@/lib/types";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button"; 
 
@@ -19,32 +19,43 @@ export default function EditTransactionPage() {
   const transactionId = params.id as string;
 
   const [transactionForForm, setTransactionForForm] = React.useState<Transaction | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(true);
 
   React.useEffect(() => {
-    if (transactionId) {
-      const allTransactions = getMockTransactions(); 
-      const foundTransaction = allTransactions.find(tx => tx.id === transactionId);
-      if (foundTransaction) {
-        setTransactionForForm({ ...foundTransaction });
-      } else {
-        toast({
-          title: "Error",
-          description: "Transaction not found.",
-          variant: "destructive",
-        });
-        router.push("/transactions");
+    const fetchTransaction = async () => {
+      if (transactionId) {
+        setIsFetching(true);
+        try {
+          const allTransactions = await getMockTransactions(); 
+          const foundTransaction = allTransactions.find(tx => tx.id === transactionId);
+          if (foundTransaction) {
+            setTransactionForForm({ ...foundTransaction, date: parseISO(foundTransaction.date) as any }); // Ensure date is a Date object
+          } else {
+            toast({
+              title: "Error",
+              description: "Transaction not found.",
+              variant: "destructive",
+            });
+            router.push("/transactions");
+          }
+        } catch (error) {
+          console.error("Error fetching transaction for edit:", error);
+          toast({ title: "Error", description: "Could not load transaction details.", variant: "destructive" });
+        } finally {
+          setIsFetching(false);
+        }
       }
-      setIsFetching(false);
-    }
+    };
+    fetchTransaction();
   }, [transactionId, router, toast]);
 
   const handleSubmit = async (data: TransactionFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log("Receipt Image URI submitted from form:", data.receiptImageURI ? data.receiptImageURI.substring(0,50) + "..." : "empty"); 
 
-    const currentTransaction = getMockTransactions().find(tx => tx.id === transactionId);
+    const allTransactions = await getMockTransactions();
+    const currentTransaction = allTransactions.find(tx => tx.id === transactionId);
 
     if (!currentTransaction) {
         toast({
@@ -52,7 +63,7 @@ export default function EditTransactionPage() {
             description: "Cannot update transaction, original data not found.",
             variant: "destructive",
         });
-        setIsLoading(false);
+        setIsSubmitting(false);
         return;
     }
     
@@ -65,21 +76,28 @@ export default function EditTransactionPage() {
         category: data.category,
         investorId: data.investorId,
         property: data.property, 
-        unitNumber: data.unitNumber || "", // Added Unit Number
+        unitNumber: data.unitNumber || "", 
         cardId: data.cardId,
         receiptImageURI: data.receiptImageURI || "",
+        // 'reconciled' and 'sourceType' are preserved from currentTransaction
     };
     
-    updateTransactionInMockData(updatedTransactionData);
-    console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", {...updatedTransactionData, receiptImageURI: updatedTransactionData.receiptImageURI ? updatedTransactionData.receiptImageURI.substring(0,50) + "..." : "empty" });
+    try {
+        await updateTransactionInMockData(updatedTransactionData);
+        console.log("Updated transaction via updateTransactionInMockData (ID: " + transactionId + "):", {...updatedTransactionData, receiptImageURI: updatedTransactionData.receiptImageURI ? updatedTransactionData.receiptImageURI.substring(0,50) + "..." : "empty" });
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    toast({
-      title: "Transaction Updated",
-      description: `Transaction for ${updatedTransactionData.vendor} of $${updatedTransactionData.amount} has been updated.`,
-    });
-    setIsLoading(false);
-    router.push("/transactions"); 
+        toast({
+        title: "Transaction Updated",
+        description: `Transaction for ${updatedTransactionData.vendor} of $${updatedTransactionData.amount} has been updated.`,
+        });
+        // router.refresh(); // Might not be necessary if ViewTransactionsPage refreshes on navigation
+        router.push("/transactions"); 
+    } catch (error) {
+        console.error("Error updating transaction:", error);
+        toast({ title: "Error", description: "Failed to update transaction.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   if (isFetching) {
@@ -117,7 +135,7 @@ export default function EditTransactionPage() {
         <TransactionForm 
           initialData={transactionForForm} 
           onSubmit={handleSubmit} 
-          isLoading={isLoading} 
+          isLoading={isSubmitting} 
         />
       </CardContent>
     </Card>

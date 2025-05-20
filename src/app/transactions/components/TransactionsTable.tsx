@@ -47,8 +47,8 @@ import {
   getMockCards,
   deleteTransactionFromMockData,
   updateTransactionInMockData,
-  // permanentlyDeleteTransactionFromMockData, // Removed from here
-  getMockTransactions
+  getMockTransactions,
+  permanentlyDeleteTransactionFromMockData
 } from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -61,14 +61,13 @@ import Image from "next/image";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
-  onTransactionUpdate: () => void;
+  onTransactionUpdate: () => Promise<void>; // onTransactionUpdate is now async
 }
 
 type SortKey = keyof Transaction | "";
 const ALL_ITEMS_FILTER_VALUE = "__ALL_ITEMS__";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-// To test teammate view, change this to a non-admin email like 'teammate@example.com'
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
@@ -98,14 +97,33 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
   const [investors, setInvestorsState] = React.useState<Investor[]>([]);
   const [properties, setPropertiesState] = React.useState<string[]>([]);
   const [cards, setCardsState] = React.useState<UserCard[]>([]);
+  const [isFetchingDropdownData, setIsFetchingDropdownData] = React.useState(true);
   const [duplicateTransactionIds, setDuplicateTransactionIds] = React.useState<Set<string>>(new Set());
 
   const [filteredTransactions, setFilteredTransactions] = React.useState<Transaction[]>(initialTransactions);
+  const [isAlertOpen, setIsAlertOpen] = React.useState(false);
+  const [transactionToPermanentlyDelete, setTransactionToPermanentlyDelete] = React.useState<string | null>(null);
+
 
   React.useEffect(() => {
-    setInvestorsState(getMockInvestors());
-    setPropertiesState(getMockProperties());
-    setCardsState(getMockCards());
+    const fetchDropdowns = async () => {
+      setIsFetchingDropdownData(true);
+      try {
+        const [investorsData, propertiesData, cardsData] = await Promise.all([
+          getMockInvestors(),
+          getMockProperties(),
+          getMockCards()
+        ]);
+        setInvestorsState(investorsData);
+        setPropertiesState(propertiesData);
+        setCardsState(cardsData);
+      } catch (error) {
+        console.error("Error fetching dropdown data for TransactionsTable:", error);
+      } finally {
+        setIsFetchingDropdownData(false);
+      }
+    };
+    fetchDropdowns();
   }, []);
 
   React.useEffect(() => {
@@ -218,7 +236,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     return <ArrowUpDown className="ml-2 h-4 w-4 inline opacity-50" />;
   };
 
-  const handleDeleteToRecycleBin = (id: string) => {
+  const handleDeleteToRecycleBin = async (id: string) => {
     if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
@@ -227,12 +245,12 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
       });
       return;
     }
-    deleteTransactionFromMockData(id);
+    await deleteTransactionFromMockData(id);
     toast({
       title: "Transaction Moved",
       description: `Transaction has been moved to Deleted Items.`,
     });
-    onTransactionUpdate();
+    await onTransactionUpdate();
   };
 
   const handleEdit = (id: string) => {
@@ -247,7 +265,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     router.push(`/transactions/edit/${id}`);
   };
 
-  const handleToggleRecordedInBuildium = (id: string) => {
+  const handleToggleRecordedInBuildium = async (id: string) => {
     if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
@@ -259,16 +277,16 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     const transactionToUpdate = initialTransactions.find(tx => tx.id === id);
     if (transactionToUpdate) {
       const updatedTransaction = { ...transactionToUpdate, reconciled: !transactionToUpdate.reconciled };
-      updateTransactionInMockData(updatedTransaction);
+      await updateTransactionInMockData(updatedTransaction);
       toast({
         title: "Status Updated",
         description: `Transaction ${updatedTransaction.vendor} marked as ${updatedTransaction.reconciled ? "Recorded in Buildium" : "Not Recorded in Buildium"}.`,
       });
-      onTransactionUpdate();
+      await onTransactionUpdate();
     }
   };
 
-  const handleConfirmDuplicate = (transactionId: string) => {
+  const handleConfirmDuplicate = async (transactionId: string) => {
     if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
@@ -279,14 +297,42 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
     }
     const transactionToConfirm = initialTransactions.find(tx => tx.id === transactionId);
     if (transactionToConfirm) {
-      updateTransactionInMockData({ ...transactionToConfirm, isDuplicateConfirmed: true });
-      onTransactionUpdate();
+      await updateTransactionInMockData({ ...transactionToConfirm, isDuplicateConfirmed: true });
+      await onTransactionUpdate();
       toast({
         title: "Transaction Confirmed",
         description: "This transaction will no longer be flagged as a potential duplicate.",
       });
     }
   };
+
+  const openPermanentDeleteDialog = (id: string) => {
+    if (!IS_ADMIN) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to permanently delete transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setTransactionToPermanentlyDelete(id);
+    setIsAlertOpen(true);
+  };
+
+  const handlePermanentDeleteConfirm = async () => {
+    if (transactionToPermanentlyDelete) {
+      await permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
+      setFilteredTransactions(prev => prev.filter(tx => tx.id !== transactionToPermanentlyDelete));
+      toast({
+        title: "Transaction Permanently Deleted",
+        description: `Transaction has been permanently deleted.`,
+      });
+      await onTransactionUpdate(); // Ensure parent re-fetches
+      setTransactionToPermanentlyDelete(null);
+    }
+    setIsAlertOpen(false);
+  };
+
 
   const handleCopyDetails = async (id: string) => {
     const transaction = initialTransactions.find(tx => tx.id === id);
@@ -329,6 +375,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
             <Select
               value={investorFilter}
               onValueChange={(value) => setInvestorFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
+              disabled={isFetchingDropdownData}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by Investor" />
@@ -341,6 +388,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
             <Select
               value={propertyFilter}
               onValueChange={(value) => setPropertyFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
+              disabled={isFetchingDropdownData}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by Property" />
@@ -353,6 +401,7 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
             <Select
               value={cardFilter}
               onValueChange={(value) => setCardFilter(value === ALL_ITEMS_FILTER_VALUE ? ALL_ITEMS_FILTER_VALUE : value)}
+              disabled={isFetchingDropdownData}
             >
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Filter by Card" />
@@ -529,6 +578,14 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
                               </TooltipTrigger>
                               <TooltipContent><p>Move to Deleted Items</p></TooltipContent>
                             </Tooltip>
+                             <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => openPermanentDeleteDialog(tx.id)} title="Permanently Delete">
+                                  <AlertCircle className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Permanently Delete Transaction</p></TooltipContent>
+                            </Tooltip>
                           </>
                         )}
                       </div>
@@ -546,7 +603,25 @@ export function TransactionsTable({ transactions: initialTransactions, onTransac
           </Table>
         </div>
       </div>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete the transaction from the system. It cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTransactionToPermanentlyDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePermanentDeleteConfirm}
+              className={cn(buttonVariants({ variant: "destructive" }))}
+            >
+              Permanently Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }
-

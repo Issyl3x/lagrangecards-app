@@ -16,18 +16,39 @@ import { CreditCardPaymentsList } from "./components/CreditCardPaymentsList";
 export default function DashboardPage() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [cards, setCards] = React.useState<UserCard[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const fetchDashboardData = React.useCallback(() => {
-    setTransactions(getMockTransactions());
-    setCards(getMockCards());
+  const fetchDashboardData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [transactionsData, cardsData] = await Promise.all([
+        getMockTransactions(),
+        getMockCards()
+      ]);
+      setTransactions(transactionsData);
+      setCards(cardsData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      // Optionally set an error state here
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData, pathname, searchParams]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <p>Loading dashboard data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,4 +86,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

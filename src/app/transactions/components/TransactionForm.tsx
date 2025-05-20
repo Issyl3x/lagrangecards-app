@@ -17,8 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
-// import { Calendar } from "@/components/ui/calendar"; // Original import
+import { CalendarIcon, Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -49,17 +48,16 @@ import { transactionSchema } from '@/lib/schemas';
 import Image from "next/image";
 import dynamic from 'next/dynamic';
 
-// Dynamically import the Calendar component
 const Calendar = dynamic(() => import('@/components/ui/calendar').then(mod => mod.Calendar), { 
   ssr: false,
-  loading: () => <p>Loading Calendar...</p> // Optional loading state
+  loading: () => <p>Loading Calendar...</p> 
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 interface TransactionFormProps {
   initialData?: Partial<Transaction>;
-  onSubmit: (data: TransactionFormValues) => void;
+  onSubmit: (data: TransactionFormValues) => Promise<void>; // onSubmit is now async
   isLoading?: boolean;
 }
 
@@ -67,7 +65,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      date: undefined, // Initialize as undefined
+      date: undefined, 
       vendor: initialData?.vendor || "",
       description: initialData?.description || "",
       amount: initialData?.amount || undefined, 
@@ -76,7 +74,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
       investorId: initialData?.investorId || "",
       investorName: "",
       property: initialData?.property || "",
-      unitNumber: initialData?.unitNumber || "",
+      unitNumber: initialData?.unitNumber || "", 
       receiptImageURI: initialData?.receiptImageURI || "", 
       sourceType: initialData?.sourceType || 'manual',
     },
@@ -86,91 +84,112 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
   const [properties, setProperties] = React.useState<string[]>([]);
   const [cards, setCards] = React.useState<UserCard[]>([]);
   const [categories] = React.useState<(string)[]>(mockCategories);
+  const [isFetchingDropdownData, setIsFetchingDropdownData] = React.useState(true);
 
   const [isVendorPopoverOpen, setIsVendorPopoverOpen] = React.useState(false);
   const [uniqueVendors, setUniqueVendors] = React.useState<string[]>([]);
   const [imagePreview, setImagePreview] = React.useState<string | null>(initialData?.receiptImageURI || null);
   const [fileName, setFileName] = React.useState<string | null>(null);
 
-
   React.useEffect(() => {
-    setInvestors(getMockInvestors());
-    setProperties(getMockProperties());
-    setCards(getMockCards()); 
+    const fetchDropdownData = async () => {
+      setIsFetchingDropdownData(true);
+      try {
+        const [investorsData, propertiesData, allCardsData, transactionsData] = await Promise.all([
+          getMockInvestors(),
+          getMockProperties(),
+          getMockCards(),
+          getMockTransactions()
+        ]);
+        setInvestors(investorsData);
+        setProperties(propertiesData);
+        setCards(allCardsData); 
 
-    const transactions = getMockTransactions();
-    const vendors = Array.from(new Set(transactions.map(tx => tx.vendor).filter(Boolean).map(v => v.trim())))
-                       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    setUniqueVendors(vendors);
+        const vendors = Array.from(new Set(transactionsData.map(tx => tx.vendor).filter(Boolean).map(v => v.trim())))
+                           .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        setUniqueVendors(vendors);
+
+      } catch (error) {
+        console.error("Error fetching dropdown data for TransactionForm:", error);
+      } finally {
+        setIsFetchingDropdownData(false);
+      }
+    };
+    fetchDropdownData();
   }, []);
 
   React.useEffect(() => {
-    if (initialData) {
-      const currentInvestors = getMockInvestors(); 
-      const investorName = initialData.investorId
-        ? (currentInvestors.find(inv => inv.id === initialData.investorId)?.name || "")
-        : "";
-      
-      const resetValues: TransactionFormValues = {
-        date: initialData.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
-        vendor: initialData.vendor || "",
-        description: initialData.description || "",
-        amount: initialData.amount || 0,
-        category: initialData.category || "",
-        cardId: initialData.cardId || "",
-        investorId: initialData.investorId || "",
-        investorName: investorName,
-        property: initialData.property || "",
-        unitNumber: initialData.unitNumber || "", 
-        receiptImageURI: initialData.receiptImageURI || "",
-        sourceType: initialData.sourceType || 'manual',
-      };
-      form.reset(resetValues);
-      setImagePreview(initialData.receiptImageURI || null);
-      setFileName(null); 
+    const setupForm = async () => {
+      if (initialData) {
+        let investorName = "";
+        if (initialData.investorId) {
+          const currentInvestors = investors.length > 0 ? investors : await getMockInvestors();
+          investorName = currentInvestors.find(inv => inv.id === initialData.investorId)?.name || "";
+        }
+        
+        const resetValues: TransactionFormValues = {
+          date: initialData.date && isValid(parseISO(initialData.date)) ? parseISO(initialData.date) : new Date(),
+          vendor: initialData.vendor || "",
+          description: initialData.description || "",
+          amount: initialData.amount || 0,
+          category: initialData.category || "",
+          cardId: initialData.cardId || "",
+          investorId: initialData.investorId || "",
+          investorName: investorName,
+          property: initialData.property || "",
+          unitNumber: initialData.unitNumber || "", 
+          receiptImageURI: initialData.receiptImageURI || "",
+          sourceType: initialData.sourceType || 'manual',
+        };
+        form.reset(resetValues);
+        setImagePreview(initialData.receiptImageURI || null);
+        setFileName(null); 
 
-      if (initialData.investorId) {
-        setCards(getMockCards().filter(card => card.investorId === initialData.investorId));
-      } else {
-        setCards(getMockCards());
+        if (initialData.investorId) {
+          const allCards = cards.length > 0 ? cards : await getMockCards();
+          setCards(allCards.filter(card => card.investorId === initialData.investorId));
+        }
+      } else if (form.getValues('date') === undefined) {
+         form.setValue('date', new Date());
       }
+    };
+    if (!isFetchingDropdownData) { // Ensure dropdown data is loaded before setting up form with initialData
+        setupForm();
     }
-  }, [initialData, form]);
-
-  // Set date to new Date() on client side if no initialData.date
-  React.useEffect(() => {
-    if (!initialData?.date && form.getValues('date') === undefined) {
-      form.setValue('date', new Date());
-    }
-  }, [initialData, form]);
+  }, [initialData, form, isFetchingDropdownData, investors, cards]);
 
 
   const selectedInvestorId = form.watch("investorId");
 
   React.useEffect(() => {
-    const currentInvestors = getMockInvestors();
-    const allCards = getMockCards();
-    if (selectedInvestorId) {
-      const investor = currentInvestors.find(inv => inv.id === selectedInvestorId);
-      if (investor) form.setValue("investorName", investor.name);
-      
-      const filteredCards = allCards.filter(card => card.investorId === selectedInvestorId);
-      setCards(filteredCards);
-      
-      const currentCardId = form.getValues("cardId");
-      if (currentCardId && !filteredCards.find(card => card.id === currentCardId)) {
-        form.setValue("cardId", "");
+    const updateCardsForInvestor = async () => {
+      const allCards = cards.length > 0 ? cards : await getMockCards(); // Use state if populated, else fetch
+      const currentInvestors = investors.length > 0 ? investors : await getMockInvestors();
+
+      if (selectedInvestorId) {
+        const investor = currentInvestors.find(inv => inv.id === selectedInvestorId);
+        if (investor) form.setValue("investorName", investor.name);
+        
+        const filteredCards = allCards.filter(card => card.investorId === selectedInvestorId);
+        setCards(filteredCards); // Update the cards state for the dropdown
+        
+        const currentCardId = form.getValues("cardId");
+        if (currentCardId && !filteredCards.find(card => card.id === currentCardId)) {
+          form.setValue("cardId", ""); // Clear card if no longer valid for selected investor
+        }
+      } else {
+        form.setValue("investorName", "");
+        setCards(allCards); // Show all cards if no investor selected
       }
-
-    } else {
-      form.setValue("investorName", "");
-      setCards(allCards);
+    };
+    if (!isFetchingDropdownData) {
+        updateCardsForInvestor();
     }
-  }, [selectedInvestorId, form]);
+  }, [selectedInvestorId, form, isFetchingDropdownData, investors, cards]); // Added cards and investors as dependencies
 
 
-  function handleSubmit(data: TransactionFormValues) {
-    onSubmit(data);
+  async function handleSubmit(data: TransactionFormValues) {
+    await onSubmit(data);
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,9 +210,19 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
     }
   };
 
+  if (isFetchingDropdownData) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading form data...</p>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        {/* Date and Vendor Fields */}
         <div className="grid md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
@@ -318,6 +347,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           />
         </div>
 
+        {/* Description Field */}
         <FormField
           control={form.control}
           name="description"
@@ -332,6 +362,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           )}
         />
         
+        {/* Amount and Category Fields */}
         <div className="grid md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
@@ -390,6 +421,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           />
         </div>
 
+        {/* Investor, Property, Unit #, Card Used Fields */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 items-end">
           <FormField
             control={form.control}
@@ -407,6 +439,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
                           "w-full justify-between",
                           !field.value && "text-muted-foreground"
                         )}
+                        disabled={isFetchingDropdownData}
                       >
                         {field.value
                           ? investors.find(
@@ -458,7 +491,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Property</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingDropdownData || (!selectedInvestorId && !initialData?.investorId)}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a property" />
@@ -489,21 +522,20 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
             )}
           />
 
-
           <FormField
             control={form.control}
             name="cardId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Card Used</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedInvestorId && !initialData?.investorId}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingDropdownData || (!selectedInvestorId && !initialData?.investorId)}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a card" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {cards.map(card => (
+                    {cards.map(card => ( // This 'cards' state is filtered based on selectedInvestorId
                       <SelectItem key={card.id} value={card.id}>
                         {card.cardName}{card.last4Digits ? ` (****${card.last4Digits})` : ''}
                       </SelectItem>
@@ -516,6 +548,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           />
         </div>
 
+        {/* Receipt Image Upload */}
         <FormField
           control={form.control}
           name="receiptImageURI"
@@ -549,7 +582,7 @@ export function TransactionForm({ initialData, onSubmit, isLoading }: Transactio
           )}
         />
         
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || isFetchingDropdownData}>
           {isLoading ? "Saving..." : (initialData?.id ? "Update Transaction" : "Save Transaction")}
         </Button>
       </form>

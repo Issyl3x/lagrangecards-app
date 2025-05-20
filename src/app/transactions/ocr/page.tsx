@@ -17,9 +17,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 
-// To simulate different users for webhook notification
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
-const currentUsersEmailForOCR = ADMIN_EMAIL; // Change to 'teammate@example.com' to test
+const currentUsersEmailForOCR = ADMIN_EMAIL; 
 
 export default function OcrTransactionPage() {
   const [parsedDataForForm, setParsedDataForForm] = React.useState<Partial<Transaction> | null>(null);
@@ -75,24 +74,28 @@ export default function OcrTransactionPage() {
       receiptImageURI: formData.receiptImageURI || "", 
     };
 
-    addTransactionToMockData(newTransactionData, currentUsersEmailForOCR); // Pass submitter email
-    console.log("OCR-Prefilled/Manual Transaction Data Saved:", newTransactionData);
+    try {
+        await addTransactionToMockData(newTransactionData, currentUsersEmailForOCR); 
+        console.log("OCR-Prefilled/Manual Transaction Data Saved:", newTransactionData);
 
-    await new Promise(resolve => setTimeout(resolve, 100)); 
-
-    toast({
-      title: "Transaction Saved",
-      description: (
-        <>
-          Transaction for {newTransactionData.vendor} of ${newTransactionData.amount.toFixed(2)} has been saved.
-          <br />
-          <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
-        </>
-      ),
-    });
-    setParsedDataForForm(null); 
-    setIsParsingOrSaving(false);
-    router.push("/transactions"); 
+        toast({
+        title: "Transaction Saved",
+        description: (
+            <>
+            Transaction for {newTransactionData.vendor} of ${newTransactionData.amount.toFixed(2)} has been saved.
+            <br />
+            <em className="text-xs text-muted-foreground">(Simulated: Internal webhook notification logged to console.)</em>
+            </>
+        ),
+        });
+        setParsedDataForForm(null); 
+        router.push("/transactions"); 
+    } catch (error) {
+        console.error("Error saving transaction from OCR form:", error);
+        toast({ title: "Error", description: "Failed to save transaction.", variant: "destructive" });
+    } finally {
+        setIsParsingOrSaving(false);
+    }
   };
 
   const handleCopyParsedSnippet = async () => {
@@ -198,5 +201,3 @@ export default function OcrTransactionPage() {
     </div>
   );
 }
-
-    

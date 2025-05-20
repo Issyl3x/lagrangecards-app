@@ -9,7 +9,7 @@ import { getMockTransactions, updateTransactionInMockData } from "@/lib/mock-dat
 import { Button } from "@/components/ui/button";
 import { format, parseISO, differenceInDays, parse } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 export interface StatementTransaction {
   id: string; // A unique ID for the list, e.g., "stmt-0", "stmt-1"
@@ -22,12 +22,24 @@ export interface StatementTransaction {
 export default function ReconcileTransactionsPage() {
   const [statementTransactions, setStatementTransactions] = React.useState<StatementTransaction[]>([]);
   const [appTransactions, setAppTransactions] = React.useState<Transaction[]>([]);
+  const [isLoadingAppTxs, setIsLoadingAppTxs] = React.useState(true);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Fetch only unreconciled transactions from the app
-    setAppTransactions(getMockTransactions().filter(tx => !tx.reconciled));
-  }, []);
+    const fetchAppTxs = async () => {
+      setIsLoadingAppTxs(true);
+      try {
+        const allTxs = await getMockTransactions();
+        setAppTransactions(allTxs.filter(tx => !tx.reconciled));
+      } catch (error) {
+        console.error("Error fetching app transactions for reconciliation:", error);
+        toast({ title: "Error", description: "Could not load app transactions.", variant: "destructive" });
+      } finally {
+        setIsLoadingAppTxs(false);
+      }
+    };
+    fetchAppTxs();
+  }, [toast]);
 
   const handleStatementParsed = (parsedStatementTxs: StatementTransaction[]) => {
     setStatementTransactions(parsedStatementTxs);
@@ -35,37 +47,37 @@ export default function ReconcileTransactionsPage() {
 
   const findPotentialMatches = (stmtTx: StatementTransaction): Transaction[] => {
     return appTransactions.filter(appTx => {
-      if (appTx.reconciled) return false; // Should already be filtered, but good to double check
+      if (appTx.reconciled) return false;
 
       const dateDiff = Math.abs(differenceInDays(stmtTx.date, parseISO(appTx.date)));
-      const amountMatches = Math.abs(Math.abs(stmtTx.amount) - appTx.amount) < 0.01; // Compare absolute values, allow for small differences
+      const amountMatches = Math.abs(Math.abs(stmtTx.amount) - appTx.amount) < 0.01; 
 
-      // Basic description match (can be improved)
-      // For credit card statements, vendor is usually in description
       const descriptionInAppTxVendor = appTx.vendor.toLowerCase().includes(stmtTx.description.toLowerCase().substring(0,10));
       const descriptionInAppTxDesc = appTx.description.toLowerCase().includes(stmtTx.description.toLowerCase().substring(0,10));
-
 
       return dateDiff <= 3 && amountMatches && (descriptionInAppTxVendor || descriptionInAppTxDesc || stmtTx.description.toLowerCase().includes(appTx.vendor.toLowerCase()));
     });
   };
 
-  const handleMatchTransaction = (stmtTxId: string, appTxId: string) => {
+  const handleMatchTransaction = async (stmtTxId: string, appTxId: string) => {
     const appTxToUpdate = appTransactions.find(tx => tx.id === appTxId);
     if (appTxToUpdate) {
-      updateTransactionInMockData({ ...appTxToUpdate, reconciled: true });
-      
-      // Update statement transaction status locally
-      setStatementTransactions(prevStmtTxs => 
-        prevStmtTxs.map(st => st.id === stmtTxId ? { ...st, isReconciled: true } : st)
-      );
-      // Refresh app transactions list to remove the reconciled one
-      setAppTransactions(prevAppTxs => prevAppTxs.filter(tx => tx.id !== appTxId));
+      try {
+        await updateTransactionInMockData({ ...appTxToUpdate, reconciled: true });
+        
+        setStatementTransactions(prevStmtTxs => 
+          prevStmtTxs.map(st => st.id === stmtTxId ? { ...st, isReconciled: true } : st)
+        );
+        setAppTransactions(prevAppTxs => prevAppTxs.filter(tx => tx.id !== appTxId));
 
-      toast({
-        title: "Transaction Matched",
-        description: `App transaction for ${appTxToUpdate.vendor} has been marked as recorded.`,
-      });
+        toast({
+          title: "Transaction Matched",
+          description: `App transaction for ${appTxToUpdate.vendor} has been marked as recorded.`,
+        });
+      } catch (error) {
+        console.error("Error matching transaction:", error);
+        toast({ title: "Error", description: "Could not match transaction.", variant: "destructive" });
+      }
     }
   };
 
@@ -84,7 +96,14 @@ export default function ReconcileTransactionsPage() {
         </CardContent>
       </Card>
 
-      {statementTransactions.length > 0 && (
+      {isLoadingAppTxs && statementTransactions.length > 0 && (
+         <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading app transactions to match...</p>
+        </div>
+      )}
+
+      {!isLoadingAppTxs && statementTransactions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Reconcile Statement Transactions</CardTitle>

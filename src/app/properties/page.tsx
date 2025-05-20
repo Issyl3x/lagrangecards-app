@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addProperty, getMockProperties } from "@/lib/mock-data";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert, Home } from "lucide-react";
+import { ShieldAlert, Home, Loader2 } from "lucide-react";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
@@ -25,12 +25,12 @@ function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
     resolver: zodResolver(propertySchema),
     defaultValues: { name: "" },
   });
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const onSubmit = (data: PropertyFormValues) => {
-    setIsLoading(true);
+  const onSubmit = async (data: PropertyFormValues) => {
+    setIsSubmitting(true);
     try {
-      addProperty(data.name);
+      await addProperty(data.name);
       toast({ title: "Property Added", description: `${data.name} has been added.` });
       form.reset();
       onPropertyAdded();
@@ -38,7 +38,7 @@ function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
       toast({ title: "Error", description: "Failed to add property.", variant: "destructive" });
       console.error("Failed to add property:", error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -56,7 +56,7 @@ function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>{isLoading ? "Adding..." : "Add Property"}</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Adding..." : "Add Property"}</Button>
       </form>
     </Form>
   );
@@ -64,14 +64,32 @@ function AddPropertyForm({ onPropertyAdded }: { onPropertyAdded: () => void }) {
 
 export default function PropertiesPage() {
   const [properties, setProperties] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const refreshProperties = React.useCallback(() => {
-    setProperties(getMockProperties());
+  const refreshProperties = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMockProperties();
+      setProperties(data);
+    } catch (error) {
+      console.error("Failed to fetch properties:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     refreshProperties();
   }, [refreshProperties]);
+
+  if (isLoading && properties.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading properties...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -103,7 +121,10 @@ export default function PropertiesPage() {
           <CardDescription>List of all registered properties.</CardDescription>
         </CardHeader>
         <CardContent>
-          {properties.length > 0 ? (
+          {isLoading && properties.length > 0 && <p>Refreshing properties...</p>}
+          {!isLoading && properties.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No properties found.</p>
+          ) : (
             <ul className="space-y-4">
               {properties.map(property => (
                 <li key={property} className="flex items-center p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
@@ -112,8 +133,6 @@ export default function PropertiesPage() {
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No properties found.</p>
           )}
         </CardContent>
       </Card>

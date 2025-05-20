@@ -16,12 +16,12 @@ import { Undo2, AlertCircle, Trash2 } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { 
   restoreTransactionFromMockData,
-  getDeletedTransactions,
+  // getDeletedTransactions, // No longer needed here as data comes via props
   permanentlyDeleteTransactionFromMockData 
 } from "@/lib/mock-data"; 
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Not directly used for navigation here
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,25 +37,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface DeletedTransactionsTableProps {
   initialDeletedTransactions: Transaction[]; 
+  onTransactionUpdate: () => Promise<void>; // Callback to tell parent to refresh
 }
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
 const IS_ADMIN = currentUsersEmail === ADMIN_EMAIL;
 
-export function DeletedTransactionsTable({ initialDeletedTransactions }: DeletedTransactionsTableProps) {
-  const [deletedTransactions, setDeletedTransactions] = React.useState<Transaction[]>(initialDeletedTransactions);
+export function DeletedTransactionsTable({ initialDeletedTransactions, onTransactionUpdate }: DeletedTransactionsTableProps) {
+  // const [deletedTransactions, setDeletedTransactions] = React.useState<Transaction[]>(initialDeletedTransactions); // State managed by parent
   const { toast } = useToast();
-  const router = useRouter();
+  // const router = useRouter(); // Not used for navigation here
 
   const [isAlertOpen, setIsAlertOpen] = React.useState(false);
   const [transactionToPermanentlyDelete, setTransactionToPermanentlyDelete] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    setDeletedTransactions(initialDeletedTransactions);
-  }, [initialDeletedTransactions]);
+  // React.useEffect(() => {
+  //   setDeletedTransactions(initialDeletedTransactions); // Data comes from prop, local state not needed
+  // }, [initialDeletedTransactions]);
 
-  const handleRestore = (id: string) => {
+  const handleRestore = async (id: string) => {
     if (!IS_ADMIN) {
       toast({
         title: "Permission Denied",
@@ -65,14 +66,14 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
       return;
     }
 
-    restoreTransactionFromMockData(id);
-    setDeletedTransactions(getDeletedTransactions()); 
+    await restoreTransactionFromMockData(id);
+    // setDeletedTransactions(await getDeletedTransactions()); // Parent will refresh
     
     toast({
       title: "Transaction Restored",
-      description: `Transaction with ID ${id} has been restored to the active list.`,
+      description: `Transaction has been restored to the active list.`,
     });
-    // router.refresh(); // May not be needed if parent page handles refresh, or if onTransactionUpdate prop is used
+    await onTransactionUpdate();
   };
 
   const openPermanentDeleteDialog = (id: string) => {
@@ -88,14 +89,15 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
     setIsAlertOpen(true);
   };
 
-  const handlePermanentDeleteConfirm = () => {
+  const handlePermanentDeleteConfirm = async () => {
     if (transactionToPermanentlyDelete) {
-      permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
-      setDeletedTransactions(getDeletedTransactions()); // Refresh the list
+      await permanentlyDeleteTransactionFromMockData(transactionToPermanentlyDelete);
+      // setDeletedTransactions(await getDeletedTransactions()); // Parent will refresh
       toast({
         title: "Transaction Permanently Deleted",
         description: `Transaction has been permanently deleted.`,
       });
+      await onTransactionUpdate();
       setTransactionToPermanentlyDelete(null);
     }
     setIsAlertOpen(false);
@@ -118,8 +120,8 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
               </TableRow>
             </TableHeader>
             <TableBody>
-              {deletedTransactions.length > 0 ? (
-                deletedTransactions.map((tx) => (
+              {initialDeletedTransactions.length > 0 ? (
+                initialDeletedTransactions.map((tx) => (
                   <TableRow key={tx.id}>
                     <TableCell>{format(parseISO(tx.date), "MMM dd, yyyy")}</TableCell>
                     <TableCell className="font-medium">{tx.vendor}</TableCell>
@@ -147,6 +149,7 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
                                         size="icon" 
                                         onClick={() => openPermanentDeleteDialog(tx.id)}
                                         className="text-destructive hover:text-destructive/80"
+                                        title="Permanently Delete Transaction"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -193,4 +196,3 @@ export function DeletedTransactionsTable({ initialDeletedTransactions }: Deleted
     </TooltipProvider>
   );
 }
-

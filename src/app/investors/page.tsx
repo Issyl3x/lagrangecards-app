@@ -14,7 +14,7 @@ import { addInvestor, getMockInvestors } from "@/lib/mock-data";
 import type { Investor } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert, UserCircle2 } from "lucide-react";
+import { ShieldAlert, UserCircle2, Loader2 } from "lucide-react";
 
 const ADMIN_EMAIL = 'jessrafalfernandez@gmail.com';
 const currentUsersEmail = 'jessrafalfernandez@gmail.com'; 
@@ -27,12 +27,12 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
     resolver: zodResolver(investorSchema),
     defaultValues: { name: "", email: "" },
   });
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const onSubmit = (data: InvestorFormValues) => {
-    setIsLoading(true);
+  const onSubmit = async (data: InvestorFormValues) => {
+    setIsSubmitting(true);
     try {
-      addInvestor(data);
+      await addInvestor(data);
       toast({ title: "Investor Added", description: `${data.name} has been added.` });
       form.reset();
       onInvestorAdded();
@@ -40,7 +40,7 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
       toast({ title: "Error", description: "Failed to add investor.", variant: "destructive" });
       console.error("Failed to add investor:", error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -69,7 +69,7 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>{isLoading ? "Adding..." : "Add Investor"}</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Adding..." : "Add Investor"}</Button>
       </form>
     </Form>
   );
@@ -77,14 +77,32 @@ function AddInvestorForm({ onInvestorAdded }: { onInvestorAdded: () => void }) {
 
 export default function InvestorsPage() {
   const [investors, setInvestors] = React.useState<Investor[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const refreshInvestors = React.useCallback(() => {
-    setInvestors(getMockInvestors());
+  const refreshInvestors = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMockInvestors();
+      setInvestors(data);
+    } catch (error) {
+      console.error("Failed to fetch investors:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     refreshInvestors();
   }, [refreshInvestors]);
+
+  if (isLoading && investors.length === 0) { // Show loading only on initial load
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading investors...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -116,7 +134,10 @@ export default function InvestorsPage() {
           <CardDescription>List of all registered investors.</CardDescription>
         </CardHeader>
         <CardContent>
-          {investors.length > 0 ? (
+          {isLoading && investors.length > 0 && <p>Refreshing investors...</p>} 
+          {!isLoading && investors.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No investors found.</p>
+          ) : (
             <ul className="space-y-4">
               {investors.map(investor => (
                 <li key={investor.id} className="flex items-center p-4 border rounded-lg shadow-sm bg-card hover:shadow-md transition-shadow">
@@ -128,8 +149,6 @@ export default function InvestorsPage() {
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No investors found.</p>
           )}
         </CardContent>
       </Card>

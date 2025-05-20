@@ -8,27 +8,43 @@ import type { Transaction } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { usePathname, useSearchParams } from 'next/navigation';
 
 export default function ViewTransactionsPage() {
   const [currentTransactions, setCurrentTransactions] = React.useState<Transaction[]>([]);
-  const pathname = usePathname(); // For triggering updates if needed
-  const searchParams = useSearchParams(); // For triggering updates if needed
+  const [isLoading, setIsLoading] = React.useState(true);
+  const pathname = usePathname(); 
+  const searchParams = useSearchParams(); 
 
-  const fetchTransactions = React.useCallback(() => {
-    // console.log("ViewTransactionsPage: Fetching transactions");
-    setCurrentTransactions(getMockTransactions());
+  const fetchTransactions = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMockTransactions();
+      setCurrentTransactions(data);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions, pathname, searchParams]); // Re-fetch on navigation or when explicitly told
+  }, [fetchTransactions, pathname, searchParams]); 
 
   const handleTransactionUpdate = () => {
-    // console.log("ViewTransactionsPage: handleTransactionUpdate called, re-fetching transactions.");
-    fetchTransactions();
+    fetchTransactions(); // Re-fetch data when an update occurs
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Loading transactions...</p>
+      </div>
+    );
+  }
 
   return (
     <Card>

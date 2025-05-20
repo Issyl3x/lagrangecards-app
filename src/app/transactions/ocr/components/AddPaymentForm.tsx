@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -33,14 +33,14 @@ import { format, isValid, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 
-// To simulate different users for webhook notification
 const ADMIN_EMAIL_PAYMENT_FORM = 'jessrafalfernandez@gmail.com';
-const currentUsersEmailPaymentForm = ADMIN_EMAIL_PAYMENT_FORM; // Change to 'teammate@example.com' to test
+const currentUsersEmailPaymentForm = ADMIN_EMAIL_PAYMENT_FORM;
 
 export function AddPaymentForm() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [cards, setCards] = React.useState<UserCard[]>([]);
+  const [isLoadingCards, setIsLoadingCards] = React.useState(true);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -54,11 +54,22 @@ export function AddPaymentForm() {
   });
 
   React.useEffect(() => {
-    setCards(getMockCards());
+    const fetchCards = async () => {
+      setIsLoadingCards(true);
+      try {
+        const cardsData = await getMockCards();
+        setCards(cardsData);
+      } catch (error) {
+        console.error("Error fetching cards for payment form:", error);
+      } finally {
+        setIsLoadingCards(false);
+      }
+    };
+    fetchCards();
   }, []);
 
   const onSubmit = async (data: PaymentFormValues) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     const selectedCard = cards.find(card => card.id === data.cardId);
     if (!selectedCard) {
@@ -67,7 +78,7 @@ export function AddPaymentForm() {
         description: "Selected card not found. Please try again.",
         variant: "destructive",
       });
-      setIsLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
@@ -83,26 +94,41 @@ export function AddPaymentForm() {
       property: selectedCard.property, 
       unitNumber: "", 
       receiptImageURI: "", 
-      reconciled: false,
+      reconciled: false, // Payments usually need to be reconciled
       sourceType: 'manual',
     };
 
-    addTransactionToMockData(newPaymentTransaction, currentUsersEmailPaymentForm); // Pass submitter email
+    try {
+        await addTransactionToMockData(newPaymentTransaction, currentUsersEmailPaymentForm); 
 
-    toast({
-      title: "Payment Saved",
-      description: `Payment of $${data.amount.toFixed(2)} to ${selectedCard.cardName} has been recorded.`,
-    });
-    
-    form.reset({
-        cardId: undefined,
-        date: new Date(),
-        amount: undefined,
-        bankAccountUsed: "",
-        note: "",
-    });
-    setIsLoading(false);
+        toast({
+        title: "Payment Saved",
+        description: `Payment of $${data.amount.toFixed(2)} to ${selectedCard.cardName} has been recorded.`,
+        });
+        
+        form.reset({
+            cardId: undefined,
+            date: new Date(),
+            amount: undefined,
+            bankAccountUsed: "",
+            note: "",
+        });
+    } catch (error) {
+        console.error("Error saving payment transaction:", error);
+        toast({ title: "Error", description: "Failed to save payment.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
+
+  if (isLoadingCards) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        <span>Loading card options...</span>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
@@ -232,12 +258,10 @@ export function AddPaymentForm() {
           )}
         />
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving Payment..." : "Add Payment"}
+        <Button type="submit" disabled={isSubmitting || isLoadingCards}>
+          {isSubmitting ? "Saving Payment..." : "Add Payment"}
         </Button>
       </form>
     </Form>
   );
 }
-
-    
